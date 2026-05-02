@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pinehurst Cup 2026</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .sub {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 20px;
+      color: #cbd5f5;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row input {
+      flex: 1;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
+
+    .team {
+      width: 40%;
+    }
+
+    .score {
+      font-size: 40px;
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      background: #22c55e;
+      color: white;
+    }
+
+    .small-btn {
+      background: #3b82f6;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Pinehurst Cup 2026</h1>
+  <div class="sub">
+    Oct 1–4 • Courses 2, 4, 8, 9
+  </div>
+
+  <!-- TEAM SETUP -->
+  <div class="card">
+    <h3>Team Setup</h3>
+
+    <input id="teamA" placeholder="Team A Name" />
+    <input id="teamB" placeholder="Team B Name" />
+
+    <button class="small-btn" onclick="saveTeams()">Save Teams</button>
+  </div>
+
+  <!-- PLAYER SETUP -->
+  <div class="card">
+    <h3>Players & Handicaps</h3>
+
+    <div id="players"></div>
+
+    <button class="small-btn" onclick="addPlayer()">+ Add Player</button>
+    <button class="small-btn" onclick="savePlayers()">Save Players</button>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div class="card">
+    <div class="scoreboard">
+      <div class="team">
+        <h3 id="teamAName">Team A</h3>
+        <div class="score" id="scoreA">0</div>
+      </div>
+
+      <div>VS</div>
+
+      <div class="team">
+        <h3 id="teamBName">Team B</h3>
+        <div class="score" id="scoreB">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <button onclick="goToMatches()">Start Matches</button>
+
+</div>
+
+<script>
+
+let players = [];
+
+function addPlayer() {
+  const container = document.getElementById("players");
+
+  const div = document.createElement("div");
+  div.className = "row";
+
+  div.innerHTML = `
+    <input placeholder="Name" />
+    <input placeholder="Handicap" type="number" />
+  `;
+
+  container.appendChild(div);
+}
+
+function saveTeams() {
+  const teamA = document.getElementById("teamA").value;
+  const teamB = document.getElementById("teamB").value;
+
+  localStorage.setItem("teamA", teamA);
+  localStorage.setItem("teamB", teamB);
+
+  document.getElementById("teamAName").innerText = teamA;
+  document.getElementById("teamBName").innerText = teamB;
+}
+
+function savePlayers() {
+  const rows = document.querySelectorAll("#players .row");
+  players = [];
+
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll("input");
+    players.push({
+      name: inputs[0].value,
+      handicap: inputs[1].value
+    });
+  });
+
+  localStorage.setItem("players", JSON.stringify(players));
+  alert("Players saved!");
+}
+
+function loadData() {
+  const teamA = localStorage.getItem("teamA");
+  const teamB = localStorage.getItem("teamB");
+
+  if (teamA) document.getElementById("teamAName").innerText = teamA;
+  if (teamB) document.getElementById("teamBName").innerText = teamB;
+}
+
+function goToMatches() {
+  alert("Next step: Matches page coming next!");
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
