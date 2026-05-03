@@ -61,9 +61,7 @@
       margin-top: 15px;
     }
 
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
     .page-header {
       position: relative;
@@ -74,9 +72,7 @@
       min-height: 29px;
     }
 
-    .page-header h2 {
-      margin: 0;
-    }
+    .page-header h2 { margin: 0; }
 
     .score-card {
       min-height: 12.5vh;
@@ -121,17 +117,9 @@
       cursor: pointer;
     }
 
-    button.secondary {
-      background: #334155;
-    }
-
-    button.backup {
-      background: #0f766e;
-    }
-
-    button.import {
-      background: #7c3aed;
-    }
+    button.secondary { background: #334155; }
+    button.backup { background: #0f766e; }
+    button.import { background: #7c3aed; }
 
     .gear {
       position: absolute;
@@ -167,9 +155,7 @@
       font-family: monospace;
     }
 
-    h2 {
-      text-align: center;
-    }
+    h2 { text-align: center; }
 
     h4 {
       margin: 16px 0 8px;
@@ -264,18 +250,14 @@
       <div class="card score-card">
         <div class="scoreboard">
           <div>
-            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">
-              Team A
-            </div>
+            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">Team A</div>
             <div id="teamAScore" class="score">0</div>
           </div>
 
           <div>VS</div>
 
           <div>
-            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">
-              Team B
-            </div>
+            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
             <div id="teamBScore" class="score">0</div>
           </div>
         </div>
@@ -348,6 +330,7 @@
     <div class="card">
       <input id="playerName" placeholder="Name"/>
       <input id="nickname" placeholder="Nickname"/>
+      <input id="handicapIndex" type="number" step="0.1" placeholder="Handicap Index"/>
 
       <select id="playerTeam">
         <option value="">Assign to Team</option>
@@ -454,14 +437,8 @@ function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
   let players = JSON.parse(localStorage.getItem("players") || "[]");
 
   players = players.map(player => {
-    if (player.team === oldTeamA) {
-      player.team = newTeamA;
-    }
-
-    if (player.team === oldTeamB) {
-      player.team = newTeamB;
-    }
-
+    if (player.team === oldTeamA) player.team = newTeamA;
+    if (player.team === oldTeamB) player.team = newTeamB;
     return player;
   });
 
@@ -539,6 +516,7 @@ function renderTeamRoster(teamName) {
       <div class="player-name">${player.name}</div>
       <div class="player-detail">
         ${player.nickname ? `"${player.nickname}"<br>` : ""}
+        <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? player.handicapIndex : "Not entered"}<br>
         <strong>Strengths:</strong>
         ${player.strengths && player.strengths.length ? player.strengths.join(", ") : "None selected"}
         <br>
@@ -631,6 +609,7 @@ function toggleTrait(el, value, type) {
 function resetPlayerForm() {
   document.getElementById("playerName").value = "";
   document.getElementById("nickname").value = "";
+  document.getElementById("handicapIndex").value = "";
   document.getElementById("playerTeam").value = "";
 
   selectedStrengths = [];
@@ -647,6 +626,7 @@ function loadPlayerForEdit(index) {
 
   document.getElementById("playerName").value = player.name || "";
   document.getElementById("nickname").value = player.nickname || "";
+  document.getElementById("handicapIndex").value = player.handicapIndex || "";
   document.getElementById("playerTeam").value = player.team || "";
 
   selectedStrengths = player.strengths || [];
@@ -668,6 +648,7 @@ function loadPlayerForEdit(index) {
 function savePlayer() {
   const name = document.getElementById("playerName").value;
   const nickname = document.getElementById("nickname").value;
+  const handicapIndex = document.getElementById("handicapIndex").value;
   const team = document.getElementById("playerTeam").value;
 
   if (!name.trim()) {
@@ -678,6 +659,7 @@ function savePlayer() {
   const player = {
     name,
     nickname,
+    handicapIndex,
     team,
     strengths: selectedStrengths,
     weaknesses: selectedWeaknesses
@@ -722,6 +704,7 @@ function renderPlayerList() {
       <div class="player-detail">
         ${player.nickname ? `"${player.nickname}" • ` : ""}
         ${player.team ? player.team : "No team assigned"}
+        ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? ` • HI: ${player.handicapIndex}` : ""}
       </div>
     `;
 
