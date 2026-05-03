@@ -124,14 +124,6 @@
       flex-direction: column;
     }
 
-    .feed-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
     .feed-title {
       font-size: 18px;
       font-weight: bold;
@@ -140,6 +132,7 @@
     .feed-subtitle {
       font-size: 12px;
       color: #dbeafe;
+      margin-top: 3px;
     }
 
     .feed-list {
@@ -180,10 +173,6 @@
       padding: 18px;
       font-size: 14px;
       line-height: 1.4;
-    }
-
-    .feed-input-row {
-      margin-top: 12px;
     }
 
     button {
@@ -389,6 +378,13 @@
       line-height: 1.4;
       margin-top: 10px;
     }
+
+    .sync-status {
+      font-size: 12px;
+      color: #bfdbfe;
+      text-align: center;
+      margin-top: 8px;
+    }
   </style>
 </head>
 
@@ -400,6 +396,8 @@
     <div class="logo">
       <img src="/Swami Golf Logo.png" class="logo-img">
     </div>
+
+    <div class="sync-status" id="syncStatus">Connecting to Swami...</div>
 
     <div class="tile" onclick="openTripHome('pinehurst2026')">
       🏌️ Pinehurst 2026
@@ -439,19 +437,15 @@
       </div>
 
       <div class="card feed-card">
-        <div class="feed-header">
-          <div>
-            <div class="feed-title">Trip Feed</div>
-            <div class="feed-subtitle">Trash talk, updates, and Swami wisdom</div>
-          </div>
+        <div>
+          <div class="feed-title">Trip Feed</div>
+          <div class="feed-subtitle">Trash talk, updates, and Swami wisdom</div>
         </div>
 
         <div id="feedList" class="feed-list"></div>
 
-        <div class="feed-input-row">
-          <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..."></textarea>
-          <button onclick="postUserComment()">Post Comment</button>
-        </div>
+        <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..."></textarea>
+        <button onclick="postUserComment()">Post Comment</button>
       </div>
     </div>
   </div>
@@ -558,8 +552,8 @@
 
     <div class="card">
       <div class="helper-text">
-        Paste your exported Swami Golf backup data below, then tap Import.
-        This will replace the saved data on this device.
+        Paste exported Swami Golf backup data below, then tap Import.
+        This will upload the backup data into Firebase.
       </div>
 
       <textarea id="importDataText" placeholder="Paste exported backup JSON here"></textarea>
@@ -616,992 +610,1064 @@
 
 </div>
 
-<script>
-let activeTripId = "pinehurst2026";
-let editingPlayerIndex = null;
-let editingItineraryEventId = null;
-
-const trips = {
-  pinehurst2026: {
-    id: "pinehurst2026",
-    name: "Pinehurst 2026",
-    defaultTeamA: "Team A",
-    defaultTeamB: "Team B"
-  },
-  testGolfTrip: {
-    id: "testGolfTrip",
-    name: "Test Golf Trip",
-    defaultTeamA: "Team A",
-    defaultTeamB: "Team B"
-  }
-};
-
-const defaultPinehurstItineraryEvents = [
-  {
-    id: "golf-tobacco-road-2026-09-30",
-    section: "golf",
-    title: "Tobacco Road Golf Club",
-    startDate: "2026-09-30",
-    endDate: "2026-09-30",
-    startTime: "13:12",
-    endTime: "",
-    details: "Tee Times: 1:12 PM, 1:24 PM"
-  },
-  {
-    id: "golf-pinehurst-9-2026-10-01",
-    section: "golf",
-    title: "Pinehurst 9",
-    startDate: "2026-10-01",
-    endDate: "2026-10-01",
-    startTime: "13:35",
-    endTime: "",
-    details: "Tee Times: 1:35 PM, 1:44 PM"
-  },
-  {
-    id: "golf-pinehurst-4-2026-10-02",
-    section: "golf",
-    title: "Pinehurst 4",
-    startDate: "2026-10-02",
-    endDate: "2026-10-02",
-    startTime: "09:10",
-    endTime: "",
-    details: "Tee Times: 9:10 AM, 9:20 AM"
-  },
-  {
-    id: "golf-cradle-2026-10-02",
-    section: "golf",
-    title: "The Cradle",
-    startDate: "2026-10-02",
-    endDate: "2026-10-02",
-    startTime: "14:20",
-    endTime: "",
-    details: "Tee Times: 2:20 PM, 2:30 PM"
-  },
-  {
-    id: "golf-pinehurst-2-2026-10-01",
-    section: "golf",
-    title: "Pinehurst 2",
-    startDate: "2026-10-01",
-    endDate: "2026-10-01",
-    startTime: "12:50",
-    endTime: "",
-    details: "Tee Times: 12:50 PM, 1:00 PM"
-  },
-  {
-    id: "golf-pinehurst-8-2026-10-02",
-    section: "golf",
-    title: "Pinehurst 8",
-    startDate: "2026-10-02",
-    endDate: "2026-10-02",
-    startTime: "08:30",
-    endTime: "",
-    details: "Tee Times: 8:30 AM, 8:40 AM"
-  },
-  {
-    id: "lodging-holly-inn-2026-10-01",
-    section: "lodging",
-    title: "The Holly Inn",
-    startDate: "2026-10-01",
-    endDate: "2026-10-04",
-    startTime: "",
-    endTime: "",
-    details: "Lodging: Oct 1-4, 2026"
-  }
-];
-
-function tripKey(key) {
-  return `swamiGolf.${activeTripId}.${key}`;
-}
-
-function migrateLegacyPinehurstDataIfNeeded() {
-  const migrationFlag = "swamiGolf.legacyMigrationComplete";
-  if (localStorage.getItem(migrationFlag)) return;
-
-  if (localStorage.getItem("teamA")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.teamA", localStorage.getItem("teamA"));
-  }
-
-  if (localStorage.getItem("teamB")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.teamB", localStorage.getItem("teamB"));
-  }
-
-  if (localStorage.getItem("teamAScore")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.teamAScore", localStorage.getItem("teamAScore"));
-  }
-
-  if (localStorage.getItem("teamBScore")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.teamBScore", localStorage.getItem("teamBScore"));
-  }
-
-  if (localStorage.getItem("players")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.players", localStorage.getItem("players"));
-  }
-
-  if (localStorage.getItem("itineraryEvents")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.itineraryEvents", localStorage.getItem("itineraryEvents"));
-  }
-
-  if (localStorage.getItem("feedPosts")) {
-    localStorage.setItem("swamiGolf.pinehurst2026.feedPosts", localStorage.getItem("feedPosts"));
-  }
-
-  localStorage.setItem(migrationFlag, "true");
-}
-
-function initializeTripIfNeeded(tripId) {
-  const previousTripId = activeTripId;
-  activeTripId = tripId;
-
-  if (!localStorage.getItem(tripKey("teamA"))) {
-    localStorage.setItem(tripKey("teamA"), trips[tripId].defaultTeamA);
-  }
-
-  if (!localStorage.getItem(tripKey("teamB"))) {
-    localStorage.setItem(tripKey("teamB"), trips[tripId].defaultTeamB);
-  }
-
-  if (!localStorage.getItem(tripKey("teamAScore"))) {
-    localStorage.setItem(tripKey("teamAScore"), "0");
-  }
-
-  if (!localStorage.getItem(tripKey("teamBScore"))) {
-    localStorage.setItem(tripKey("teamBScore"), "0");
-  }
-
-  if (!localStorage.getItem(tripKey("players"))) {
-    localStorage.setItem(tripKey("players"), JSON.stringify([]));
-  }
-
-  if (!localStorage.getItem(tripKey("itineraryEvents"))) {
-    const defaultEvents = tripId === "pinehurst2026"
-      ? defaultPinehurstItineraryEvents
-      : [];
-
-    localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(defaultEvents));
-  }
-
-  if (!localStorage.getItem(tripKey("feedPosts"))) {
-    localStorage.setItem(tripKey("feedPosts"), JSON.stringify([]));
-  }
-
-  activeTripId = previousTripId;
-}
-
-function show(id) {
-  [
-    "appHome",
-    "tripHome",
-    "itineraryScreen",
-    "itineraryEditorScreen",
-    "teamRosterScreen",
-    "settingsScreen",
-    "importScreen",
-    "teamScreen",
-    "playerListScreen",
-    "playerScreen"
-  ].forEach(x => document.getElementById(x).classList.add("hidden"));
-
-  document.getElementById(id).classList.remove("hidden");
-}
-
-function openTripHome(tripId = activeTripId) {
-  activeTripId = tripId;
-  initializeTripIfNeeded(activeTripId);
-
-  document.getElementById("tripTitle").innerText = trips[activeTripId].name;
-
-  show("tripHome");
-  loadTeams();
-  loadScores();
-  renderFeed();
-}
-
-function openItinerary() {
-  show("itineraryScreen");
-  renderItinerary();
-}
-
-function goHome() {
-  show("appHome");
-}
-
-function openSettings() {
-  show("settingsScreen");
-}
-
-function openImportScreen() {
-  document.getElementById("importDataText").value = "";
-  show("importScreen");
-}
-
-function goTripHome() {
-  openTripHome(activeTripId);
-}
-
-function openTeamEdit() {
-  show("teamScreen");
-  loadInputs();
-}
-
-function openPlayerList() {
-  show("playerListScreen");
-  renderPlayerList();
-}
-
-function openPlayer(index = null) {
-  editingPlayerIndex = index;
-  show("playerScreen");
-  renderTraits();
-  loadTeamDropdown();
-
-  if (index === null) {
-    document.getElementById("playerScreenTitle").innerText = "Add Player";
-    resetPlayerForm();
-  } else {
-    document.getElementById("playerScreenTitle").innerText = "Edit Player";
-    loadPlayerForEdit(index);
-  }
-}
-
-function saveTeams() {
-  const teamA = document.getElementById("teamAInput").value || "Team A";
-  const teamB = document.getElementById("teamBInput").value || "Team B";
-
-  const oldTeamA = localStorage.getItem(tripKey("teamA")) || "Team A";
-  const oldTeamB = localStorage.getItem(tripKey("teamB")) || "Team B";
-
-  localStorage.setItem(tripKey("teamA"), teamA);
-  localStorage.setItem(tripKey("teamB"), teamB);
-
-  updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
-  addSwamiPost("teams", `${teamA} vs. ${teamB}`);
-
-  loadTeams();
-  openSettings();
-}
-
-function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
-  let players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
-
-  players = players.map(player => {
-    if (player.team === oldTeamA) player.team = newTeamA;
-    if (player.team === oldTeamB) player.team = newTeamB;
-    return player;
-  });
-
-  localStorage.setItem(tripKey("players"), JSON.stringify(players));
-}
-
-function loadTeams() {
-  document.getElementById("teamAName").innerText =
-    localStorage.getItem(tripKey("teamA")) || "Team A";
-
-  document.getElementById("teamBName").innerText =
-    localStorage.getItem(tripKey("teamB")) || "Team B";
-}
-
-function loadScores() {
-  document.getElementById("teamAScore").innerText =
-    localStorage.getItem(tripKey("teamAScore")) || "0";
-
-  document.getElementById("teamBScore").innerText =
-    localStorage.getItem(tripKey("teamBScore")) || "0";
-}
-
-function loadInputs() {
-  document.getElementById("teamAInput").value =
-    localStorage.getItem(tripKey("teamA")) || "";
-
-  document.getElementById("teamBInput").value =
-    localStorage.getItem(tripKey("teamB")) || "";
-}
-
-function loadTeamDropdown() {
-  const teamA = localStorage.getItem(tripKey("teamA")) || "Team A";
-  const teamB = localStorage.getItem(tripKey("teamB")) || "Team B";
-
-  const select = document.getElementById("playerTeam");
-
-  select.innerHTML = `
-    <option value="">Assign to Team</option>
-    <option value="${teamA}">${teamA}</option>
-    <option value="${teamB}">${teamB}</option>
-  `;
-}
-
-function openTeamRoster(teamKeyValue) {
-  const teamName = teamKeyValue === "A"
-    ? localStorage.getItem(tripKey("teamA")) || "Team A"
-    : localStorage.getItem(tripKey("teamB")) || "Team B";
-
-  document.getElementById("teamRosterTitle").innerText = teamName;
-  renderTeamRoster(teamName);
-  show("teamRosterScreen");
-}
-
-function renderTeamRoster(teamName) {
-  const list = document.getElementById("teamRosterList");
-  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
-  const teamPlayers = players.filter(player => player.team === teamName);
-
-  list.innerHTML = "";
-
-  if (teamPlayers.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        No players assigned to ${teamName} yet.
-      </div>
-    `;
-    return;
-  }
-
-  teamPlayers.forEach(player => {
-    const div = document.createElement("div");
-    div.className = "player-row";
-
-    div.innerHTML = `
-      <div class="player-name">${player.name}</div>
-      <div class="player-detail">
-        ${player.nickname ? `"${player.nickname}"<br>` : ""}
-        <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? player.handicapIndex : "Not entered"}<br>
-        <strong>Strengths:</strong>
-        ${player.strengths && player.strengths.length ? player.strengths.join(", ") : "None selected"}
-        <br>
-        <strong>Weaknesses:</strong>
-        ${player.weaknesses && player.weaknesses.length ? player.weaknesses.join(", ") : "None selected"}
-      </div>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-function getItineraryEvents() {
-  return JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]");
-}
-
-function saveItineraryEvents(events) {
-  localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(events));
-}
-
-function renderItinerary() {
-  const events = getItineraryEvents();
-
-  renderItinerarySection("golf", "golfItineraryList", events);
-  renderItinerarySection("lodging", "lodgingItineraryList", events);
-  renderItinerarySection("reservations", "reservationsItineraryList", events);
-  renderItinerarySection("flights", "flightsItineraryList", events);
-  renderItinerarySection("other", "otherItineraryList", events);
-}
-
-function renderItinerarySection(section, elementId, events) {
-  const list = document.getElementById(elementId);
-  const sectionEvents = events
-    .filter(event => event.section === section)
-    .sort((a, b) => {
-      const aSort = `${a.startDate || ""} ${a.startTime || ""}`;
-      const bSort = `${b.startDate || ""} ${b.startTime || ""}`;
-      return aSort.localeCompare(bSort);
-    });
-
-  list.innerHTML = "";
-
-  if (sectionEvents.length === 0) {
-    list.innerHTML = `<div class="empty-state">No events added yet.</div>`;
-    return;
-  }
-
-  sectionEvents.forEach(event => {
-    const div = document.createElement("div");
-    div.className = "itinerary-item";
-    div.onclick = () => openItineraryEditor(event.section, event.id);
-
-    div.innerHTML = `
-      <div class="itinerary-date">${formatDateRange(event.startDate, event.endDate)}</div>
-      <div class="itinerary-title">${event.title || "Untitled Event"}</div>
-      <div class="itinerary-detail">
-        ${formatTimeRange(event.startTime, event.endTime)}
-        ${event.details ? `<br>${event.details}` : ""}
-      </div>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-function openItineraryEditor(section, eventId = null) {
-  editingItineraryEventId = eventId;
-
-  document.getElementById("eventSection").value = section;
-  document.getElementById("eventTitle").value = "";
-  document.getElementById("eventStartDate").value = "";
-  document.getElementById("eventEndDate").value = "";
-  document.getElementById("eventStartTime").value = "";
-  document.getElementById("eventEndTime").value = "";
-  document.getElementById("eventDetails").value = "";
-
-  if (eventId) {
-    const events = getItineraryEvents();
-    const event = events.find(x => x.id === eventId);
-
-    if (event) {
-      document.getElementById("itineraryEditorTitle").innerText = "Edit Event";
-      document.getElementById("eventSection").value = event.section || section;
-      document.getElementById("eventTitle").value = event.title || "";
-      document.getElementById("eventStartDate").value = event.startDate || "";
-      document.getElementById("eventEndDate").value = event.endDate || "";
-      document.getElementById("eventStartTime").value = event.startTime || "";
-      document.getElementById("eventEndTime").value = event.endTime || "";
-      document.getElementById("eventDetails").value = event.details || "";
-      document.getElementById("deleteItineraryButton").classList.remove("hidden");
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    collection,
+    addDoc,
+    getDocs,
+    onSnapshot,
+    writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuw-M3ies3M0sDjH1Du1bG2t_rfWzFkdY",
+    authDomain: "swami-golf.firebaseapp.com",
+    projectId: "swami-golf",
+    storageBucket: "swami-golf.firebasestorage.app",
+    messagingSenderId: "902001518083",
+    appId: "1:902001518083:web:5315b74fd66aebd8b99036"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let activeTripId = "pinehurst2026";
+  let currentUser = null;
+  let activeTripData = {};
+  let players = [];
+  let itineraryEvents = [];
+  let feedPosts = [];
+  let editingPlayerId = null;
+  let editingItineraryEventId = null;
+  let unsubscribers = [];
+
+  const trips = {
+    pinehurst2026: {
+      id: "pinehurst2026",
+      name: "Pinehurst 2026",
+      defaultTeamA: "Team A",
+      defaultTeamB: "Team B"
+    },
+    testGolfTrip: {
+      id: "testGolfTrip",
+      name: "Test Golf Trip",
+      defaultTeamA: "Team A",
+      defaultTeamB: "Team B"
     }
-  } else {
-    document.getElementById("itineraryEditorTitle").innerText = "Add Event";
-    document.getElementById("deleteItineraryButton").classList.add("hidden");
-  }
-
-  show("itineraryEditorScreen");
-}
-
-function saveItineraryEvent() {
-  const section = document.getElementById("eventSection").value;
-  const title = document.getElementById("eventTitle").value.trim();
-  const startDate = document.getElementById("eventStartDate").value;
-  const endDate = document.getElementById("eventEndDate").value;
-  const startTime = document.getElementById("eventStartTime").value;
-  const endTime = document.getElementById("eventEndTime").value;
-  const details = document.getElementById("eventDetails").value.trim();
-
-  if (!title) {
-    alert("Please enter an event name.");
-    return;
-  }
-
-  let events = getItineraryEvents();
-
-  const eventData = {
-    id: editingItineraryEventId || `event-${Date.now()}`,
-    section,
-    title,
-    startDate,
-    endDate,
-    startTime,
-    endTime,
-    details
   };
 
-  const wasEditing = Boolean(editingItineraryEventId);
-
-  if (editingItineraryEventId) {
-    events = events.map(event =>
-      event.id === editingItineraryEventId ? eventData : event
-    );
-  } else {
-    events.push(eventData);
-  }
-
-  saveItineraryEvents(events);
-
-  addSwamiPost(
-    wasEditing ? "itineraryEdit" : "itineraryAdd",
-    title
-  );
-
-  editingItineraryEventId = null;
-  openItinerary();
-}
-
-function deleteItineraryEvent() {
-  if (!editingItineraryEventId) return;
-  if (!confirm("Delete this event?")) return;
-
-  const events = getItineraryEvents();
-  const event = events.find(x => x.id === editingItineraryEventId);
-  const eventTitle = event ? event.title : "an event";
-
-  const updatedEvents = events.filter(event => event.id !== editingItineraryEventId);
-
-  saveItineraryEvents(updatedEvents);
-  addSwamiPost("itineraryDelete", eventTitle);
-
-  editingItineraryEventId = null;
-  openItinerary();
-}
-
-function formatDateRange(startDate, endDate) {
-  if (!startDate && !endDate) return "Date TBD";
-
-  const start = startDate ? formatDisplayDate(startDate) : "";
-  const end = endDate ? formatDisplayDate(endDate) : "";
-
-  if (start && end && start !== end) {
-    return `${start} - ${end}`;
-  }
-
-  return start || end;
-}
-
-function formatDisplayDate(dateString) {
-  const date = new Date(`${dateString}T12:00:00`);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  });
-}
-
-function formatTimeRange(startTime, endTime) {
-  if (!startTime && !endTime) return "";
-
-  const start = startTime ? formatDisplayTime(startTime) : "";
-  const end = endTime ? formatDisplayTime(endTime) : "";
-
-  if (start && end) {
-    return `${start} - ${end}`;
-  }
-
-  return start || end;
-}
-
-function formatDisplayTime(timeString) {
-  const [hours, minutes] = timeString.split(":");
-  const date = new Date();
-  date.setHours(Number(hours));
-  date.setMinutes(Number(minutes));
-
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
-
-function getFeedPosts() {
-  return JSON.parse(localStorage.getItem(tripKey("feedPosts")) || "[]");
-}
-
-function saveFeedPosts(posts) {
-  localStorage.setItem(tripKey("feedPosts"), JSON.stringify(posts));
-}
-
-function renderFeed() {
-  const list = document.getElementById("feedList");
-  const posts = getFeedPosts()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  list.innerHTML = "";
-
-  if (posts.length === 0) {
-    list.innerHTML = `
-      <div class="feed-empty">
-        The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.
-      </div>
-    `;
-    return;
-  }
-
-  posts.forEach(post => {
-    const div = document.createElement("div");
-    div.className = "feed-post";
-
-    div.innerHTML = `
-      <div class="feed-author">${post.author}</div>
-      <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
-      <div class="feed-text">${escapeHtml(post.text)}</div>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-function addFeedPost(author, text, type = "user") {
-  const posts = getFeedPosts();
-
-  posts.push({
-    id: `post-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    author,
-    text,
-    type,
-    createdAt: new Date().toISOString()
-  });
-
-  saveFeedPosts(posts);
-}
-
-function addSwamiPost(action, subject) {
-  const text = getSwamiComment(action, subject);
-  addFeedPost("Swami Says", text, "admin");
-}
-
-function getSwamiComment(action, subject) {
-  const comments = {
-    itineraryAdd: [
-      `New itinerary item added: ${subject}. Excellent. Nothing says "relaxing golf trip" like another scheduled commitment.`,
-      `${subject} just hit the itinerary. The boys are now officially over-managed and under-hydrated.`,
-      `Added ${subject}. Somewhere, a guy who "doesn't need details" is already asking what time it starts.`
-    ],
-    itineraryEdit: [
-      `${subject} was updated. Because apparently the first plan was too easy to understand.`,
-      `Itinerary update: ${subject}. Please pretend you read it before asking the group chat.`,
-      `${subject} changed. Adjust your excuses accordingly.`
-    ],
-    itineraryDelete: [
-      `${subject} was removed from the itinerary. A rare victory for free time and poor decision-making.`,
-      `Deleted ${subject}. The schedule has lost weight. If only some swings could do the same.`,
-      `${subject} is gone. Pour one out, then check if you were supposed to be there.`
-    ],
-    playerAdd: [
-      `${subject} joined the trip. May his handicap be honest and his breakfast ball usage be limited.`,
-      `${subject} has been added. Another swing enters the evidence locker.`,
-      `Welcome ${subject}. The field gets deeper, though not necessarily better.`
-    ],
-    playerEdit: [
-      `${subject}'s profile was updated. Bold move editing the scouting report before the first tee.`,
-      `${subject} has new player info. The handicap committee is already suspicious.`,
-      `${subject}'s profile changed. Somewhere a sandbagger just felt seen.`
-    ],
-    teams: [
-      `Team update: ${subject}. Rivalries are forming and friendships are already on probation.`,
-      `The teams are now ${subject}. Somebody is about to claim they "don't care" very loudly.`,
-      `${subject}. May the better team win, and may the worse team have a deep cooler.`
-    ],
-    userComment: [
-      `The group chat has spoken. Accuracy level: questionable. Confidence level: elite.`,
-      `A new comment has entered the arena. Grammar optional, trash talk encouraged.`,
-      `Someone posted in the feed. Productivity is down, vibes are up.`
-    ]
-  };
-
-  const list = comments[action] || [
-    `Something changed: ${subject}. Swami has reviewed it and remains mildly concerned.`
+  const defaultPinehurstItineraryEvents = [
+    {
+      section: "golf",
+      title: "Tobacco Road Golf Club",
+      startDate: "2026-09-30",
+      endDate: "2026-09-30",
+      startTime: "13:12",
+      endTime: "",
+      details: "Tee Times: 1:12 PM, 1:24 PM"
+    },
+    {
+      section: "golf",
+      title: "Pinehurst 9",
+      startDate: "2026-10-01",
+      endDate: "2026-10-01",
+      startTime: "13:35",
+      endTime: "",
+      details: "Tee Times: 1:35 PM, 1:44 PM"
+    },
+    {
+      section: "golf",
+      title: "Pinehurst 4",
+      startDate: "2026-10-02",
+      endDate: "2026-10-02",
+      startTime: "09:10",
+      endTime: "",
+      details: "Tee Times: 9:10 AM, 9:20 AM"
+    },
+    {
+      section: "golf",
+      title: "The Cradle",
+      startDate: "2026-10-02",
+      endDate: "2026-10-02",
+      startTime: "14:20",
+      endTime: "",
+      details: "Tee Times: 2:20 PM, 2:30 PM"
+    },
+    {
+      section: "golf",
+      title: "Pinehurst 2",
+      startDate: "2026-10-01",
+      endDate: "2026-10-01",
+      startTime: "12:50",
+      endTime: "",
+      details: "Tee Times: 12:50 PM, 1:00 PM"
+    },
+    {
+      section: "golf",
+      title: "Pinehurst 8",
+      startDate: "2026-10-02",
+      endDate: "2026-10-02",
+      startTime: "08:30",
+      endTime: "",
+      details: "Tee Times: 8:30 AM, 8:40 AM"
+    },
+    {
+      section: "lodging",
+      title: "The Holly Inn",
+      startDate: "2026-10-01",
+      endDate: "2026-10-04",
+      startTime: "",
+      endTime: "",
+      details: "Lodging: Oct 1-4, 2026"
+    }
   ];
 
-  return list[Math.floor(Math.random() * list.length)];
-}
+  const strengths = [
+    "Fairway Finder-ish",
+    "Green-Seeking Missiles",
+    "Flop Shot Flair",
+    "Putt Whisperer Energy",
+    "Beer Consistency",
+    "Trash Talk Volume",
+    "Cart Navigation Skills",
+    "Mental Toughness",
+    "Snack Management",
+    "Mulligan Negotiation",
+    "Cart Cooler Logistics",
+    "Approach Shot Optimism",
+    "Gimme Putt Diplomacy",
+    "Post-Round Storytelling",
+    "First Tee Swagger",
+    "Club Twirl Confidence"
+  ];
 
-function postUserComment() {
-  const input = document.getElementById("feedCommentInput");
-  const text = input.value.trim();
+  const weaknesses = [
+    "3-Putt Specialist",
+    "Slice Machine",
+    "Hook Under Pressure",
+    "Slow Play Offender",
+    "Bunker Magnet",
+    "Ball Disappearance Expert",
+    "Water Hazard Addiction",
+    "Driver Meltdown",
+    "Putting Confidence Issues",
+    "Breakfast Ball Dependency",
+    "Range Hero Syndrome",
+    "Yardage Guessing Disorder",
+    "Cart Path Only Confusion",
+    "Scorecard Math Problems",
+    "Wind Blame Specialist",
+    "Forgotten Wedge Syndrome"
+  ];
 
-  if (!text) {
-    alert("Please enter a comment.");
-    return;
+  let selectedStrengths = [];
+  let selectedWeaknesses = [];
+
+  signInAnonymously(auth).catch(error => {
+    document.getElementById("syncStatus").innerText = "Firebase sign-in failed. Check Authentication settings.";
+    console.error(error);
+  });
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return;
+
+    currentUser = user;
+    document.getElementById("syncStatus").innerText = "Connected. Real-time sync is active.";
+
+    await initializeTripIfNeeded("pinehurst2026");
+    await initializeTripIfNeeded("testGolfTrip");
+  });
+
+  function tripDocRef(tripId = activeTripId) {
+    return doc(db, "trips", tripId);
   }
 
-  addFeedPost("User", text, "user");
-  input.value = "";
-
-  if (Math.random() < 0.45) {
-    addSwamiPost("userComment", "comment");
+  function playersCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "players");
   }
 
-  renderFeed();
-}
-
-function formatFeedTime(isoString) {
-  const date = new Date(isoString);
-
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
-
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.innerText = text;
-  return div.innerHTML;
-}
-
-const strengths = [
-  "Fairway Finder-ish",
-  "Green-Seeking Missiles",
-  "Flop Shot Flair",
-  "Putt Whisperer Energy",
-  "Beer Consistency",
-  "Trash Talk Volume",
-  "Cart Navigation Skills",
-  "Mental Toughness",
-  "Snack Management",
-  "Mulligan Negotiation",
-  "Cart Cooler Logistics",
-  "Approach Shot Optimism",
-  "Gimme Putt Diplomacy",
-  "Post-Round Storytelling",
-  "First Tee Swagger",
-  "Club Twirl Confidence"
-];
-
-const weaknesses = [
-  "3-Putt Specialist",
-  "Slice Machine",
-  "Hook Under Pressure",
-  "Slow Play Offender",
-  "Bunker Magnet",
-  "Ball Disappearance Expert",
-  "Water Hazard Addiction",
-  "Driver Meltdown",
-  "Putting Confidence Issues",
-  "Breakfast Ball Dependency",
-  "Range Hero Syndrome",
-  "Yardage Guessing Disorder",
-  "Cart Path Only Confusion",
-  "Scorecard Math Problems",
-  "Wind Blame Specialist",
-  "Forgotten Wedge Syndrome"
-];
-
-let selectedStrengths = [];
-let selectedWeaknesses = [];
-
-function renderTraits() {
-  const s = document.getElementById("strengths");
-  const w = document.getElementById("weaknesses");
-
-  s.innerHTML = "";
-  w.innerHTML = "";
-
-  strengths.forEach(x => {
-    const div = document.createElement("div");
-    div.className = "trait-card";
-    div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "strength");
-    s.appendChild(div);
-  });
-
-  weaknesses.forEach(x => {
-    const div = document.createElement("div");
-    div.className = "trait-card";
-    div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "weakness");
-    w.appendChild(div);
-  });
-}
-
-function toggleTrait(el, value, type) {
-  el.classList.toggle("selected");
-
-  let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
-
-  if (arr.includes(value)) {
-    arr.splice(arr.indexOf(value), 1);
-  } else {
-    arr.push(value);
+  function itineraryCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "itineraryEvents");
   }
-}
 
-function resetPlayerForm() {
-  document.getElementById("playerName").value = "";
-  document.getElementById("nickname").value = "";
-  document.getElementById("handicapIndex").value = "";
-  document.getElementById("playerTeam").value = "";
+  function feedCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "feedPosts");
+  }
 
-  selectedStrengths = [];
-  selectedWeaknesses = [];
+  async function initializeTripIfNeeded(tripId) {
+    const tripRef = tripDocRef(tripId);
+    const tripSnap = await getDoc(tripRef);
 
-  document.querySelectorAll(".trait-card").forEach(card => {
-    card.classList.remove("selected");
-  });
-}
-
-function loadPlayerForEdit(index) {
-  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
-  const player = players[index];
-
-  document.getElementById("playerName").value = player.name || "";
-  document.getElementById("nickname").value = player.nickname || "";
-  document.getElementById("handicapIndex").value = player.handicapIndex || "";
-  document.getElementById("playerTeam").value = player.team || "";
-
-  selectedStrengths = player.strengths || [];
-  selectedWeaknesses = player.weaknesses || [];
-
-  document.querySelectorAll("#strengths .trait-card").forEach(card => {
-    if (selectedStrengths.includes(card.innerText)) {
-      card.classList.add("selected");
+    if (!tripSnap.exists()) {
+      await setDoc(tripRef, {
+        id: tripId,
+        name: trips[tripId].name,
+        teamA: trips[tripId].defaultTeamA,
+        teamB: trips[tripId].defaultTeamB,
+        teamAScore: "0",
+        teamBScore: "0",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
     }
-  });
 
-  document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
-    if (selectedWeaknesses.includes(card.innerText)) {
-      card.classList.add("selected");
+    const itinerarySnap = await getDocs(itineraryCollection(tripId));
+
+    if (itinerarySnap.empty && tripId === "pinehurst2026") {
+      const batch = writeBatch(db);
+
+      defaultPinehurstItineraryEvents.forEach(event => {
+        const eventRef = doc(itineraryCollection(tripId));
+        batch.set(eventRef, {
+          ...event,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+
+      await batch.commit();
     }
-  });
-}
-
-function savePlayer() {
-  const name = document.getElementById("playerName").value;
-  const nickname = document.getElementById("nickname").value;
-  const handicapIndex = document.getElementById("handicapIndex").value;
-  const team = document.getElementById("playerTeam").value;
-
-  if (!name.trim()) {
-    alert("Please enter a player name.");
-    return;
   }
 
-  const player = {
-    name,
-    nickname,
-    handicapIndex,
-    team,
-    strengths: selectedStrengths,
-    weaknesses: selectedWeaknesses
-  };
-
-  let players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
-  const wasEditing = editingPlayerIndex !== null;
-
-  if (editingPlayerIndex === null) {
-    players.push(player);
-  } else {
-    players[editingPlayerIndex] = player;
+  function clearTripListeners() {
+    unsubscribers.forEach(unsub => unsub());
+    unsubscribers = [];
   }
 
-  localStorage.setItem(tripKey("players"), JSON.stringify(players));
+  function subscribeToTrip(tripId) {
+    clearTripListeners();
 
-  addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
+    unsubscribers.push(
+      onSnapshot(tripDocRef(tripId), snapshot => {
+        activeTripData = snapshot.data() || {};
+        renderTripHeader();
+        loadTeams();
+        loadScores();
+        loadTeamDropdownIfVisible();
+      })
+    );
 
-  editingPlayerIndex = null;
-  openPlayerList();
-}
+    unsubscribers.push(
+      onSnapshot(playersCollection(tripId), snapshot => {
+        players = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderPlayerList();
+      })
+    );
 
-function renderPlayerList() {
-  const list = document.getElementById("playerList");
-  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
+    unsubscribers.push(
+      onSnapshot(itineraryCollection(tripId), snapshot => {
+        itineraryEvents = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderItinerary();
+      })
+    );
 
-  list.innerHTML = "";
-
-  if (players.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        No players yet. Tap “Add New Player” to create one.
-      </div>
-    `;
-    return;
+    unsubscribers.push(
+      onSnapshot(feedCollection(tripId), snapshot => {
+        feedPosts = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderFeed();
+      })
+    );
   }
 
-  players.forEach((player, index) => {
-    const div = document.createElement("div");
-    div.className = "player-row";
-    div.onclick = () => openPlayer(index);
+  function show(id) {
+    [
+      "appHome",
+      "tripHome",
+      "itineraryScreen",
+      "itineraryEditorScreen",
+      "teamRosterScreen",
+      "settingsScreen",
+      "importScreen",
+      "teamScreen",
+      "playerListScreen",
+      "playerScreen"
+    ].forEach(x => document.getElementById(x).classList.add("hidden"));
 
-    div.innerHTML = `
-      <div class="player-name">${player.name}</div>
-      <div class="player-detail">
-        ${player.nickname ? `"${player.nickname}" • ` : ""}
-        ${player.team ? player.team : "No team assigned"}
-        ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? ` • HI: ${player.handicapIndex}` : ""}
-      </div>
-    `;
+    document.getElementById(id).classList.remove("hidden");
+  }
 
-    list.appendChild(div);
-  });
-}
+  async function openTripHome(tripId = activeTripId) {
+    activeTripId = tripId;
+    await initializeTripIfNeeded(activeTripId);
+    subscribeToTrip(activeTripId);
+    show("tripHome");
+  }
 
-function getSingleTripData(tripId) {
-  const previousTripId = activeTripId;
-  activeTripId = tripId;
-  initializeTripIfNeeded(tripId);
+  function renderTripHeader() {
+    document.getElementById("tripTitle").innerText =
+      activeTripData.name || trips[activeTripId].name;
+  }
 
-  const data = {
-    tripId,
-    tripName: trips[tripId].name,
-    teamA: localStorage.getItem(tripKey("teamA")) || "Team A",
-    teamB: localStorage.getItem(tripKey("teamB")) || "Team B",
-    teamAScore: localStorage.getItem(tripKey("teamAScore")) || "0",
-    teamBScore: localStorage.getItem(tripKey("teamBScore")) || "0",
-    players: JSON.parse(localStorage.getItem(tripKey("players")) || "[]"),
-    itineraryEvents: JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]"),
-    feedPosts: JSON.parse(localStorage.getItem(tripKey("feedPosts")) || "[]")
-  };
+  function openItinerary() {
+    show("itineraryScreen");
+    renderItinerary();
+  }
 
-  activeTripId = previousTripId;
-  return data;
-}
+  function goHome() {
+    show("appHome");
+  }
 
-function getSwamiGolfData() {
-  return {
-    appName: "Swami Golf",
-    appVersion: "development",
-    exportedAt: new Date().toISOString(),
-    activeTripId,
-    trips: {
-      pinehurst2026: getSingleTripData("pinehurst2026"),
-      testGolfTrip: getSingleTripData("testGolfTrip")
+  function openSettings() {
+    show("settingsScreen");
+  }
+
+  function openImportScreen() {
+    document.getElementById("importDataText").value = "";
+    show("importScreen");
+  }
+
+  function goTripHome() {
+    openTripHome(activeTripId);
+  }
+
+  function openTeamEdit() {
+    show("teamScreen");
+    loadInputs();
+  }
+
+  function openPlayerList() {
+    show("playerListScreen");
+    renderPlayerList();
+  }
+
+  function openPlayer(playerId = null) {
+    editingPlayerId = playerId;
+    show("playerScreen");
+    renderTraits();
+    loadTeamDropdown();
+
+    if (playerId === null) {
+      document.getElementById("playerScreenTitle").innerText = "Add Player";
+      resetPlayerForm();
+    } else {
+      document.getElementById("playerScreenTitle").innerText = "Edit Player";
+      loadPlayerForEdit(playerId);
     }
-  };
-}
+  }
 
-function exportData() {
-  const backup = getSwamiGolfData();
-  const backupText = JSON.stringify(backup, null, 2);
+  async function saveTeams() {
+    const teamA = document.getElementById("teamAInput").value || "Team A";
+    const teamB = document.getElementById("teamBInput").value || "Team B";
 
-  navigator.clipboard.writeText(backupText)
-    .then(() => {
-      alert("Backup copied to clipboard. Save it somewhere safe before updating the app.");
-    })
-    .catch(() => {
-      prompt("Copy this backup data and save it somewhere safe:", backupText);
+    const oldTeamA = activeTripData.teamA || "Team A";
+    const oldTeamB = activeTripData.teamB || "Team B";
+
+    await updateDoc(tripDocRef(), {
+      teamA,
+      teamB,
+      updatedAt: new Date().toISOString()
     });
-}
 
-function importData() {
-  const importText = document.getElementById("importDataText").value.trim();
+    await updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
+    await addSwamiPost("teams", `${teamA} vs. ${teamB}`);
 
-  if (!importText) {
-    alert("Please paste backup data first.");
-    return;
+    openSettings();
   }
 
-  try {
-    const backup = JSON.parse(importText);
+  async function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
+    const batch = writeBatch(db);
 
-    if (backup.trips) {
-      Object.keys(backup.trips).forEach(tripId => {
-        if (!trips[tripId]) return;
+    players.forEach(player => {
+      let updatedTeam = player.team;
 
-        const previousTripId = activeTripId;
-        activeTripId = tripId;
+      if (player.team === oldTeamA) updatedTeam = newTeamA;
+      if (player.team === oldTeamB) updatedTeam = newTeamB;
+
+      if (updatedTeam !== player.team) {
+        batch.update(doc(db, "trips", activeTripId, "players", player.id), {
+          team: updatedTeam
+        });
+      }
+    });
+
+    await batch.commit();
+  }
+
+  function loadTeams() {
+    document.getElementById("teamAName").innerText = activeTripData.teamA || "Team A";
+    document.getElementById("teamBName").innerText = activeTripData.teamB || "Team B";
+  }
+
+  function loadScores() {
+    document.getElementById("teamAScore").innerText = activeTripData.teamAScore || "0";
+    document.getElementById("teamBScore").innerText = activeTripData.teamBScore || "0";
+  }
+
+  function loadInputs() {
+    document.getElementById("teamAInput").value = activeTripData.teamA || "";
+    document.getElementById("teamBInput").value = activeTripData.teamB || "";
+  }
+
+  function loadTeamDropdown() {
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+
+    const select = document.getElementById("playerTeam");
+
+    select.innerHTML = `
+      <option value="">Assign to Team</option>
+      <option value="${escapeAttr(teamA)}">${teamA}</option>
+      <option value="${escapeAttr(teamB)}">${teamB}</option>
+    `;
+  }
+
+  function loadTeamDropdownIfVisible() {
+    if (!document.getElementById("playerScreen").classList.contains("hidden")) {
+      loadTeamDropdown();
+    }
+  }
+
+  function openTeamRoster(teamKeyValue) {
+    const teamName = teamKeyValue === "A"
+      ? activeTripData.teamA || "Team A"
+      : activeTripData.teamB || "Team B";
+
+    document.getElementById("teamRosterTitle").innerText = teamName;
+    renderTeamRoster(teamName);
+    show("teamRosterScreen");
+  }
+
+  function renderTeamRoster(teamName) {
+    const list = document.getElementById("teamRosterList");
+    const teamPlayers = players.filter(player => player.team === teamName);
+
+    list.innerHTML = "";
+
+    if (teamPlayers.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          No players assigned to ${teamName} yet.
+        </div>
+      `;
+      return;
+    }
+
+    teamPlayers.forEach(player => {
+      const div = document.createElement("div");
+      div.className = "player-row";
+
+      div.innerHTML = `
+        <div class="player-name">${escapeHtml(player.name)}</div>
+        <div class="player-detail">
+          ${player.nickname ? `"${escapeHtml(player.nickname)}"<br>` : ""}
+          <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
+          <strong>Strengths:</strong>
+          ${player.strengths && player.strengths.length ? player.strengths.map(escapeHtml).join(", ") : "None selected"}
+          <br>
+          <strong>Weaknesses:</strong>
+          ${player.weaknesses && player.weaknesses.length ? player.weaknesses.map(escapeHtml).join(", ") : "None selected"}
+        </div>
+      `;
+
+      list.appendChild(div);
+    });
+  }
+
+  function renderItinerary() {
+    if (document.getElementById("itineraryScreen").classList.contains("hidden")) return;
+
+    renderItinerarySection("golf", "golfItineraryList");
+    renderItinerarySection("lodging", "lodgingItineraryList");
+    renderItinerarySection("reservations", "reservationsItineraryList");
+    renderItinerarySection("flights", "flightsItineraryList");
+    renderItinerarySection("other", "otherItineraryList");
+  }
+
+  function renderItinerarySection(section, elementId) {
+    const list = document.getElementById(elementId);
+    const sectionEvents = itineraryEvents
+      .filter(event => event.section === section)
+      .sort((a, b) => {
+        const aSort = `${a.startDate || ""} ${a.startTime || ""}`;
+        const bSort = `${b.startDate || ""} ${b.startTime || ""}`;
+        return aSort.localeCompare(bSort);
+      });
+
+    list.innerHTML = "";
+
+    if (sectionEvents.length === 0) {
+      list.innerHTML = `<div class="empty-state">No events added yet.</div>`;
+      return;
+    }
+
+    sectionEvents.forEach(event => {
+      const div = document.createElement("div");
+      div.className = "itinerary-item";
+      div.onclick = () => openItineraryEditor(event.section, event.id);
+
+      div.innerHTML = `
+        <div class="itinerary-date">${formatDateRange(event.startDate, event.endDate)}</div>
+        <div class="itinerary-title">${escapeHtml(event.title || "Untitled Event")}</div>
+        <div class="itinerary-detail">
+          ${formatTimeRange(event.startTime, event.endTime)}
+          ${event.details ? `<br>${escapeHtml(event.details)}` : ""}
+        </div>
+      `;
+
+      list.appendChild(div);
+    });
+  }
+
+  function openItineraryEditor(section, eventId = null) {
+    editingItineraryEventId = eventId;
+
+    document.getElementById("eventSection").value = section;
+    document.getElementById("eventTitle").value = "";
+    document.getElementById("eventStartDate").value = "";
+    document.getElementById("eventEndDate").value = "";
+    document.getElementById("eventStartTime").value = "";
+    document.getElementById("eventEndTime").value = "";
+    document.getElementById("eventDetails").value = "";
+
+    if (eventId) {
+      const event = itineraryEvents.find(x => x.id === eventId);
+
+      if (event) {
+        document.getElementById("itineraryEditorTitle").innerText = "Edit Event";
+        document.getElementById("eventSection").value = event.section || section;
+        document.getElementById("eventTitle").value = event.title || "";
+        document.getElementById("eventStartDate").value = event.startDate || "";
+        document.getElementById("eventEndDate").value = event.endDate || "";
+        document.getElementById("eventStartTime").value = event.startTime || "";
+        document.getElementById("eventEndTime").value = event.endTime || "";
+        document.getElementById("eventDetails").value = event.details || "";
+        document.getElementById("deleteItineraryButton").classList.remove("hidden");
+      }
+    } else {
+      document.getElementById("itineraryEditorTitle").innerText = "Add Event";
+      document.getElementById("deleteItineraryButton").classList.add("hidden");
+    }
+
+    show("itineraryEditorScreen");
+  }
+
+  async function saveItineraryEvent() {
+    const section = document.getElementById("eventSection").value;
+    const title = document.getElementById("eventTitle").value.trim();
+    const startDate = document.getElementById("eventStartDate").value;
+    const endDate = document.getElementById("eventEndDate").value;
+    const startTime = document.getElementById("eventStartTime").value;
+    const endTime = document.getElementById("eventEndTime").value;
+    const details = document.getElementById("eventDetails").value.trim();
+
+    if (!title) {
+      alert("Please enter an event name.");
+      return;
+    }
+
+    const eventData = {
+      section,
+      title,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      details,
+      updatedAt: new Date().toISOString()
+    };
+
+    const wasEditing = Boolean(editingItineraryEventId);
+
+    if (editingItineraryEventId) {
+      await updateDoc(doc(db, "trips", activeTripId, "itineraryEvents", editingItineraryEventId), eventData);
+    } else {
+      await addDoc(itineraryCollection(), {
+        ...eventData,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    await addSwamiPost(wasEditing ? "itineraryEdit" : "itineraryAdd", title);
+
+    editingItineraryEventId = null;
+    openItinerary();
+  }
+
+  async function deleteItineraryEvent() {
+    if (!editingItineraryEventId) return;
+    if (!confirm("Delete this event?")) return;
+
+    const event = itineraryEvents.find(x => x.id === editingItineraryEventId);
+    const eventTitle = event ? event.title : "an event";
+
+    await deleteDoc(doc(db, "trips", activeTripId, "itineraryEvents", editingItineraryEventId));
+    await addSwamiPost("itineraryDelete", eventTitle);
+
+    editingItineraryEventId = null;
+    openItinerary();
+  }
+
+  function formatDateRange(startDate, endDate) {
+    if (!startDate && !endDate) return "Date TBD";
+
+    const start = startDate ? formatDisplayDate(startDate) : "";
+    const end = endDate ? formatDisplayDate(endDate) : "";
+
+    if (start && end && start !== end) {
+      return `${start} - ${end}`;
+    }
+
+    return start || end;
+  }
+
+  function formatDisplayDate(dateString) {
+    const date = new Date(`${dateString}T12:00:00`);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  }
+
+  function formatTimeRange(startTime, endTime) {
+    if (!startTime && !endTime) return "";
+
+    const start = startTime ? formatDisplayTime(startTime) : "";
+    const end = endTime ? formatDisplayTime(endTime) : "";
+
+    if (start && end) {
+      return `${start} - ${end}`;
+    }
+
+    return start || end;
+  }
+
+  function formatDisplayTime(timeString) {
+    const [hours, minutes] = timeString.split(":");
+    const date = new Date();
+    date.setHours(Number(hours));
+    date.setMinutes(Number(minutes));
+
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  function renderFeed() {
+    const list = document.getElementById("feedList");
+
+    const sortedPosts = [...feedPosts].sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    list.innerHTML = "";
+
+    if (sortedPosts.length === 0) {
+      list.innerHTML = `
+        <div class="feed-empty">
+          The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.
+        </div>
+      `;
+      return;
+    }
+
+    sortedPosts.forEach(post => {
+      const div = document.createElement("div");
+      div.className = "feed-post";
+
+      div.innerHTML = `
+        <div class="feed-author">${escapeHtml(post.author)}</div>
+        <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
+        <div class="feed-text">${escapeHtml(post.text)}</div>
+      `;
+
+      list.appendChild(div);
+    });
+  }
+
+  async function addFeedPost(author, text, type = "user") {
+    await addDoc(feedCollection(), {
+      author,
+      text,
+      type,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  async function addSwamiPost(action, subject) {
+    const text = getSwamiComment(action, subject);
+    await addFeedPost("Swami Says", text, "admin");
+  }
+
+  function getSwamiComment(action, subject) {
+    const comments = {
+      itineraryAdd: [
+        `New itinerary item added: ${subject}. Excellent. Nothing says "relaxing golf trip" like another scheduled commitment.`,
+        `${subject} just hit the itinerary. The boys are now officially over-managed and under-hydrated.`,
+        `Added ${subject}. Somewhere, a guy who "doesn't need details" is already asking what time it starts.`
+      ],
+      itineraryEdit: [
+        `${subject} was updated. Because apparently the first plan was too easy to understand.`,
+        `Itinerary update: ${subject}. Please pretend you read it before asking the group chat.`,
+        `${subject} changed. Adjust your excuses accordingly.`
+      ],
+      itineraryDelete: [
+        `${subject} was removed from the itinerary. A rare victory for free time and poor decision-making.`,
+        `Deleted ${subject}. The schedule has lost weight. If only some swings could do the same.`,
+        `${subject} is gone. Pour one out, then check if you were supposed to be there.`
+      ],
+      playerAdd: [
+        `${subject} joined the trip. May his handicap be honest and his breakfast ball usage be limited.`,
+        `${subject} has been added. Another swing enters the evidence locker.`,
+        `Welcome ${subject}. The field gets deeper, though not necessarily better.`
+      ],
+      playerEdit: [
+        `${subject}'s profile was updated. Bold move editing the scouting report before the first tee.`,
+        `${subject} has new player info. The handicap committee is already suspicious.`,
+        `${subject}'s profile changed. Somewhere a sandbagger just felt seen.`
+      ],
+      teams: [
+        `Team update: ${subject}. Rivalries are forming and friendships are already on probation.`,
+        `The teams are now ${subject}. Somebody is about to claim they "don't care" very loudly.`,
+        `${subject}. May the better team win, and may the worse team have a deep cooler.`
+      ],
+      userComment: [
+        `The group chat has spoken. Accuracy level: questionable. Confidence level: elite.`,
+        `A new comment has entered the arena. Grammar optional, trash talk encouraged.`,
+        `Someone posted in the feed. Productivity is down, vibes are up.`
+      ]
+    };
+
+    const list = comments[action] || [
+      `Something changed: ${subject}. Swami has reviewed it and remains mildly concerned.`
+    ];
+
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  async function postUserComment() {
+    const input = document.getElementById("feedCommentInput");
+    const text = input.value.trim();
+
+    if (!text) {
+      alert("Please enter a comment.");
+      return;
+    }
+
+    await addFeedPost("User", text, "user");
+    input.value = "";
+
+    if (Math.random() < 0.45) {
+      await addSwamiPost("userComment", "comment");
+    }
+  }
+
+  function formatFeedTime(isoString) {
+    const date = new Date(isoString);
+
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
+
+  function renderTraits() {
+    const s = document.getElementById("strengths");
+    const w = document.getElementById("weaknesses");
+
+    s.innerHTML = "";
+    w.innerHTML = "";
+
+    strengths.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "trait-card";
+      div.innerText = x;
+      div.onclick = () => toggleTrait(div, x, "strength");
+      s.appendChild(div);
+    });
+
+    weaknesses.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "trait-card";
+      div.innerText = x;
+      div.onclick = () => toggleTrait(div, x, "weakness");
+      w.appendChild(div);
+    });
+  }
+
+  function toggleTrait(el, value, type) {
+    el.classList.toggle("selected");
+
+    let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
+
+    if (arr.includes(value)) {
+      arr.splice(arr.indexOf(value), 1);
+    } else {
+      arr.push(value);
+    }
+  }
+
+  function resetPlayerForm() {
+    document.getElementById("playerName").value = "";
+    document.getElementById("nickname").value = "";
+    document.getElementById("handicapIndex").value = "";
+    document.getElementById("playerTeam").value = "";
+
+    selectedStrengths = [];
+    selectedWeaknesses = [];
+
+    document.querySelectorAll(".trait-card").forEach(card => {
+      card.classList.remove("selected");
+    });
+  }
+
+  function loadPlayerForEdit(playerId) {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    document.getElementById("playerName").value = player.name || "";
+    document.getElementById("nickname").value = player.nickname || "";
+    document.getElementById("handicapIndex").value = player.handicapIndex || "";
+    document.getElementById("playerTeam").value = player.team || "";
+
+    selectedStrengths = player.strengths || [];
+    selectedWeaknesses = player.weaknesses || [];
+
+    document.querySelectorAll("#strengths .trait-card").forEach(card => {
+      if (selectedStrengths.includes(card.innerText)) {
+        card.classList.add("selected");
+      }
+    });
+
+    document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
+      if (selectedWeaknesses.includes(card.innerText)) {
+        card.classList.add("selected");
+      }
+    });
+  }
+
+  async function savePlayer() {
+    const name = document.getElementById("playerName").value;
+    const nickname = document.getElementById("nickname").value;
+    const handicapIndex = document.getElementById("handicapIndex").value;
+    const team = document.getElementById("playerTeam").value;
+
+    if (!name.trim()) {
+      alert("Please enter a player name.");
+      return;
+    }
+
+    const player = {
+      name,
+      nickname,
+      handicapIndex,
+      team,
+      strengths: selectedStrengths,
+      weaknesses: selectedWeaknesses,
+      updatedAt: new Date().toISOString()
+    };
+
+    const wasEditing = Boolean(editingPlayerId);
+
+    if (editingPlayerId) {
+      await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), player);
+    } else {
+      await addDoc(playersCollection(), {
+        ...player,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    await addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
+
+    editingPlayerId = null;
+    openPlayerList();
+  }
+
+  function renderPlayerList() {
+    const list = document.getElementById("playerList");
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (players.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          No players yet. Tap “Add New Player” to create one.
+        </div>
+      `;
+      return;
+    }
+
+    players
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      .forEach(player => {
+        const div = document.createElement("div");
+        div.className = "player-row";
+        div.onclick = () => openPlayer(player.id);
+
+        div.innerHTML = `
+          <div class="player-name">${escapeHtml(player.name)}</div>
+          <div class="player-detail">
+            ${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}
+            ${player.team ? escapeHtml(player.team) : "No team assigned"}
+            ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}
+          </div>
+        `;
+
+        list.appendChild(div);
+      });
+  }
+
+  async function getSingleTripData(tripId) {
+    await initializeTripIfNeeded(tripId);
+
+    const tripSnap = await getDoc(tripDocRef(tripId));
+    const playerSnap = await getDocs(playersCollection(tripId));
+    const itinerarySnap = await getDocs(itineraryCollection(tripId));
+    const feedSnap = await getDocs(feedCollection(tripId));
+
+    return {
+      tripId,
+      tripName: trips[tripId].name,
+      ...(tripSnap.data() || {}),
+      players: playerSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      itineraryEvents: itinerarySnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      feedPosts: feedSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    };
+  }
+
+  async function getSwamiGolfData() {
+    return {
+      appName: "Swami Golf",
+      appVersion: "firebase-realtime",
+      exportedAt: new Date().toISOString(),
+      activeTripId,
+      trips: {
+        pinehurst2026: await getSingleTripData("pinehurst2026"),
+        testGolfTrip: await getSingleTripData("testGolfTrip")
+      }
+    };
+  }
+
+  async function exportData() {
+    const backup = await getSwamiGolfData();
+    const backupText = JSON.stringify(backup, null, 2);
+
+    navigator.clipboard.writeText(backupText)
+      .then(() => {
+        alert("Backup copied to clipboard.");
+      })
+      .catch(() => {
+        prompt("Copy this backup data and save it somewhere safe:", backupText);
+      });
+  }
+
+  async function importData() {
+    const importText = document.getElementById("importDataText").value.trim();
+
+    if (!importText) {
+      alert("Please paste backup data first.");
+      return;
+    }
+
+    try {
+      const backup = JSON.parse(importText);
+
+      if (!backup.trips) {
+        alert("This import format is older. Send it to me if you want me to help migrate it.");
+        return;
+      }
+
+      for (const tripId of Object.keys(backup.trips)) {
+        if (!trips[tripId]) continue;
 
         const data = backup.trips[tripId];
 
-        localStorage.setItem(tripKey("teamA"), data.teamA || "Team A");
-        localStorage.setItem(tripKey("teamB"), data.teamB || "Team B");
-        localStorage.setItem(tripKey("teamAScore"), data.teamAScore || "0");
-        localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
-        localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
-        localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
-        localStorage.setItem(tripKey("feedPosts"), JSON.stringify(data.feedPosts || []));
+        await setDoc(tripDocRef(tripId), {
+          id: tripId,
+          name: trips[tripId].name,
+          teamA: data.teamA || "Team A",
+          teamB: data.teamB || "Team B",
+          teamAScore: data.teamAScore || "0",
+          teamBScore: data.teamBScore || "0",
+          updatedAt: new Date().toISOString()
+        });
 
-        activeTripId = previousTripId;
-      });
+        await replaceCollection(playersCollection(tripId), data.players || []);
+        await replaceCollection(itineraryCollection(tripId), data.itineraryEvents || []);
+        await replaceCollection(feedCollection(tripId), data.feedPosts || []);
+      }
 
-      activeTripId = backup.activeTripId || "pinehurst2026";
-    } else {
-      const data = backup.data || backup;
-
-      localStorage.setItem(tripKey("teamA"), data.teamA || "Team A");
-      localStorage.setItem(tripKey("teamB"), data.teamB || "Team B");
-      localStorage.setItem(tripKey("teamAScore"), data.teamAScore || "0");
-      localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
-      localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
-      localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
-      localStorage.setItem(tripKey("feedPosts"), JSON.stringify(data.feedPosts || []));
+      alert("Data imported successfully into Firebase.");
+      openSettings();
+    } catch (error) {
+      console.error(error);
+      alert("Import failed. Please make sure you pasted valid backup data.");
     }
-
-    alert("Data imported successfully.");
-    openSettings();
-  } catch (error) {
-    alert("Import failed. Please make sure you pasted valid backup data.");
   }
-}
 
-migrateLegacyPinehurstDataIfNeeded();
-initializeTripIfNeeded("pinehurst2026");
-initializeTripIfNeeded("testGolfTrip");
+  async function replaceCollection(collectionRef, items) {
+    const existing = await getDocs(collectionRef);
+    const batch = writeBatch(db);
+
+    existing.docs.forEach(d => batch.delete(d.ref));
+
+    items.forEach(item => {
+      const cleanItem = { ...item };
+      delete cleanItem.id;
+
+      const ref = doc(collectionRef);
+      batch.set(ref, cleanItem);
+    });
+
+    await batch.commit();
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = String(text ?? "");
+    return div.innerHTML;
+  }
+
+  function escapeAttr(text) {
+    return String(text ?? "").replace(/"/g, "&quot;");
+  }
+
+  window.openTripHome = openTripHome;
+  window.openItinerary = openItinerary;
+  window.goHome = goHome;
+  window.openSettings = openSettings;
+  window.openImportScreen = openImportScreen;
+  window.goTripHome = goTripHome;
+  window.openTeamEdit = openTeamEdit;
+  window.openPlayerList = openPlayerList;
+  window.openPlayer = openPlayer;
+  window.saveTeams = saveTeams;
+  window.openTeamRoster = openTeamRoster;
+  window.openItineraryEditor = openItineraryEditor;
+  window.saveItineraryEvent = saveItineraryEvent;
+  window.deleteItineraryEvent = deleteItineraryEvent;
+  window.postUserComment = postUserComment;
+  window.savePlayer = savePlayer;
+  window.exportData = exportData;
+  window.importData = importData;
 </script>
 
 </body>
