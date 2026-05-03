@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Swami Golf</title>
+  <!-- Swami Golf fixed build: removed missing updateMatchScore export that blocked app startup -->
 
   <style>
     html, body {
@@ -915,7 +916,7 @@
       if (!window.__swamiAppReady && window.__pendingTripId === tripId) {
         const lateStatus = document.getElementById("syncStatus");
         if (lateStatus) {
-          lateStatus.innerText = "Still loading. Check connection or refresh.";
+          lateStatus.innerText = "Still loading Swami Golf. Check connection or refresh.";
         }
       }
     }, 4000);
@@ -2687,7 +2688,6 @@
   window.deleteMatch = deleteMatch;
   window.openEnterScore = openEnterScore;
   window.renderMatchValueFields = renderMatchValueFields;
-  window.updateMatchScore = updateMatchScore;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
