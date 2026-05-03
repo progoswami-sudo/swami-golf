@@ -9,41 +9,63 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0b1220, #111827);
+      background: radial-gradient(circle at top, #0b1a2f, #050914);
       color: white;
     }
 
     .container {
       padding: 18px;
-      max-width: 600px;
+      max-width: 650px;
       margin: auto;
+    }
+
+    /* ================= LOGO ================= */
+
+    .logo {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* ================= HOME TILE ================= */
+
+    .tile {
+      margin-top: 25px;
+      padding: 22px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #12233f, #0f1b33);
+      border: 1px solid #2b3d5c;
+      text-align: center;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(0,0,0,0.4);
+      transition: 0.2s;
+    }
+
+    .tile:hover {
+      transform: scale(1.02);
+      border-color: #4c7dff;
     }
 
     h1 {
       text-align: center;
       margin: 10px 0;
-      font-size: 30px;
+      font-size: 28px;
       letter-spacing: 1px;
     }
 
-    .tile {
-      background: rgba(30,41,59,0.9);
-      border: 1px solid #334155;
-      padding: 18px;
-      border-radius: 14px;
-      margin-top: 20px;
+    .sub {
       text-align: center;
-      font-size: 18px;
-      cursor: pointer;
+      font-size: 13px;
+      color: #a9b7d0;
     }
 
-    .tile:hover {
-      background: rgba(51,65,85,0.9);
-    }
+    /* ================= SCREENS ================= */
 
     .card {
-      background: rgba(30,41,59,0.9);
-      border: 1px solid #334155;
+      background: rgba(18, 35, 63, 0.85);
+      border: 1px solid #2b3d5c;
       padding: 15px;
       border-radius: 12px;
       margin-top: 15px;
@@ -51,79 +73,84 @@
 
     .hidden { display: none; }
 
-    /* SCOREBOARD */
+    /* ================= SCOREBOARD ================= */
+
     .scoreboard {
       display: flex;
       justify-content: space-between;
       align-items: center;
       text-align: center;
-      font-size: 18px;
       margin-top: 10px;
     }
 
     .score {
-      font-size: 42px;
+      font-size: 44px;
       font-weight: bold;
     }
 
-    /* BUTTONS */
+    /* ================= BUTTONS ================= */
+
     button {
       width: 100%;
       padding: 12px;
       border-radius: 10px;
       border: none;
-      background: #f97316;
+      background: #3b82f6;
       color: white;
       font-weight: bold;
       margin-top: 10px;
       cursor: pointer;
     }
 
-    button:hover { background: #fb923c; }
+    button:hover {
+      background: #60a5fa;
+    }
 
-    .secondary { background: #3b82f6; }
+    .primary {
+      background: #f97316;
+    }
 
-    /* GEAR */
+    /* ================= ICONS ================= */
+
     .gear {
       position: absolute;
-      top: 14px;
-      right: 14px;
+      top: 12px;
+      right: 12px;
       font-size: 22px;
       cursor: pointer;
     }
 
-    /* SETTINGS LIST */
-    .list-item {
-      padding: 12px;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      margin-top: 10px;
+    .homeBtn {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 14px;
       cursor: pointer;
-      background: rgba(15,23,42,0.7);
+      color: #cbd5e1;
     }
 
-    /* PLAYER CHECKBOX ROWS */
-    .row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 6px 0;
-      flex-wrap: wrap;
-    }
+    /* ================= FORM ================= */
 
-    .row label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-    }
-
-    input[type="text"] {
+    input {
       width: 100%;
       padding: 10px;
-      margin: 6px 0;
+      margin-top: 6px;
       border-radius: 8px;
       border: none;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin: 4px 0;
+    }
+
+    h4 {
+      margin: 10px 0 5px;
+      font-size: 14px;
+      color: #cbd5e1;
     }
 
   </style>
@@ -133,10 +160,23 @@
 
 <div class="container">
 
-  <!-- ================= APP HOME ================= -->
+  <!-- ================= HOME ================= -->
   <div id="appHome">
 
+    <div class="logo">
+      <!-- Simple Swami Golf Logo (inline SVG) -->
+      <svg width="110" height="110" viewBox="0 0 120 120">
+        <!-- golf ball -->
+        <circle cx="60" cy="60" r="40" fill="#e5e7eb"/>
+        <!-- turban -->
+        <path d="M25 45 Q60 10 95 45 Q60 30 25 45" fill="#60a5fa"/>
+        <!-- mustache -->
+        <path d="M35 70 Q60 85 85 70 Q60 95 35 70" fill="#111827"/>
+      </svg>
+    </div>
+
     <h1>Swami Golf</h1>
+    <div class="sub">Your golf trip universe</div>
 
     <div class="tile" onclick="openTripHome()">
       🏌️ Pinehurst 2026
@@ -148,6 +188,8 @@
   <div id="tripHome" class="hidden">
 
     <div style="position:relative;">
+
+      <div class="homeBtn" onclick="goHome()">← Home</div>
       <div class="gear" onclick="openSettings()">⚙️</div>
 
       <h1>Pinehurst 2026</h1>
@@ -155,14 +197,14 @@
       <div class="card">
         <div class="scoreboard">
           <div>
-            <div id="teamAName">Team A</div>
+            <div>Team A</div>
             <div class="score">0</div>
           </div>
 
           <div>VS</div>
 
           <div>
-            <div id="teamBName">Team B</div>
+            <div>Team B</div>
             <div class="score">0</div>
           </div>
         </div>
@@ -178,15 +220,9 @@
     <h2>Settings</h2>
 
     <div class="card">
-      <div class="list-item" onclick="openTeamEdit()">
-        Edit Team Names
-      </div>
-
-      <div class="list-item" onclick="openPlayerList()">
-        Edit / Add Players
-      </div>
-
-      <button class="secondary" onclick="goTripHome()">← Back</button>
+      <button onclick="openTeamEdit()">Edit Team Names</button>
+      <button onclick="openPlayer()">Add / Edit Players</button>
+      <button onclick="goTripHome()">Back</button>
     </div>
 
   </div>
@@ -194,26 +230,25 @@
   <!-- ================= TEAM EDIT ================= -->
   <div id="teamScreen" class="hidden">
 
-    <h2>Edit Teams</h2>
+    <h2>Team Names</h2>
 
     <div class="card">
-      <input id="teamAInput" placeholder="Team A Name"/>
-      <input id="teamBInput" placeholder="Team B Name"/>
-
-      <button onclick="saveTeams()">Save</button>
-      <button class="secondary" onclick="openSettings()">← Back</button>
+      <input placeholder="Team A Name"/>
+      <input placeholder="Team B Name"/>
+      <button>Save</button>
+      <button onclick="openSettings()">Back</button>
     </div>
 
   </div>
 
-  <!-- ================= PLAYER SCREEN ================= -->
+  <!-- ================= PLAYER ================= -->
   <div id="playerScreen" class="hidden">
 
-    <h2>Add Player</h2>
+    <h2>Player Profile</h2>
 
     <div class="card">
 
-      <input id="playerName" placeholder="Player Name"/>
+      <input id="playerName" placeholder="Name"/>
       <input id="nickname" placeholder="Nickname"/>
 
       <h4>Strengths</h4>
@@ -223,7 +258,7 @@
       <div id="weaknesses"></div>
 
       <button onclick="savePlayer()">Save Player</button>
-      <button class="secondary" onclick="openSettings()">← Back</button>
+      <button onclick="openSettings()">Back</button>
 
     </div>
 
@@ -233,7 +268,7 @@
 
 <script>
 
-/* ================= NAVIGATION ================= */
+/* ================= NAV ================= */
 
 function show(id) {
   ["appHome","tripHome","settingsScreen","teamScreen","playerScreen"]
@@ -242,17 +277,18 @@ function show(id) {
 }
 
 function openTripHome() { show("tripHome"); }
+function goHome() { show("appHome"); }
 function goTripHome() { show("tripHome"); }
 function openSettings() { show("settingsScreen"); }
 function openTeamEdit() { show("teamScreen"); }
-function openPlayerList() { show("playerScreen"); showTraits(); }
+function openPlayer() { show("playerScreen"); renderTraits(); }
 
-/* ================= DEFAULT DATA ================= */
+/* ================= TRAITS ================= */
 
 const strengths = [
   "Driver Accuracy","Iron Play","Short Game","Putting",
   "Beer Consistency","Trash Talk Volume","Cart Navigation Skills",
-  "Mental Toughness","Snack Management","Course Management"
+  "Mental Toughness","Snack Management"
 ];
 
 const weaknesses = [
@@ -260,64 +296,34 @@ const weaknesses = [
   "Slow Play Offender","Bunker Magnet","Ball Disappearance Expert"
 ];
 
-/* ================= TRAITS UI ================= */
-
-function showTraits() {
+function renderTraits() {
   const s = document.getElementById("strengths");
   const w = document.getElementById("weaknesses");
 
   if (s.innerHTML) return;
 
-  strengths.forEach(item => {
-    s.innerHTML += `
-      <div class="row">
-        <label><input type="checkbox" value="${item}">${item}</label>
-      </div>`;
+  strengths.forEach(x => {
+    s.innerHTML += `<label><input type="checkbox">${x}</label>`;
   });
 
-  weaknesses.forEach(item => {
-    w.innerHTML += `
-      <div class="row">
-        <label><input type="checkbox" value="${item}">${item}</label>
-      </div>`;
+  weaknesses.forEach(x => {
+    w.innerHTML += `<label><input type="checkbox">${x}</label>`;
   });
 }
 
-/* ================= SAVE TEAM ================= */
-
-function saveTeams() {
-  document.getElementById("teamAName").innerText =
-    document.getElementById("teamAInput").value || "Team A";
-
-  document.getElementById("teamBName").innerText =
-    document.getElementById("teamBInput").value || "Team B";
-
-  alert("Teams updated");
-  openSettings();
-}
-
-/* ================= SAVE PLAYER ================= */
+/* ================= SAVE ================= */
 
 function savePlayer() {
   const name = document.getElementById("playerName").value;
   const nickname = document.getElementById("nickname").value;
 
-  const get = (id) =>
-    Array.from(document.querySelectorAll(`#${id} input:checked`))
-      .map(x => x.value);
-
-  const player = {
-    name,
-    nickname,
-    strengths: get("strengths"),
-    weaknesses: get("weaknesses")
-  };
+  const player = { name, nickname };
 
   let players = JSON.parse(localStorage.getItem("players") || "[]");
   players.push(player);
   localStorage.setItem("players", JSON.stringify(players));
 
-  alert(`${name} added 🏌️`);
+  alert("Saved");
   openSettings();
 }
 
