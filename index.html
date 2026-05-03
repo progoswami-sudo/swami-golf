@@ -511,6 +511,82 @@
       line-height: 1.35;
       margin-top: 8px;
     }
+  
+    .match-setup-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .dynamic-point-card {
+      background: rgba(19, 41, 77, 0.7);
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 14px;
+    }
+
+    .match-scorecard {
+      margin-top: 12px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #375984;
+      background: #0f2442;
+    }
+
+    .match-scorecard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: #13294d;
+      border-bottom: 1px solid #375984;
+    }
+
+    .match-gear {
+      width: auto;
+      margin-top: 0;
+      padding: 8px 11px;
+      border-radius: 10px;
+      background: #334155;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .match-actions-menu {
+      background: #0b1b33;
+      border-top: 1px solid #375984;
+      padding: 10px;
+    }
+
+    .match-scorecard-body {
+      padding: 12px;
+    }
+
+    .scorecard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .scorecard-table th,
+    .scorecard-table td {
+      border: 1px solid #375984;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .scorecard-table th {
+      background: #13294d;
+      color: #dbeafe;
+    }
+
+    .enter-score-btn {
+      background: #0f766e;
+    }
+
   </style>
 </head>
 
@@ -681,6 +757,12 @@
     <h2 id="matchSetupTitle">Set Up Match</h2>
 
     <div class="card">
+      <label class="form-label" for="matchDate">Date</label>
+      <input id="matchDate" type="date"/>
+
+      <label class="form-label" for="matchCourse">Golf Course</label>
+      <input id="matchCourse" placeholder="e.g., Pinehurst No. 2"/>
+
       <label class="form-label" for="matchFormat">Match Format</label>
       <select id="matchFormat" onchange="handleMatchFormatChange()">
         <option value="Best Ball">Best Ball</option>
@@ -689,18 +771,28 @@
         <option value="Stableford">Stableford</option>
       </select>
 
-      <label class="form-label" for="matchName">Match Name</label>
-      <input id="matchName" placeholder="e.g., Match 1, Morning Best Ball"/>
+      <label class="form-label" for="matchScoringType">Gross / Net</label>
+      <select id="matchScoringType">
+        <option value="Gross">Gross</option>
+        <option value="Net">Net</option>
+      </select>
 
-      <label class="form-label" for="matchTeamAPlayers">Team A Player(s)</label>
+      <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
       <select id="matchTeamAPlayers" class="multi-select" multiple></select>
-      <div class="small-note">Hold Ctrl/Cmd to select multiple players on desktop. Mobile multi-select support varies by browser.</div>
 
-      <label class="form-label" for="matchTeamBPlayers">Team B Player(s)</label>
+      <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B</label>
       <select id="matchTeamBPlayers" class="multi-select" multiple></select>
 
-      <label class="form-label" for="matchPointSystem">Point System</label>
-      <input id="matchPointSystem" placeholder="e.g., 1 point per match, 2 points total, Nassau 1/1/1"/>
+      <label class="form-label" for="matchValueType">Points / Cash</label>
+      <select id="matchValueType" onchange="renderMatchValueFields()">
+        <option value="Points">Points</option>
+        <option value="Cash">Cash</option>
+      </select>
+
+      <div class="dynamic-point-card">
+        <h3 id="matchValueSectionTitle">Point System</h3>
+        <div id="matchValueFields"></div>
+      </div>
 
       <div id="nassauHelp" class="small-note hidden">
         Nassau scoring tracks three sub-matches: Front 9, Back 9, and Overall.
@@ -780,10 +872,13 @@
       <input id="handicapIndex" type="number" step="0.1" placeholder="Handicap Index"/>
 
       <select id="playerGender">
-        <option value="">Gender / Pronouns</option>
-        <option value="male">Male / he-him</option>
-        <option value="female">Female / she-her</option>
-        <option value="neutral">Neutral / they-them</option>
+        <option value="">Gender</option>
+        <option value="alphaMale">Alpha Male</option>
+        <option value="tacticalSuburbanite">Tactical Suburbanite</option>
+        <option value="artisanalLumberjack">Artisanal Lumberjack</option>
+        <option value="etherealFlowerBoy">Ethereal Flower Boy</option>
+        <option value="earthyMatriarch">Earthy Matriarch</option>
+        <option value="modernDayPrincess">Modern Day Princess</option>
       </select>
 
       <select id="playerTeam">
@@ -979,6 +1074,10 @@
       { title: "Rules Committee", caption: "The match format has been reviewed by absolutely nobody qualified.", tone: "team" },
       { title: "Fine Print", caption: "The format changed. The excuses improved.", tone: "team" },
       { title: "Match Tinkering", caption: "Somebody smelled disadvantage.", tone: "team" }
+    ],
+    matchDelete: [
+      { title: "Match Deleted", caption: "The evidence has been removed.", tone: "team" },
+      { title: "Scorecard Shredder", caption: "Some matches disappear for a reason.", tone: "team" }
     ],
     scoreUpdate: [
       { title: "Scoreboard Heat", caption: "The numbers are speaking. Some players wish they would stop.", tone: "team" },
@@ -1327,9 +1426,11 @@
     show("matchSetupScreen");
     loadMatchPlayerSelectors();
 
-    document.getElementById("matchName").value = "";
+    document.getElementById("matchDate").value = getTodayDateString();
+    document.getElementById("matchCourse").value = "";
     document.getElementById("matchFormat").value = "Best Ball";
-    document.getElementById("matchPointSystem").value = "";
+    document.getElementById("matchScoringType").value = "Gross";
+    document.getElementById("matchValueType").value = "Points";
     document.getElementById("matchSetupTitle").innerText = matchId ? "Edit Match" : "Set Up Match";
 
     let sourceMatch = null;
@@ -1342,28 +1443,111 @@
     }
 
     if (sourceMatch) {
-      document.getElementById("matchName").value = copyFromId ? `${sourceMatch.name || "Match"} Copy` : (sourceMatch.name || "");
+      document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
+      document.getElementById("matchCourse").value = sourceMatch.course || "";
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
-      document.getElementById("matchPointSystem").value = sourceMatch.pointSystem || "";
+      document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
+      document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
       setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
       setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
     }
 
     handleMatchFormatChange();
+
+    if (sourceMatch && sourceMatch.valueSettings) {
+      populateMatchValueFields(sourceMatch.valueSettings);
+    }
+  }
+
+  function getTodayDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   function handleMatchFormatChange() {
     const format = document.getElementById("matchFormat").value;
     document.getElementById("nassauHelp").classList.toggle("hidden", format !== "Best Ball (Nassau)");
+    renderMatchValueFields();
+  }
 
-    if (format === "Best Ball (Nassau)" && !document.getElementById("matchPointSystem").value) {
-      document.getElementById("matchPointSystem").value = "1 point front / 1 point back / 1 point overall";
+  function renderMatchValueFields() {
+    const format = document.getElementById("matchFormat").value;
+    const valueType = document.getElementById("matchValueType").value;
+    const title = valueType === "Cash" ? "Wager" : "Point System";
+    const container = document.getElementById("matchValueFields");
+
+    document.getElementById("matchValueSectionTitle").innerText = title;
+    container.innerHTML = "";
+
+    let fields = [];
+
+    if (format === "Best Ball (Nassau)") {
+      fields = ["Front 9", "Back 9", "Overall"];
+    } else if (format === "Stableford") {
+      fields = [
+        "Albatross (3 under)",
+        "Eagle (2 under)",
+        "Birdie (1 under)",
+        "Par",
+        "Bogey (1 over)",
+        "Double or Worse (2+ over)"
+      ];
+    } else {
+      fields = ["Overall"];
     }
+
+    fields.forEach(label => {
+      const key = makeValueKey(label);
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = `
+        <label class="form-label" for="value-${key}">${label}</label>
+        <input id="value-${key}" inputmode="decimal" pattern="^\\d+(\\.\\d{1,2})?$" placeholder="0.00">
+      `;
+      container.appendChild(wrapper);
+    });
+  }
+
+  function makeValueKey(label) {
+    return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
+  function getMatchValueSettings() {
+    const inputs = Array.from(document.querySelectorAll("#matchValueFields input"));
+    const values = {};
+
+    for (const input of inputs) {
+      const label = input.previousElementSibling.innerText;
+      const value = input.value.trim();
+
+      if (value && !/^\d+(\.\d{1,2})?$/.test(value)) {
+        alert(`${label} must be a number with up to 2 decimals.`);
+        return null;
+      }
+
+      values[label] = value || "0.00";
+    }
+
+    return values;
+  }
+
+  function populateMatchValueFields(valueSettings) {
+    Object.keys(valueSettings || {}).forEach(label => {
+      const key = makeValueKey(label);
+      const input = document.getElementById(`value-${key}`);
+      if (input) input.value = valueSettings[label];
+    });
   }
 
   function loadMatchPlayerSelectors() {
     const teamA = activeTripData.teamA || "Team A";
     const teamB = activeTripData.teamB || "Team B";
+
+    document.getElementById("matchTeamALabel").innerText = teamA;
+    document.getElementById("matchTeamBLabel").innerText = teamB;
+
     fillPlayerSelect("matchTeamAPlayers", players.filter(player => player.team === teamA));
     fillPlayerSelect("matchTeamBPlayers", players.filter(player => player.team === teamB));
   }
@@ -1371,7 +1555,6 @@
   function fillPlayerSelect(elementId, playerList) {
     const select = document.getElementById(elementId);
     select.innerHTML = "";
-
     playerList.forEach(player => {
       const option = document.createElement("option");
       option.value = player.id;
@@ -1392,48 +1575,38 @@
   }
 
   async function saveMatch() {
+    const matchDate = document.getElementById("matchDate").value;
+    const course = document.getElementById("matchCourse").value.trim();
     const format = document.getElementById("matchFormat").value;
-    const name = document.getElementById("matchName").value.trim() || format;
-    const pointSystem = document.getElementById("matchPointSystem").value.trim();
+    const scoringType = document.getElementById("matchScoringType").value;
+    const valueType = document.getElementById("matchValueType").value;
+    const valueSettings = getMatchValueSettings();
     const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
     const teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
 
-    if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) {
-      alert("Please select player(s) for both sides.");
-      return;
-    }
+    if (!valueSettings) return;
+    if (!matchDate) return alert("Please select a date.");
+    if (!course) return alert("Please enter a golf course.");
+    if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return alert("Please select player(s) for both sides.");
 
     const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
-
     const matchData = {
-      name,
-      format,
-      pointSystem,
-      teamAPlayerIds,
-      teamBPlayerIds,
-      teamAScore: baseScores.teamAScore || "0",
-      teamBScore: baseScores.teamBScore || "0",
-      frontA: baseScores.frontA || "0",
-      frontB: baseScores.frontB || "0",
-      backA: baseScores.backA || "0",
-      backB: baseScores.backB || "0",
-      overallA: baseScores.overallA || "0",
-      overallB: baseScores.overallB || "0",
+      matchDate, course, format, scoringType, valueType, valueSettings,
+      teamAPlayerIds, teamBPlayerIds,
+      teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
+      frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
+      backA: baseScores.backA || "0", backB: baseScores.backB || "0",
+      overallA: baseScores.overallA || "0", overallB: baseScores.overallB || "0",
       updatedAt: new Date().toISOString()
     };
 
     const wasEditing = Boolean(editingMatchId);
+    const matchLabel = `${format} at ${course}`;
 
-    if (editingMatchId) {
-      await updateDoc(doc(db, "trips", activeTripId, "matches", editingMatchId), matchData);
-    } else {
-      await addDoc(matchesCollection(), {
-        ...matchData,
-        createdAt: new Date().toISOString()
-      });
-    }
+    if (editingMatchId) await updateDoc(doc(db, "trips", activeTripId, "matches", editingMatchId), matchData);
+    else await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
 
-    await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", name);
+    await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", matchLabel);
     editingMatchId = null;
     openMatchHome();
   }
@@ -1441,7 +1614,6 @@
   function renderMatchList() {
     const list = document.getElementById("matchList");
     if (!list) return;
-
     list.innerHTML = "";
 
     if (matches.length === 0) {
@@ -1449,91 +1621,66 @@
       return;
     }
 
-    matches
-      .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""))
-      .forEach(match => {
-        const div = document.createElement("div");
-        div.className = "match-row";
+    matches.sort((a,b) => `${a.matchDate || ""} ${a.createdAt || ""}`.localeCompare(`${b.matchDate || ""} ${b.createdAt || ""}`)).forEach(match => {
+      const div = document.createElement("div");
+      div.className = "match-scorecard";
+      const teamAName = activeTripData.teamA || "Team A";
+      const teamBName = activeTripData.teamB || "Team B";
+      const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
+      const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
+      const isNassau = match.format === "Best Ball (Nassau)";
 
-        const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
-        const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
-        const isNassau = match.format === "Best Ball (Nassau)";
-
-        div.innerHTML = `
-          <div class="match-title">${escapeHtml(match.name || match.format)}</div>
-          <div class="match-detail">
-            <strong>Format:</strong> ${escapeHtml(match.format || "")}<br>
-            <strong>Match:</strong> ${escapeHtml(teamAPlayers)} vs. ${escapeHtml(teamBPlayers)}<br>
-            <strong>Points:</strong> ${escapeHtml(match.pointSystem || "Not set")}
+      div.innerHTML = `
+        <div class="match-scorecard-header">
+          <div>
+            <div class="match-title">${escapeHtml(match.course || "Golf Course TBD")}</div>
+            <div class="match-detail">${escapeHtml(formatMatchDate(match.matchDate))}<br>${escapeHtml(match.format || "")} • ${escapeHtml(match.scoringType || "Gross")} • ${escapeHtml(match.valueType || "Points")}</div>
           </div>
-
-          ${
-            isNassau
-              ? `
-                <div class="match-score-grid">
-                  <div><label class="inline-label">Front A</label><input id="frontA-${match.id}" value="${escapeAttr(match.frontA || "0")}"></div>
-                  <div><label class="inline-label">Front B</label><input id="frontB-${match.id}" value="${escapeAttr(match.frontB || "0")}"></div>
-                  <div><label class="inline-label">Back A</label><input id="backA-${match.id}" value="${escapeAttr(match.backA || "0")}"></div>
-                  <div><label class="inline-label">Back B</label><input id="backB-${match.id}" value="${escapeAttr(match.backB || "0")}"></div>
-                  <div><label class="inline-label">Overall A</label><input id="overallA-${match.id}" value="${escapeAttr(match.overallA || "0")}"></div>
-                  <div><label class="inline-label">Overall B</label><input id="overallB-${match.id}" value="${escapeAttr(match.overallB || "0")}"></div>
-                </div>
-              `
-              : `
-                <div class="match-score-grid">
-                  <div><label class="inline-label">Team A Score</label><input id="teamAScoreMatch-${match.id}" value="${escapeAttr(match.teamAScore || "0")}"></div>
-                  <div><label class="inline-label">Team B Score</label><input id="teamBScoreMatch-${match.id}" value="${escapeAttr(match.teamBScore || "0")}"></div>
-                </div>
-              `
-          }
-
-          <button onclick="updateMatchScore('${match.id}')">Update Score</button>
+          <button class="match-gear" onclick="toggleMatchMenu('${match.id}')">⚙️</button>
+        </div>
+        <div id="matchMenu-${match.id}" class="match-actions-menu hidden">
           <button onclick="openMatchSetup('${match.id}')" class="secondary">Edit Match</button>
           <button onclick="openMatchSetup(null, '${match.id}')" class="secondary">Copy Match</button>
-        `;
-
-        list.appendChild(div);
-      });
+          <button onclick="deleteMatch('${match.id}')" class="danger">Delete Match</button>
+        </div>
+        <div class="match-scorecard-body">
+          <div class="match-detail"><strong>${escapeHtml(teamAName)}:</strong> ${escapeHtml(teamAPlayers)}<br><strong>${escapeHtml(teamBName)}:</strong> ${escapeHtml(teamBPlayers)}</div>
+          ${renderMatchValueSummary(match)}
+          ${isNassau ? `
+            <table class="scorecard-table"><tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr><tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.frontA || "0")}</td><td>${escapeHtml(match.backA || "0")}</td><td>${escapeHtml(match.overallA || "0")}</td></tr><tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.frontB || "0")}</td><td>${escapeHtml(match.backB || "0")}</td><td>${escapeHtml(match.overallB || "0")}</td></tr></table>` : `
+            <table class="scorecard-table"><tr><th></th><th>Score</th></tr><tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.teamAScore || "0")}</td></tr><tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.teamBScore || "0")}</td></tr></table>`}
+          <button class="enter-score-btn" onclick="openEnterScore('${match.id}')">Enter Score</button>
+        </div>`;
+      list.appendChild(div);
+    });
   }
+
+  function renderMatchValueSummary(match) {
+    const settings = match.valueSettings || {};
+    const keys = Object.keys(settings);
+    if (keys.length === 0) return "";
+    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Point System")}:</strong> ${keys.map(key => `${escapeHtml(key)}: ${escapeHtml(settings[key])}`).join(" • ")}</div>`;
+  }
+
+  function toggleMatchMenu(matchId) { document.getElementById(`matchMenu-${matchId}`).classList.toggle("hidden"); }
 
   function getPlayerNames(playerIds) {
-    return playerIds
-      .map(id => {
-        const player = players.find(p => p.id === id);
-        return player ? player.name : "Unknown Player";
-      })
-      .join(", ");
+    return playerIds.map(id => {
+      const player = players.find(p => p.id === id);
+      return player ? player.name : "Unknown Player";
+    }).join(", ");
   }
 
-  async function updateMatchScore(matchId) {
+  function formatMatchDate(dateString) { return dateString ? formatDisplayDate(dateString) : "Date TBD"; }
+
+  async function deleteMatch(matchId) {
+    if (!confirm("Delete this match?")) return;
     const match = matches.find(item => item.id === matchId);
-    if (!match) return;
-
-    const isNassau = match.format === "Best Ball (Nassau)";
-    let update = { updatedAt: new Date().toISOString() };
-
-    if (isNassau) {
-      update = {
-        ...update,
-        frontA: document.getElementById(`frontA-${matchId}`).value,
-        frontB: document.getElementById(`frontB-${matchId}`).value,
-        backA: document.getElementById(`backA-${matchId}`).value,
-        backB: document.getElementById(`backB-${matchId}`).value,
-        overallA: document.getElementById(`overallA-${matchId}`).value,
-        overallB: document.getElementById(`overallB-${matchId}`).value
-      };
-    } else {
-      update = {
-        ...update,
-        teamAScore: document.getElementById(`teamAScoreMatch-${matchId}`).value,
-        teamBScore: document.getElementById(`teamBScoreMatch-${matchId}`).value
-      };
-    }
-
-    await updateDoc(doc(db, "trips", activeTripId, "matches", matchId), update);
-    await addSwamiPost("scoreUpdate", match.name || match.format || "match");
+    await deleteDoc(doc(db, "trips", activeTripId, "matches", matchId));
+    await addSwamiPost("matchDelete", match ? `${match.format} at ${match.course}` : "match");
   }
 
+  function openEnterScore(matchId) { alert("Enter Score screen is coming next. Match ID: " + matchId); }
 
   async function openTripHome(tripId = activeTripId) {
     activeTripId = tripId;
@@ -1700,7 +1847,7 @@
         <div class="player-detail">
           ${player.nickname ? `"${escapeHtml(player.nickname)}"<br>` : ""}
           <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
-          <strong>Pronouns:</strong> ${formatPronouns(player.gender)}<br>
+          <strong>Gender:</strong> ${formatGender(player.gender)}<br>
           <strong>Strengths:</strong>
           ${player.strengths && player.strengths.length ? player.strengths.map(escapeHtml).join(", ") : "None selected"}
           <br>
@@ -2084,6 +2231,11 @@
         `Updated ${subject}. The Swami detects pre-match negotiation tactics.`,
         `${subject} has been revised. Please act surprised when this matters later.`
       ],
+      matchDelete: [
+        `${subject} was deleted. The Swami respects the courage to erase evidence.`,
+        `Match removed: ${subject}. Some scorecards are better left unseen.`,
+        `${subject} has been deleted. The leaderboard lawyers have been notified.`
+      ],
       scoreUpdate: [
         `Score update for ${subject}. The pressure is now entering the group chat.`,
         `${subject} has new numbers. Several egos are currently recalculating.`,
@@ -2179,21 +2331,29 @@
   }
 
 
+  function isFemaleGender(gender) {
+    return gender === "earthyMatriarch" || gender === "modernDayPrincess";
+  }
+
   function getPronouns(gender) {
-    if (gender === "female") {
+    if (isFemaleGender(gender)) {
       return { subject: "she", object: "her", possessive: "her" };
     }
-    if (gender === "neutral") {
-      return { subject: "they", object: "them", possessive: "their" };
-    }
+
     return { subject: "he", object: "him", possessive: "his" };
   }
 
-  function formatPronouns(gender) {
-    if (gender === "female") return "she/her";
-    if (gender === "neutral") return "they/them";
-    if (gender === "male") return "he/him";
-    return "Not entered";
+  function formatGender(gender) {
+    const labels = {
+      alphaMale: "Alpha Male",
+      tacticalSuburbanite: "Tactical Suburbanite",
+      artisanalLumberjack: "Artisanal Lumberjack",
+      etherealFlowerBoy: "Ethereal Flower Boy",
+      earthyMatriarch: "Earthy Matriarch",
+      modernDayPrincess: "Modern Day Princess"
+    };
+
+    return labels[gender] || "Not entered";
   }
 
   function renderTraits() {
@@ -2472,6 +2632,10 @@
   window.openMatchSetup = openMatchSetup;
   window.handleMatchFormatChange = handleMatchFormatChange;
   window.saveMatch = saveMatch;
+  window.toggleMatchMenu = toggleMatchMenu;
+  window.deleteMatch = deleteMatch;
+  window.openEnterScore = openEnterScore;
+  window.renderMatchValueFields = renderMatchValueFields;
   window.updateMatchScore = updateMatchScore;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
