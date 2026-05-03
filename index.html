@@ -53,6 +53,18 @@
       cursor: pointer;
     }
 
+    .mini-tile {
+      margin-top: 15px;
+      padding: 18px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1f4f7a, #16375d);
+      border: 1px solid #4f7fae;
+      text-align: center;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
     .card {
       background: rgba(24, 52, 92, 0.88);
       border: 1px solid #375984;
@@ -157,10 +169,43 @@
 
     h2 { text-align: center; }
 
+    h3 {
+      margin: 18px 0 8px;
+      color: #ffffff;
+      font-size: 18px;
+    }
+
     h4 {
       margin: 16px 0 8px;
       font-size: 14px;
       color: #dbeafe;
+    }
+
+    .itinerary-item {
+      padding: 14px;
+      border-radius: 12px;
+      background: #13294d;
+      border: 1px solid #375984;
+      margin-top: 10px;
+    }
+
+    .itinerary-date {
+      font-weight: bold;
+      color: #ffffff;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .itinerary-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .itinerary-detail {
+      color: #dbeafe;
+      font-size: 14px;
+      margin-top: 4px;
+      line-height: 1.35;
     }
 
     .traits-grid {
@@ -247,6 +292,10 @@
         <div class="gear" onclick="openSettings()">⚙️</div>
       </div>
 
+      <div class="mini-tile" onclick="openItinerary()">
+        📅 View Trip Itinerary
+      </div>
+
       <div class="card score-card">
         <div class="scoreboard">
           <div>
@@ -262,6 +311,68 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="itineraryScreen" class="hidden">
+    <h2>Trip Itinerary</h2>
+
+    <div class="card">
+      <h3>Golf</h3>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Wed Sep 30, 2026</div>
+        <div class="itinerary-title">Tobacco Road Golf Club</div>
+        <div class="itinerary-detail">Tee Times: 1:12 PM, 1:24 PM</div>
+      </div>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Thu Oct 1, 2026</div>
+        <div class="itinerary-title">Pinehurst 9</div>
+        <div class="itinerary-detail">Tee Times: 1:35 PM, 1:44 PM</div>
+      </div>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Fri Oct 2, 2026</div>
+        <div class="itinerary-title">Pinehurst 4</div>
+        <div class="itinerary-detail">Tee Times: 9:10 AM, 9:20 AM</div>
+      </div>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Fri Oct 2, 2026</div>
+        <div class="itinerary-title">The Cradle</div>
+        <div class="itinerary-detail">Tee Times: 2:20 PM, 2:30 PM</div>
+      </div>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Sat Oct 1, 2026</div>
+        <div class="itinerary-title">Pinehurst 2</div>
+        <div class="itinerary-detail">Tee Times: 12:50 PM, 1:00 PM</div>
+      </div>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Sun Oct 2, 2026</div>
+        <div class="itinerary-title">Pinehurst 8</div>
+        <div class="itinerary-detail">Tee Times: 8:30 AM, 8:40 AM</div>
+      </div>
+
+      <h3>Lodging</h3>
+
+      <div class="itinerary-item">
+        <div class="itinerary-date">Oct 1-4, 2026</div>
+        <div class="itinerary-title">The Holly Inn</div>
+      </div>
+
+      <h3>Meal Reservations</h3>
+      <div class="empty-state">No meal reservations added yet.</div>
+
+      <h3>Flights</h3>
+      <div class="empty-state">No flights added yet.</div>
+
+      <h3>Other Events</h3>
+      <div class="empty-state">No other planned events added yet.</div>
+
+      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -356,6 +467,7 @@ function show(id) {
   [
     "appHome",
     "tripHome",
+    "itineraryScreen",
     "teamRosterScreen",
     "settingsScreen",
     "importScreen",
@@ -371,6 +483,10 @@ function openTripHome() {
   show("tripHome");
   loadTeams();
   loadScores();
+}
+
+function openItinerary() {
+  show("itineraryScreen");
 }
 
 function goHome() {
