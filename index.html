@@ -21,53 +21,46 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 5px;
       font-size: 28px;
-      letter-spacing: 1px;
+      margin-bottom: 5px;
     }
 
     .sub {
       text-align: center;
       font-size: 14px;
-      margin-bottom: 20px;
       color: #cbd5f5;
+      margin-bottom: 20px;
     }
 
     .card {
       background: rgba(30, 41, 59, 0.9);
       padding: 15px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       border: 1px solid #334155;
     }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
       margin-bottom: 10px;
-      border-radius: 8px;
-      border: none;
     }
 
-    h4 {
-      margin-bottom: 5px;
-      margin-top: 10px;
-      font-size: 14px;
-      color: #e2e8f0;
+    .team {
+      width: 40%;
     }
 
-    label {
-      display: block;
-      font-size: 13px;
-      margin: 3px 0;
-      color: #cbd5f5;
+    .score {
+      font-size: 40px;
+      font-weight: bold;
     }
 
     button {
       width: 100%;
-      padding: 15px;
-      font-size: 16px;
+      padding: 14px;
+      font-size: 15px;
       border-radius: 10px;
       border: none;
       background: #f97316;
@@ -81,10 +74,35 @@
       background: #fb923c;
     }
 
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
+    .secondary {
+      background: #3b82f6;
     }
+
+    .hidden {
+      display: none;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin: 3px 0;
+      color: #cbd5f5;
+    }
+
+    h4 {
+      margin: 10px 0 5px;
+      font-size: 14px;
+    }
+
   </style>
 </head>
 
@@ -92,38 +110,78 @@
 
 <div class="container">
 
-  <h1>Pinehurst Cup 2026</h1>
-  <div class="sub">
-    Oct 1–4 • Courses 2, 4, 8, 9 • Trash Talk Edition
+  <!-- ================= HOME SCREEN ================= -->
+  <div id="homeScreen">
+
+    <h1>Pinehurst Cup 2026</h1>
+    <div class="sub">Oct 1–4 • Courses 2, 4, 8, 9</div>
+
+    <div class="card">
+      <div class="scoreboard">
+        <div class="team">
+          <div>Team A</div>
+          <div class="score">0</div>
+        </div>
+
+        <div>VS</div>
+
+        <div class="team">
+          <div>Team B</div>
+          <div class="score">0</div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="showPlayerScreen()">➕ Add Player</button>
+    <button class="secondary" onclick="alert('Roster screen next step')">👥 View Roster</button>
+    <button class="secondary" onclick="alert('Match system coming next')">🏌️ Start Matches</button>
+
   </div>
 
-  <!-- PLAYER PROFILE -->
-  <div class="card">
-    <h3>Create Player Profile</h3>
+  <!-- ================= PLAYER SCREEN ================= -->
+  <div id="playerScreen" class="hidden">
 
-    <input id="playerName" placeholder="Player Name" />
-    <input id="nickname" placeholder="Nickname (e.g. Sand Trap King)" />
+    <div class="card">
+      <h3>➕ Create Player Profile</h3>
 
-    <h4>🏌️ Golf Strengths (pick up to 3)</h4>
-    <div id="golfStrengths"></div>
+      <input id="playerName" placeholder="Player Name" />
+      <input id="nickname" placeholder="Nickname (e.g. Sand Trap King)" />
 
-    <h4>🍻 Funny Strengths (pick up to 3)</h4>
-    <div id="funStrengths"></div>
+      <h4>🏌️ Golf Strengths</h4>
+      <div id="golfStrengths"></div>
 
-    <h4>🏌️ Golf Weaknesses (pick up to 3)</h4>
-    <div id="golfWeaknesses"></div>
+      <h4>🍻 Funny Strengths</h4>
+      <div id="funStrengths"></div>
 
-    <h4>😂 Funny Weaknesses (pick up to 3)</h4>
-    <div id="funWeaknesses"></div>
+      <h4>🏌️ Golf Weaknesses</h4>
+      <div id="golfWeaknesses"></div>
 
-    <button onclick="savePlayerProfile()">Add Player</button>
-    <div class="small">These will power future trash talk generation 😈</div>
+      <h4>😂 Funny Weaknesses</h4>
+      <div id="funWeaknesses"></div>
+
+      <button onclick="savePlayerProfile()">Save Player</button>
+      <button class="secondary" onclick="goHome()">← Back Home</button>
+    </div>
+
   </div>
 
 </div>
 
 <script>
-/* ---------------- TRAIT DATA ---------------- */
+
+/* ================= NAVIGATION ================= */
+
+function showPlayerScreen() {
+  document.getElementById("homeScreen").classList.add("hidden");
+  document.getElementById("playerScreen").classList.remove("hidden");
+}
+
+function goHome() {
+  document.getElementById("playerScreen").classList.add("hidden");
+  document.getElementById("homeScreen").classList.remove("hidden");
+}
+
+/* ================= TRAITS ================= */
 
 const golfStrengths = [
   "Driver Accuracy", "Iron Play", "Short Game", "Putting",
@@ -148,36 +206,31 @@ const funnyWeaknesses = [
   "Fairway Loss Specialist"
 ];
 
-/* ---------------- RENDER CHECKBOXES ---------------- */
+/* ================= RENDER CHECKBOXES ================= */
 
-function renderTraits(list, containerId) {
-  const container = document.getElementById(containerId);
-
+function render(list, id) {
+  const el = document.getElementById(id);
   list.forEach(item => {
     const label = document.createElement("label");
-    label.innerHTML = `
-      <input type="checkbox" value="${item}" />
-      ${item}
-    `;
-    container.appendChild(label);
+    label.innerHTML = `<input type="checkbox" value="${item}"> ${item}`;
+    el.appendChild(label);
   });
 }
 
-renderTraits(golfStrengths, "golfStrengths");
-renderTraits(funnyStrengths, "funStrengths");
-renderTraits(golfWeaknesses, "golfWeaknesses");
-renderTraits(funnyWeaknesses, "funWeaknesses");
+render(golfStrengths, "golfStrengths");
+render(funnyStrengths, "funStrengths");
+render(golfWeaknesses, "golfWeaknesses");
+render(funnyWeaknesses, "funWeaknesses");
 
-/* ---------------- SAVE PLAYER ---------------- */
+/* ================= SAVE PLAYER ================= */
 
 function savePlayerProfile() {
   const name = document.getElementById("playerName").value;
   const nickname = document.getElementById("nickname").value;
 
-  function getSelected(containerId) {
-    return Array.from(
-      document.querySelectorAll(`#${containerId} input:checked`)
-    ).map(el => el.value);
+  function getSelected(id) {
+    return Array.from(document.querySelectorAll(`#${id} input:checked`))
+      .map(e => e.value);
   }
 
   const player = {
@@ -193,10 +246,9 @@ function savePlayerProfile() {
   players.push(player);
   localStorage.setItem("players", JSON.stringify(players));
 
-  alert(`Added ${name} to Pinehurst Cup roster 🏌️‍♂️🔥`);
+  alert(`${name} added to Pinehurst Cup 🏌️‍♂️`);
 
-  document.getElementById("playerName").value = "";
-  document.getElementById("nickname").value = "";
+  goHome();
 }
 
 </script>
