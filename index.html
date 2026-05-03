@@ -110,7 +110,7 @@
 
 <div class="container">
 
-  <!-- ================= HOME SCREEN ================= -->
+  <!-- HOME -->
   <div id="homeScreen">
 
     <h1>Pinehurst Cup 2026</h1>
@@ -133,31 +133,25 @@
     </div>
 
     <button onclick="showPlayerScreen()">➕ Add Player</button>
-    <button class="secondary" onclick="alert('Roster screen next step')">👥 View Roster</button>
-    <button class="secondary" onclick="alert('Match system coming next')">🏌️ Start Matches</button>
+    <button class="secondary">👥 View Roster</button>
+    <button class="secondary">🏌️ Start Matches</button>
 
   </div>
 
-  <!-- ================= PLAYER SCREEN ================= -->
+  <!-- PLAYER SCREEN -->
   <div id="playerScreen" class="hidden">
 
     <div class="card">
-      <h3>➕ Create Player Profile</h3>
+      <h3>Create Player Profile</h3>
 
       <input id="playerName" placeholder="Player Name" />
       <input id="nickname" placeholder="Nickname (e.g. Sand Trap King)" />
 
-      <h4>🏌️ Golf Strengths</h4>
-      <div id="golfStrengths"></div>
+      <h4>Strengths</h4>
+      <div id="strengths"></div>
 
-      <h4>🍻 Funny Strengths</h4>
-      <div id="funStrengths"></div>
-
-      <h4>🏌️ Golf Weaknesses</h4>
-      <div id="golfWeaknesses"></div>
-
-      <h4>😂 Funny Weaknesses</h4>
-      <div id="funWeaknesses"></div>
+      <h4>Weaknesses</h4>
+      <div id="weaknesses"></div>
 
       <button onclick="savePlayerProfile()">Save Player</button>
       <button class="secondary" onclick="goHome()">← Back Home</button>
@@ -181,35 +175,44 @@ function goHome() {
   document.getElementById("homeScreen").classList.remove("hidden");
 }
 
-/* ================= TRAITS ================= */
+/* ================= MIXED TRAITS ================= */
 
-const golfStrengths = [
-  "Driver Accuracy", "Iron Play", "Short Game", "Putting",
-  "Sand Play", "Mental Toughness", "Course Management",
+const strengths = [
+  "Driver Accuracy",
+  "Beer Consistency",
+  "Iron Play",
+  "Trash Talk Volume",
+  "Short Game",
+  "Cart Navigation Skills",
+  "Putting",
+  "Snack Management",
+  "Mental Toughness",
+  "Emergency Ball Finder",
+  "Course Management",
+  "Clubhouse Reputation",
   "One Good Shot Per Hole"
 ];
 
-const funnyStrengths = [
-  "Beer Consistency", "Cart Navigation Skills", "Trash Talk Volume",
-  "Snack Management", "Group Text Responsiveness",
-  "Emergency Ball Finder", "Clubhouse Reputation"
-];
-
-const golfWeaknesses = [
-  "3-Putt Specialist", "Slice Machine", "Hook Under Pressure",
-  "Bunker Magnet", "Driver Chaos", "Par 5 Overconfidence"
-];
-
-const funnyWeaknesses = [
-  "Lost GPS Reliance", "Rules Lawyer (Always Wrong)", "Slow Play Offender",
-  "One More Swing Syndrome", "Ball Disappearance Expert",
+const weaknesses = [
+  "3-Putt Specialist",
+  "Lost GPS Reliance",
+  "Slice Machine",
+  "Rules Lawyer (Always Wrong)",
+  "Hook Under Pressure",
+  "Slow Play Offender",
+  "Bunker Magnet",
+  "One More Swing Syndrome",
+  "Driver Chaos",
+  "Ball Disappearance Expert",
+  "Par 5 Overconfidence",
   "Fairway Loss Specialist"
 ];
 
-/* ================= RENDER CHECKBOXES ================= */
+/* ================= RENDER ================= */
 
 function render(list, id) {
   const el = document.getElementById(id);
+
   list.forEach(item => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" value="${item}"> ${item}`;
@@ -217,12 +220,10 @@ function render(list, id) {
   });
 }
 
-render(golfStrengths, "golfStrengths");
-render(funnyStrengths, "funStrengths");
-render(golfWeaknesses, "golfWeaknesses");
-render(funnyWeaknesses, "funWeaknesses");
+render(strengths, "strengths");
+render(weaknesses, "weaknesses");
 
-/* ================= SAVE PLAYER ================= */
+/* ================= SAVE ================= */
 
 function savePlayerProfile() {
   const name = document.getElementById("playerName").value;
@@ -236,10 +237,8 @@ function savePlayerProfile() {
   const player = {
     name,
     nickname,
-    golfStrengths: getSelected("golfStrengths"),
-    funnyStrengths: getSelected("funStrengths"),
-    golfWeaknesses: getSelected("golfWeaknesses"),
-    funnyWeaknesses: getSelected("funWeaknesses")
+    strengths: getSelected("strengths"),
+    weaknesses: getSelected("weaknesses")
   };
 
   let players = JSON.parse(localStorage.getItem("players") || "[]");
