@@ -11,7 +11,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       color: white;
-      background: #050914;
+      background: #081226;
     }
 
     body::before {
@@ -19,7 +19,7 @@
       position: fixed;
       inset: 0;
       z-index: -1;
-      background: radial-gradient(circle at top, #0b1a2f 0%, #050914 70%);
+      background: radial-gradient(circle at top, #18345c 0%, #081226 70%);
       background-repeat: no-repeat;
       background-size: cover;
     }
@@ -65,6 +65,19 @@
       display: none;
     }
 
+    .page-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      margin-bottom: 4px;
+    }
+
+    .page-header h2 {
+      margin: 0;
+    }
+
     .scoreboard {
       display: flex;
       justify-content: space-between;
@@ -105,16 +118,18 @@
 
     .gear {
       position: absolute;
-      top: 6px;
-      right: 12px;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
       font-size: 22px;
       cursor: pointer;
     }
 
     .homeBtn {
       position: absolute;
-      top: 6px;
-      left: 12px;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
       font-size: 22px;
       cursor: pointer;
     }
@@ -211,11 +226,12 @@
 
   <!-- TRIP -->
   <div id="tripHome" class="hidden">
-    <div style="position:relative;">
-      <div class="homeBtn" onclick="goHome()">🏠</div>
-      <div class="gear" onclick="openSettings()">⚙️</div>
-
-      <h2>Pinehurst 2026</h2>
+    <div>
+      <div class="page-header">
+        <div class="homeBtn" onclick="goHome()">🏠</div>
+        <h2>Pinehurst 2026</h2>
+        <div class="gear" onclick="openSettings()">⚙️</div>
+      </div>
 
       <div class="card">
         <div class="scoreboard">
@@ -490,7 +506,14 @@ const strengths = [
   "Trash Talk Volume",
   "Cart Navigation Skills",
   "Mental Toughness",
-  "Snack Management"
+  "Snack Management",
+  "Mulligan Negotiation",
+  "Cart Cooler Logistics",
+  "Approach Shot Optimism",
+  "Gimme Putt Diplomacy",
+  "Post-Round Storytelling",
+  "Fairway Finder Energy",
+  "Club Twirl Confidence"
 ];
 
 const weaknesses = [
@@ -502,7 +525,14 @@ const weaknesses = [
   "Ball Disappearance Expert",
   "Water Hazard Addiction",
   "Driver Meltdown",
-  "Putting Confidence Issues"
+  "Putting Confidence Issues",
+  "Breakfast Ball Dependency",
+  "Range Hero Syndrome",
+  "Yardage Guessing Disorder",
+  "Cart Path Only Confusion",
+  "Scorecard Math Problems",
+  "Wind Blame Specialist",
+  "Lost Tee Box Focus"
 ];
 
 let selectedStrengths = [];
