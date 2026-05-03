@@ -43,7 +43,7 @@
     }
 
     .tile {
-      margin-top: 25px;
+      margin-top: 16px;
       padding: 22px;
       border-radius: 16px;
       background: linear-gradient(135deg, #18345c, #13294d);
@@ -51,6 +51,7 @@
       text-align: center;
       font-size: 18px;
       cursor: pointer;
+      font-weight: bold;
     }
 
     .mini-tile {
@@ -328,8 +329,12 @@
       <img src="/Swami Golf Logo.png" class="logo-img">
     </div>
 
-    <div class="tile" onclick="openTripHome()">
+    <div class="tile" onclick="openTripHome('pinehurst2026')">
       🏌️ Pinehurst 2026
+    </div>
+
+    <div class="tile" onclick="openTripHome('testGolfTrip')">
+      🧪 Test Golf Trip
     </div>
   </div>
 
@@ -337,7 +342,7 @@
     <div>
       <div class="page-header">
         <div class="homeBtn" onclick="goHome()">🏠</div>
-        <h2>Pinehurst 2026</h2>
+        <h2 id="tripTitle">Golf Trip</h2>
         <div class="gear" onclick="openSettings()">⚙️</div>
       </div>
 
@@ -524,10 +529,26 @@
 </div>
 
 <script>
+let activeTripId = "pinehurst2026";
 let editingPlayerIndex = null;
 let editingItineraryEventId = null;
 
-const defaultItineraryEvents = [
+const trips = {
+  pinehurst2026: {
+    id: "pinehurst2026",
+    name: "Pinehurst 2026",
+    defaultTeamA: "Team A",
+    defaultTeamB: "Team B"
+  },
+  testGolfTrip: {
+    id: "testGolfTrip",
+    name: "Test Golf Trip",
+    defaultTeamA: "Team A",
+    defaultTeamB: "Team B"
+  }
+};
+
+const defaultPinehurstItineraryEvents = [
   {
     id: "golf-tobacco-road-2026-09-30",
     section: "golf",
@@ -600,6 +621,84 @@ const defaultItineraryEvents = [
   }
 ];
 
+function tripKey(key) {
+  return `swamiGolf.${activeTripId}.${key}`;
+}
+
+function allTripIds() {
+  return Object.keys(trips);
+}
+
+function migrateLegacyPinehurstDataIfNeeded() {
+  const migrationFlag = "swamiGolf.legacyMigrationComplete";
+
+  if (localStorage.getItem(migrationFlag)) return;
+
+  const legacyPlayers = localStorage.getItem("players");
+  const legacyItinerary = localStorage.getItem("itineraryEvents");
+
+  if (localStorage.getItem("teamA")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.teamA", localStorage.getItem("teamA"));
+  }
+
+  if (localStorage.getItem("teamB")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.teamB", localStorage.getItem("teamB"));
+  }
+
+  if (localStorage.getItem("teamAScore")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.teamAScore", localStorage.getItem("teamAScore"));
+  }
+
+  if (localStorage.getItem("teamBScore")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.teamBScore", localStorage.getItem("teamBScore"));
+  }
+
+  if (legacyPlayers) {
+    localStorage.setItem("swamiGolf.pinehurst2026.players", legacyPlayers);
+  }
+
+  if (legacyItinerary) {
+    localStorage.setItem("swamiGolf.pinehurst2026.itineraryEvents", legacyItinerary);
+  }
+
+  localStorage.setItem(migrationFlag, "true");
+}
+
+function initializeTripIfNeeded(tripId) {
+  const previousTripId = activeTripId;
+  activeTripId = tripId;
+
+  if (!localStorage.getItem(tripKey("teamA"))) {
+    localStorage.setItem(tripKey("teamA"), trips[tripId].defaultTeamA);
+  }
+
+  if (!localStorage.getItem(tripKey("teamB"))) {
+    localStorage.setItem(tripKey("teamB"), trips[tripId].defaultTeamB);
+  }
+
+  if (!localStorage.getItem(tripKey("teamAScore"))) {
+    localStorage.setItem(tripKey("teamAScore"), "0");
+  }
+
+  if (!localStorage.getItem(tripKey("teamBScore"))) {
+    localStorage.setItem(tripKey("teamBScore"), "0");
+  }
+
+  if (!localStorage.getItem(tripKey("players"))) {
+    localStorage.setItem(tripKey("players"), JSON.stringify([]));
+  }
+
+  if (!localStorage.getItem(tripKey("itineraryEvents"))) {
+    const defaultEvents = tripId === "pinehurst2026"
+      ? defaultPinehurstItineraryEvents
+      : [];
+
+    localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(defaultEvents));
+  }
+
+  activeTripId = previousTripId;
+}
+
 function show(id) {
   [
     "appHome",
@@ -617,14 +716,18 @@ function show(id) {
   document.getElementById(id).classList.remove("hidden");
 }
 
-function openTripHome() {
+function openTripHome(tripId = activeTripId) {
+  activeTripId = tripId;
+  initializeTripIfNeeded(activeTripId);
+
+  document.getElementById("tripTitle").innerText = trips[activeTripId].name;
+
   show("tripHome");
   loadTeams();
   loadScores();
 }
 
 function openItinerary() {
-  initializeItineraryIfNeeded();
   show("itineraryScreen");
   renderItinerary();
 }
@@ -643,9 +746,7 @@ function openImportScreen() {
 }
 
 function goTripHome() {
-  show("tripHome");
-  loadTeams();
-  loadScores();
+  openTripHome(activeTripId);
 }
 
 function openTeamEdit() {
@@ -677,11 +778,11 @@ function saveTeams() {
   const teamA = document.getElementById("teamAInput").value || "Team A";
   const teamB = document.getElementById("teamBInput").value || "Team B";
 
-  const oldTeamA = localStorage.getItem("teamA") || "Team A";
-  const oldTeamB = localStorage.getItem("teamB") || "Team B";
+  const oldTeamA = localStorage.getItem(tripKey("teamA")) || "Team A";
+  const oldTeamB = localStorage.getItem(tripKey("teamB")) || "Team B";
 
-  localStorage.setItem("teamA", teamA);
-  localStorage.setItem("teamB", teamB);
+  localStorage.setItem(tripKey("teamA"), teamA);
+  localStorage.setItem(tripKey("teamB"), teamB);
 
   updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
 
@@ -690,7 +791,7 @@ function saveTeams() {
 }
 
 function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
+  let players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
 
   players = players.map(player => {
     if (player.team === oldTeamA) player.team = newTeamA;
@@ -698,36 +799,36 @@ function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
     return player;
   });
 
-  localStorage.setItem("players", JSON.stringify(players));
+  localStorage.setItem(tripKey("players"), JSON.stringify(players));
 }
 
 function loadTeams() {
   document.getElementById("teamAName").innerText =
-    localStorage.getItem("teamA") || "Team A";
+    localStorage.getItem(tripKey("teamA")) || "Team A";
 
   document.getElementById("teamBName").innerText =
-    localStorage.getItem("teamB") || "Team B";
+    localStorage.getItem(tripKey("teamB")) || "Team B";
 }
 
 function loadScores() {
   document.getElementById("teamAScore").innerText =
-    localStorage.getItem("teamAScore") || "0";
+    localStorage.getItem(tripKey("teamAScore")) || "0";
 
   document.getElementById("teamBScore").innerText =
-    localStorage.getItem("teamBScore") || "0";
+    localStorage.getItem(tripKey("teamBScore")) || "0";
 }
 
 function loadInputs() {
   document.getElementById("teamAInput").value =
-    localStorage.getItem("teamA") || "";
+    localStorage.getItem(tripKey("teamA")) || "";
 
   document.getElementById("teamBInput").value =
-    localStorage.getItem("teamB") || "";
+    localStorage.getItem(tripKey("teamB")) || "";
 }
 
 function loadTeamDropdown() {
-  const teamA = localStorage.getItem("teamA") || "Team A";
-  const teamB = localStorage.getItem("teamB") || "Team B";
+  const teamA = localStorage.getItem(tripKey("teamA")) || "Team A";
+  const teamB = localStorage.getItem(tripKey("teamB")) || "Team B";
 
   const select = document.getElementById("playerTeam");
 
@@ -738,10 +839,10 @@ function loadTeamDropdown() {
   `;
 }
 
-function openTeamRoster(teamKey) {
-  const teamName = teamKey === "A"
-    ? localStorage.getItem("teamA") || "Team A"
-    : localStorage.getItem("teamB") || "Team B";
+function openTeamRoster(teamKeyValue) {
+  const teamName = teamKeyValue === "A"
+    ? localStorage.getItem(tripKey("teamA")) || "Team A"
+    : localStorage.getItem(tripKey("teamB")) || "Team B";
 
   document.getElementById("teamRosterTitle").innerText = teamName;
   renderTeamRoster(teamName);
@@ -750,7 +851,7 @@ function openTeamRoster(teamKey) {
 
 function renderTeamRoster(teamName) {
   const list = document.getElementById("teamRosterList");
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
+  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
   const teamPlayers = players.filter(player => player.team === teamName);
 
   list.innerHTML = "";
@@ -785,19 +886,12 @@ function renderTeamRoster(teamName) {
   });
 }
 
-function initializeItineraryIfNeeded() {
-  if (!localStorage.getItem("itineraryEvents")) {
-    localStorage.setItem("itineraryEvents", JSON.stringify(defaultItineraryEvents));
-  }
-}
-
 function getItineraryEvents() {
-  initializeItineraryIfNeeded();
-  return JSON.parse(localStorage.getItem("itineraryEvents") || "[]");
+  return JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]");
 }
 
 function saveItineraryEvents(events) {
-  localStorage.setItem("itineraryEvents", JSON.stringify(events));
+  localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(events));
 }
 
 function renderItinerary() {
@@ -1072,7 +1166,7 @@ function resetPlayerForm() {
 }
 
 function loadPlayerForEdit(index) {
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
+  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
   const player = players[index];
 
   document.getElementById("playerName").value = player.name || "";
@@ -1116,7 +1210,7 @@ function savePlayer() {
     weaknesses: selectedWeaknesses
   };
 
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
+  let players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
 
   if (editingPlayerIndex === null) {
     players.push(player);
@@ -1124,7 +1218,7 @@ function savePlayer() {
     players[editingPlayerIndex] = player;
   }
 
-  localStorage.setItem("players", JSON.stringify(players));
+  localStorage.setItem(tripKey("players"), JSON.stringify(players));
 
   editingPlayerIndex = null;
   openPlayerList();
@@ -1132,7 +1226,7 @@ function savePlayer() {
 
 function renderPlayerList() {
   const list = document.getElementById("playerList");
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
+  const players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
 
   list.innerHTML = "";
 
@@ -1163,20 +1257,35 @@ function renderPlayerList() {
   });
 }
 
-function getSwamiGolfData() {
-  initializeItineraryIfNeeded();
+function getSingleTripData(tripId) {
+  const previousTripId = activeTripId;
+  activeTripId = tripId;
+  initializeTripIfNeeded(tripId);
 
+  const data = {
+    tripId,
+    tripName: trips[tripId].name,
+    teamA: localStorage.getItem(tripKey("teamA")) || "Team A",
+    teamB: localStorage.getItem(tripKey("teamB")) || "Team B",
+    teamAScore: localStorage.getItem(tripKey("teamAScore")) || "0",
+    teamBScore: localStorage.getItem(tripKey("teamBScore")) || "0",
+    players: JSON.parse(localStorage.getItem(tripKey("players")) || "[]"),
+    itineraryEvents: JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]")
+  };
+
+  activeTripId = previousTripId;
+  return data;
+}
+
+function getSwamiGolfData() {
   return {
     appName: "Swami Golf",
     appVersion: "development",
     exportedAt: new Date().toISOString(),
-    data: {
-      teamA: localStorage.getItem("teamA") || "Team A",
-      teamB: localStorage.getItem("teamB") || "Team B",
-      teamAScore: localStorage.getItem("teamAScore") || "0",
-      teamBScore: localStorage.getItem("teamBScore") || "0",
-      players: JSON.parse(localStorage.getItem("players") || "[]"),
-      itineraryEvents: JSON.parse(localStorage.getItem("itineraryEvents") || "[]")
+    activeTripId,
+    trips: {
+      pinehurst2026: getSingleTripData("pinehurst2026"),
+      testGolfTrip: getSingleTripData("testGolfTrip")
     }
   };
 }
@@ -1204,14 +1313,37 @@ function importData() {
 
   try {
     const backup = JSON.parse(importText);
-    const data = backup.data || backup;
 
-    localStorage.setItem("teamA", data.teamA || "Team A");
-    localStorage.setItem("teamB", data.teamB || "Team B");
-    localStorage.setItem("teamAScore", data.teamAScore || "0");
-    localStorage.setItem("teamBScore", data.teamBScore || "0");
-    localStorage.setItem("players", JSON.stringify(data.players || []));
-    localStorage.setItem("itineraryEvents", JSON.stringify(data.itineraryEvents || defaultItineraryEvents));
+    if (backup.trips) {
+      Object.keys(backup.trips).forEach(tripId => {
+        if (!trips[tripId]) return;
+
+        const previousTripId = activeTripId;
+        activeTripId = tripId;
+
+        const data = backup.trips[tripId];
+
+        localStorage.setItem(tripKey("teamA"), data.teamA || "Team A");
+        localStorage.setItem(tripKey("teamB"), data.teamB || "Team B");
+        localStorage.setItem(tripKey("teamAScore"), data.teamAScore || "0");
+        localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
+        localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
+        localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
+
+        activeTripId = previousTripId;
+      });
+
+      activeTripId = backup.activeTripId || "pinehurst2026";
+    } else {
+      const data = backup.data || backup;
+
+      localStorage.setItem(tripKey("teamA"), data.teamA || "Team A");
+      localStorage.setItem(tripKey("teamB"), data.teamB || "Team B");
+      localStorage.setItem(tripKey("teamAScore"), data.teamAScore || "0");
+      localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
+      localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
+      localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
+    }
 
     alert("Data imported successfully.");
     openSettings();
@@ -1219,6 +1351,10 @@ function importData() {
     alert("Import failed. Please make sure you pasted valid backup data.");
   }
 }
+
+migrateLegacyPinehurstDataIfNeeded();
+initializeTripIfNeeded("pinehurst2026");
+initializeTripIfNeeded("testGolfTrip");
 </script>
 
 </body>
