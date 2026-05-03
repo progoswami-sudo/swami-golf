@@ -7,7 +7,7 @@
 
   <style>
     html, body {
-      min-height: 100%;
+      height: 100%;
       margin: 0;
       font-family: Arial, sans-serif;
       background: radial-gradient(circle at top, #0b1a2f, #050914);
@@ -19,19 +19,22 @@
       padding: 18px;
       max-width: 650px;
       margin: auto;
+      min-height: 100vh;
     }
 
+    /* LOGO */
     .logo {
       display: flex;
       justify-content: center;
-      margin: 10px 0 20px;
+      margin: 18px 0 24px;
     }
 
     .logo-img {
-      max-width: 160px;
+      max-width: 260px;
       width: 100%;
     }
 
+    /* TILE */
     .tile {
       margin-top: 25px;
       padding: 22px;
@@ -51,8 +54,11 @@
       margin-top: 15px;
     }
 
-    .hidden { display: none; }
+    .hidden {
+      display: none;
+    }
 
+    /* SCOREBOARD */
     .scoreboard {
       display: flex;
       justify-content: space-between;
@@ -74,6 +80,7 @@
       font-weight: bold;
     }
 
+    /* BUTTONS */
     button {
       width: 100%;
       padding: 16px;
@@ -91,6 +98,7 @@
       background: #334155;
     }
 
+    /* ICONS */
     .gear {
       position: absolute;
       top: 6px;
@@ -107,6 +115,7 @@
       cursor: pointer;
     }
 
+    /* INPUT */
     input, select {
       width: 100%;
       box-sizing: border-box;
@@ -117,7 +126,9 @@
       font-size: 16px;
     }
 
-    h2 { text-align: center; }
+    h2 {
+      text-align: center;
+    }
 
     h4 {
       margin: 16px 0 8px;
@@ -125,6 +136,7 @@
       color: #cbd5e1;
     }
 
+    /* TRAITS GRID */
     .traits-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -177,6 +189,7 @@
       padding: 18px;
       font-size: 14px;
     }
+
   </style>
 </head>
 
@@ -187,7 +200,7 @@
   <!-- HOME -->
   <div id="appHome">
     <div class="logo">
-      <img src="/Swami Golf Logo.png" class="logo-img">
+      <img src="/Swami Golf Logo 01.png" class="logo-img">
     </div>
 
     <div class="tile" onclick="openTripHome()">
@@ -205,17 +218,26 @@
 
       <div class="card">
         <div class="scoreboard">
+
           <div>
-            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">Team A</div>
+            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">
+              Team A
+            </div>
             <div class="score">0</div>
           </div>
+
           <div>VS</div>
+
           <div>
-            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
+            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">
+              Team B
+            </div>
             <div class="score">0</div>
           </div>
+
         </div>
       </div>
+
     </div>
   </div>
 
@@ -225,7 +247,10 @@
 
     <div class="card">
       <div id="teamRosterList"></div>
-      <button onclick="goTripHome()" class="secondary">Back</button>
+
+      <button onclick="goTripHome()" class="secondary">
+        Back
+      </button>
     </div>
   </div>
 
@@ -234,9 +259,17 @@
     <h2>Settings</h2>
 
     <div class="card">
-      <button onclick="openTeamEdit()">Edit Team Names</button>
-      <button onclick="openPlayerList()">Add / Edit Players</button>
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <button onclick="openTeamEdit()">
+        Edit Team Names
+      </button>
+
+      <button onclick="openPlayerList()">
+        Add / Edit Players
+      </button>
+
+      <button onclick="goTripHome()" class="secondary">
+        Back
+      </button>
     </div>
   </div>
 
@@ -247,8 +280,14 @@
     <div class="card">
       <input id="teamAInput" placeholder="Team A Name"/>
       <input id="teamBInput" placeholder="Team B Name"/>
-      <button onclick="saveTeams()">Save</button>
-      <button onclick="openSettings()" class="secondary">Back</button>
+
+      <button onclick="saveTeams()">
+        Save
+      </button>
+
+      <button onclick="openSettings()" class="secondary">
+        Back
+      </button>
     </div>
   </div>
 
@@ -257,22 +296,35 @@
     <h2>Players</h2>
 
     <div class="card">
-      <button onclick="openPlayer()">Add New Player</button>
+
+      <button onclick="openPlayer()">
+        Add New Player
+      </button>
+
       <div id="playerList"></div>
-      <button onclick="openSettings()" class="secondary">Back</button>
+
+      <button onclick="openSettings()" class="secondary">
+        Back
+      </button>
+
     </div>
   </div>
 
   <!-- PLAYER PROFILE -->
   <div id="playerScreen" class="hidden">
-    <h2 id="playerScreenTitle">Player Profile</h2>
+    <h2 id="playerScreenTitle">
+      Player Profile
+    </h2>
 
     <div class="card">
+
       <input id="playerName" placeholder="Name"/>
       <input id="nickname" placeholder="Nickname"/>
 
       <select id="playerTeam">
-        <option value="">Assign to Team</option>
+        <option value="">
+          Assign to Team
+        </option>
       </select>
 
       <h4>Strengths</h4>
@@ -281,18 +333,27 @@
       <h4>Weaknesses</h4>
       <div id="weaknesses" class="traits-grid"></div>
 
-      <button onclick="savePlayer()">Save Player</button>
-      <button onclick="openPlayerList()" class="secondary">Back to Player List</button>
+      <button onclick="savePlayer()">
+        Save Player
+      </button>
+
+      <button onclick="openPlayerList()" class="secondary">
+        Back to Player List
+      </button>
+
     </div>
   </div>
 
 </div>
 
 <script>
+
 let editingPlayerIndex = null;
 
 /* NAV */
+
 function show(id) {
+
   [
     "appHome",
     "tripHome",
@@ -301,16 +362,37 @@ function show(id) {
     "teamScreen",
     "playerListScreen",
     "playerScreen"
-  ].forEach(x => document.getElementById(x).classList.add("hidden"));
+  ].forEach(x =>
+    document.getElementById(x)
+      .classList.add("hidden")
+  );
 
-  document.getElementById(id).classList.remove("hidden");
+  document.getElementById(id)
+    .classList.remove("hidden");
 }
 
-function openTripHome(){ show("tripHome"); loadTeams(); }
-function goHome(){ show("appHome"); }
-function openSettings(){ show("settingsScreen"); }
-function goTripHome(){ show("tripHome"); loadTeams(); }
-function openTeamEdit(){ show("teamScreen"); loadInputs(); }
+function openTripHome() {
+  show("tripHome");
+  loadTeams();
+}
+
+function goHome() {
+  show("appHome");
+}
+
+function openSettings() {
+  show("settingsScreen");
+}
+
+function goTripHome() {
+  show("tripHome");
+  loadTeams();
+}
+
+function openTeamEdit() {
+  show("teamScreen");
+  loadInputs();
+}
 
 function openPlayerList() {
   show("playerListScreen");
@@ -318,223 +400,431 @@ function openPlayerList() {
 }
 
 function openPlayer(index = null) {
+
   editingPlayerIndex = index;
+
   show("playerScreen");
+
   renderTraits();
+
   loadTeamDropdown();
 
   if (index === null) {
-    document.getElementById("playerScreenTitle").innerText = "Add Player";
+
+    document.getElementById(
+      "playerScreenTitle"
+    ).innerText = "Add Player";
+
     resetPlayerForm();
+
   } else {
-    document.getElementById("playerScreenTitle").innerText = "Edit Player";
+
+    document.getElementById(
+      "playerScreenTitle"
+    ).innerText = "Edit Player";
+
     loadPlayerForEdit(index);
+
   }
+
 }
 
 /* TEAM LOGIC */
-function saveTeams() {
-  const teamA = document.getElementById("teamAInput").value || "Team A";
-  const teamB = document.getElementById("teamBInput").value || "Team B";
 
-  const oldTeamA = localStorage.getItem("teamA") || "Team A";
-  const oldTeamB = localStorage.getItem("teamB") || "Team B";
+function saveTeams() {
+
+  const teamA =
+    document.getElementById(
+      "teamAInput"
+    ).value || "Team A";
+
+  const teamB =
+    document.getElementById(
+      "teamBInput"
+    ).value || "Team B";
 
   localStorage.setItem("teamA", teamA);
   localStorage.setItem("teamB", teamB);
 
-  updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
-
   loadTeams();
+
   openSettings();
-}
 
-function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
-
-  players = players.map(player => {
-    if (player.team === oldTeamA) {
-      player.team = newTeamA;
-    }
-
-    if (player.team === oldTeamB) {
-      player.team = newTeamB;
-    }
-
-    return player;
-  });
-
-  localStorage.setItem("players", JSON.stringify(players));
 }
 
 function loadTeams() {
-  document.getElementById("teamAName").innerText =
-    localStorage.getItem("teamA") || "Team A";
 
-  document.getElementById("teamBName").innerText =
-    localStorage.getItem("teamB") || "Team B";
+  document.getElementById(
+    "teamAName"
+  ).innerText =
+    localStorage.getItem("teamA")
+    || "Team A";
+
+  document.getElementById(
+    "teamBName"
+  ).innerText =
+    localStorage.getItem("teamB")
+    || "Team B";
+
 }
 
 function loadInputs() {
-  document.getElementById("teamAInput").value =
-    localStorage.getItem("teamA") || "";
 
-  document.getElementById("teamBInput").value =
-    localStorage.getItem("teamB") || "";
+  document.getElementById(
+    "teamAInput"
+  ).value =
+    localStorage.getItem("teamA")
+    || "";
+
+  document.getElementById(
+    "teamBInput"
+  ).value =
+    localStorage.getItem("teamB")
+    || "";
+
 }
 
 function loadTeamDropdown() {
-  const teamA = localStorage.getItem("teamA") || "Team A";
-  const teamB = localStorage.getItem("teamB") || "Team B";
 
-  const select = document.getElementById("playerTeam");
+  const teamA =
+    localStorage.getItem("teamA")
+    || "Team A";
+
+  const teamB =
+    localStorage.getItem("teamB")
+    || "Team B";
+
+  const select =
+    document.getElementById(
+      "playerTeam"
+    );
+
   select.innerHTML = `
-    <option value="">Assign to Team</option>
-    <option value="${teamA}">${teamA}</option>
-    <option value="${teamB}">${teamB}</option>
+    <option value="">
+      Assign to Team
+    </option>
+    <option value="${teamA}">
+      ${teamA}
+    </option>
+    <option value="${teamB}">
+      ${teamB}
+    </option>
   `;
 }
 
 function openTeamRoster(teamKey) {
-  const teamName = teamKey === "A"
-    ? localStorage.getItem("teamA") || "Team A"
-    : localStorage.getItem("teamB") || "Team B";
 
-  document.getElementById("teamRosterTitle").innerText = teamName;
+  const teamName =
+    teamKey === "A"
+      ? localStorage.getItem("teamA")
+        || "Team A"
+      : localStorage.getItem("teamB")
+        || "Team B";
+
+  document.getElementById(
+    "teamRosterTitle"
+  ).innerText = teamName;
+
   renderTeamRoster(teamName);
+
   show("teamRosterScreen");
+
 }
 
 function renderTeamRoster(teamName) {
-  const list = document.getElementById("teamRosterList");
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
-  const teamPlayers = players.filter(player => player.team === teamName);
+
+  const list =
+    document.getElementById(
+      "teamRosterList"
+    );
+
+  const players =
+    JSON.parse(
+      localStorage.getItem("players")
+      || "[]"
+    );
+
+  const teamPlayers =
+    players.filter(
+      player =>
+        player.team === teamName
+    );
 
   list.innerHTML = "";
 
   if (teamPlayers.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
+
+    list.innerHTML =
+      `<div class="empty-state">
         No players assigned to ${teamName} yet.
-      </div>
-    `;
+      </div>`;
+
     return;
+
   }
 
   teamPlayers.forEach(player => {
-    const div = document.createElement("div");
+
+    const div =
+      document.createElement("div");
+
     div.className = "player-row";
 
     div.innerHTML = `
-      <div class="player-name">${player.name}</div>
+      <div class="player-name">
+        ${player.name}
+      </div>
       <div class="player-detail">
-        ${player.nickname ? `"${player.nickname}"<br>` : ""}
-        <strong>Strengths:</strong> ${player.strengths && player.strengths.length ? player.strengths.join(", ") : "None selected"}<br>
-        <strong>Weaknesses:</strong> ${player.weaknesses && player.weaknesses.length ? player.weaknesses.join(", ") : "None selected"}
+        ${player.nickname
+          ? `"${player.nickname}"<br>`
+          : ""}
+        <strong>Strengths:</strong>
+        ${player.strengths?.length
+          ? player.strengths.join(", ")
+          : "None selected"}
+        <br>
+        <strong>Weaknesses:</strong>
+        ${player.weaknesses?.length
+          ? player.weaknesses.join(", ")
+          : "None selected"}
       </div>
     `;
 
     list.appendChild(div);
+
   });
+
 }
 
-/* PLAYER TRAITS */
+/* TRAITS */
+
 const strengths = [
-  "Driver Accuracy","Iron Play","Short Game","Putting",
-  "Beer Consistency","Trash Talk Volume","Cart Navigation Skills",
-  "Mental Toughness","Snack Management"
+  "Driver Accuracy",
+  "Iron Play",
+  "Short Game",
+  "Putting",
+  "Beer Consistency",
+  "Trash Talk Volume",
+  "Cart Navigation Skills",
+  "Mental Toughness",
+  "Snack Management"
 ];
 
 const weaknesses = [
-  "3-Putt Specialist","Slice Machine","Hook Under Pressure",
-  "Slow Play Offender","Bunker Magnet","Ball Disappearance Expert",
-  "Water Hazard Addiction","Driver Meltdown","Putting Confidence Issues"
+  "3-Putt Specialist",
+  "Slice Machine",
+  "Hook Under Pressure",
+  "Slow Play Offender",
+  "Bunker Magnet",
+  "Ball Disappearance Expert",
+  "Water Hazard Addiction",
+  "Driver Meltdown",
+  "Putting Confidence Issues"
 ];
 
 let selectedStrengths = [];
 let selectedWeaknesses = [];
 
 function renderTraits() {
-  const s = document.getElementById("strengths");
-  const w = document.getElementById("weaknesses");
+
+  const s =
+    document.getElementById(
+      "strengths"
+    );
+
+  const w =
+    document.getElementById(
+      "weaknesses"
+    );
 
   s.innerHTML = "";
   w.innerHTML = "";
 
   strengths.forEach(x => {
-    const div = document.createElement("div");
+
+    const div =
+      document.createElement("div");
+
     div.className = "trait-card";
     div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "strength");
+
+    div.onclick = () =>
+      toggleTrait(
+        div,
+        x,
+        "strength"
+      );
+
     s.appendChild(div);
+
   });
 
   weaknesses.forEach(x => {
-    const div = document.createElement("div");
+
+    const div =
+      document.createElement("div");
+
     div.className = "trait-card";
     div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "weakness");
+
+    div.onclick = () =>
+      toggleTrait(
+        div,
+        x,
+        "weakness"
+      );
+
     w.appendChild(div);
+
   });
+
 }
 
 function toggleTrait(el, value, type) {
+
   el.classList.toggle("selected");
 
-  let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
+  let arr =
+    type === "strength"
+      ? selectedStrengths
+      : selectedWeaknesses;
 
   if (arr.includes(value)) {
-    arr.splice(arr.indexOf(value), 1);
+
+    arr.splice(
+      arr.indexOf(value),
+      1
+    );
+
   } else {
+
     arr.push(value);
+
   }
+
 }
 
 function resetPlayerForm() {
-  document.getElementById("playerName").value = "";
-  document.getElementById("nickname").value = "";
-  document.getElementById("playerTeam").value = "";
+
+  document.getElementById(
+    "playerName"
+  ).value = "";
+
+  document.getElementById(
+    "nickname"
+  ).value = "";
+
+  document.getElementById(
+    "playerTeam"
+  ).value = "";
 
   selectedStrengths = [];
   selectedWeaknesses = [];
 
-  document.querySelectorAll(".trait-card").forEach(card => {
-    card.classList.remove("selected");
-  });
+  document
+    .querySelectorAll(
+      ".trait-card"
+    )
+    .forEach(card =>
+      card.classList.remove(
+        "selected"
+      )
+    );
+
 }
 
 function loadPlayerForEdit(index) {
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
-  const player = players[index];
 
-  document.getElementById("playerName").value = player.name || "";
-  document.getElementById("nickname").value = player.nickname || "";
-  document.getElementById("playerTeam").value = player.team || "";
+  const players =
+    JSON.parse(
+      localStorage.getItem(
+        "players"
+      ) || "[]"
+    );
 
-  selectedStrengths = player.strengths || [];
-  selectedWeaknesses = player.weaknesses || [];
+  const player =
+    players[index];
 
-  document.querySelectorAll("#strengths .trait-card").forEach(card => {
-    if (selectedStrengths.includes(card.innerText)) {
-      card.classList.add("selected");
-    }
-  });
+  document.getElementById(
+    "playerName"
+  ).value =
+    player.name || "";
 
-  document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
-    if (selectedWeaknesses.includes(card.innerText)) {
-      card.classList.add("selected");
-    }
-  });
+  document.getElementById(
+    "nickname"
+  ).value =
+    player.nickname || "";
+
+  document.getElementById(
+    "playerTeam"
+  ).value =
+    player.team || "";
+
+  selectedStrengths =
+    player.strengths || [];
+
+  selectedWeaknesses =
+    player.weaknesses || [];
+
+  document
+    .querySelectorAll(
+      "#strengths .trait-card"
+    )
+    .forEach(card => {
+      if (
+        selectedStrengths.includes(
+          card.innerText
+        )
+      ) {
+        card.classList.add(
+          "selected"
+        );
+      }
+    });
+
+  document
+    .querySelectorAll(
+      "#weaknesses .trait-card"
+    )
+    .forEach(card => {
+      if (
+        selectedWeaknesses.includes(
+          card.innerText
+        )
+      ) {
+        card.classList.add(
+          "selected"
+        );
+      }
+    });
+
 }
 
 function savePlayer() {
-  const name = document.getElementById("playerName").value;
-  const nickname = document.getElementById("nickname").value;
-  const team = document.getElementById("playerTeam").value;
+
+  const name =
+    document.getElementById(
+      "playerName"
+    ).value;
+
+  const nickname =
+    document.getElementById(
+      "nickname"
+    ).value;
+
+  const team =
+    document.getElementById(
+      "playerTeam"
+    ).value;
 
   if (!name.trim()) {
-    alert("Please enter a player name.");
+
+    alert(
+      "Please enter a player name."
+    );
+
     return;
+
   }
 
   const player = {
@@ -545,47 +835,98 @@ function savePlayer() {
     weaknesses: selectedWeaknesses
   };
 
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
+  let players =
+    JSON.parse(
+      localStorage.getItem(
+        "players"
+      ) || "[]"
+    );
 
-  if (editingPlayerIndex === null) {
+  if (
+    editingPlayerIndex === null
+  ) {
     players.push(player);
   } else {
-    players[editingPlayerIndex] = player;
+    players[
+      editingPlayerIndex
+    ] = player;
   }
 
-  localStorage.setItem("players", JSON.stringify(players));
+  localStorage.setItem(
+    "players",
+    JSON.stringify(players)
+  );
 
   editingPlayerIndex = null;
+
   openPlayerList();
+
 }
 
 function renderPlayerList() {
-  const list = document.getElementById("playerList");
-  const players = JSON.parse(localStorage.getItem("players") || "[]");
+
+  const list =
+    document.getElementById(
+      "playerList"
+    );
+
+  const players =
+    JSON.parse(
+      localStorage.getItem(
+        "players"
+      ) || "[]"
+    );
 
   list.innerHTML = "";
 
   if (players.length === 0) {
-    list.innerHTML = `<div class="empty-state">No players yet. Tap “Add New Player” to create one.</div>`;
+
+    list.innerHTML =
+      `<div class="empty-state">
+        No players yet.
+        Tap “Add New Player”
+        to create one.
+      </div>`;
+
     return;
+
   }
 
-  players.forEach((player, index) => {
-    const div = document.createElement("div");
-    div.className = "player-row";
-    div.onclick = () => openPlayer(index);
+  players.forEach(
+    (player, index) => {
 
-    div.innerHTML = `
-      <div class="player-name">${player.name}</div>
-      <div class="player-detail">
-        ${player.nickname ? `"${player.nickname}" • ` : ""}
-        ${player.team ? player.team : "No team assigned"}
-      </div>
-    `;
+      const div =
+        document.createElement(
+          "div"
+        );
 
-    list.appendChild(div);
-  });
+      div.className =
+        "player-row";
+
+      div.onclick = () =>
+        openPlayer(index);
+
+      div.innerHTML = `
+        <div class="player-name">
+          ${player.name}
+        </div>
+        <div class="player-detail">
+          ${player.nickname
+            ? `"${player.nickname}" • `
+            : ""}
+          ${player.team
+            ? player.team
+            : "No team assigned"}
+        </div>
+      `;
+
+      list.appendChild(div);
+
+    }
+  );
+
 }
+
 </script>
 
 </body>
