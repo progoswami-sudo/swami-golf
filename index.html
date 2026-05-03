@@ -39,7 +39,6 @@
       text-align: center;
       font-size: 18px;
       cursor: pointer;
-      box-shadow: 0 0 25px rgba(0,0,0,0.4);
     }
 
     .card {
@@ -74,6 +73,7 @@
       font-weight: bold;
       font-size: 16px;
       margin-top: 12px;
+      cursor: pointer;
     }
 
     .gear {
@@ -147,8 +147,10 @@
   <!-- SETTINGS -->
   <div id="settingsScreen" class="hidden">
     <h2>Settings</h2>
+
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
+      <button onclick="openPlayer()">Add / Edit Players</button>
       <button onclick="goTripHome()">Back</button>
     </div>
   </div>
@@ -165,6 +167,16 @@
     </div>
   </div>
 
+  <!-- PLAYER (placeholder screen restored) -->
+  <div id="playerScreen" class="hidden">
+    <h2>Player Management</h2>
+
+    <div class="card">
+      <p>Add/Edit players functionality here</p>
+      <button onclick="openSettings()">Back</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -172,7 +184,7 @@
 /* NAV */
 
 function show(id) {
-  ["appHome","tripHome","settingsScreen","teamScreen"]
+  ["appHome","tripHome","settingsScreen","teamScreen","playerScreen"]
     .forEach(x => document.getElementById(x).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
@@ -180,7 +192,9 @@ function show(id) {
 function openTripHome(){show("tripHome"); loadTeams();}
 function goHome(){show("appHome")}
 function openSettings(){show("settingsScreen")}
+function goTripHome(){show("tripHome"); loadTeams();}
 function openTeamEdit(){show("teamScreen"); loadInputs();}
+function openPlayer(){show("playerScreen");}
 
 /* TEAM SAVE */
 
