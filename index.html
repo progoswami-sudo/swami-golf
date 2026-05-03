@@ -71,6 +71,7 @@
       padding: 15px;
       border-radius: 12px;
       margin-top: 15px;
+      overflow: hidden;
     }
 
     .hidden { display: none; }
@@ -153,13 +154,25 @@
     }
 
     input, select, textarea {
+      display: block;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       box-sizing: border-box;
       padding: 14px;
       margin-top: 10px;
       border-radius: 10px;
       border: none;
       font-size: 16px;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
     textarea {
@@ -384,6 +397,8 @@
         <button class="small-add-btn" onclick="openItineraryEditor('other')">Add Event</button>
       </div>
       <div id="otherItineraryList"></div>
+
+      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -980,7 +995,7 @@ const strengths = [
   "Approach Shot Optimism",
   "Gimme Putt Diplomacy",
   "Post-Round Storytelling",
-  "Fairway Finder Energy",
+  "First Tee Swagger",
   "Club Twirl Confidence"
 ];
 
@@ -1000,7 +1015,7 @@ const weaknesses = [
   "Cart Path Only Confusion",
   "Scorecard Math Problems",
   "Wind Blame Specialist",
-  "Lost Tee Box Focus"
+  "Forgotten Wedge Syndrome"
 ];
 
 let selectedStrengths = [];
