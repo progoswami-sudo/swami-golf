@@ -5,21 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Swami Golf</title>
 
-  <!-- iPhone / iPad Home Screen Icon -->
-  <link rel="apple-touch-icon" href="/Swami Golf Logo.png">
-  <link rel="icon" type="image/png" href="/Swami Golf Logo.png">
-  <meta name="apple-mobile-web-app-title" content="Swami Golf">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#050914">
-
   <style>
     html, body {
-      height: 100%;
+      min-height: 100%;
       margin: 0;
       font-family: Arial, sans-serif;
-      background: radial-gradient(circle at top, #0b1a2f, #050914);
-      background-attachment: fixed;
       color: white;
+      background: #050914;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(circle at top, #0b1a2f 0%, #050914 70%);
+      background-repeat: no-repeat;
+      background-size: cover;
     }
 
     .container {
@@ -196,6 +198,7 @@
 
 <div class="container">
 
+  <!-- HOME -->
   <div id="appHome">
     <div class="logo">
       <img src="/Swami Golf Logo.png" class="logo-img">
@@ -206,6 +209,7 @@
     </div>
   </div>
 
+  <!-- TRIP -->
   <div id="tripHome" class="hidden">
     <div style="position:relative;">
       <div class="homeBtn" onclick="goHome()">🏠</div>
@@ -216,14 +220,18 @@
       <div class="card">
         <div class="scoreboard">
           <div>
-            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">Team A</div>
+            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">
+              Team A
+            </div>
             <div class="score">0</div>
           </div>
 
           <div>VS</div>
 
           <div>
-            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
+            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">
+              Team B
+            </div>
             <div class="score">0</div>
           </div>
         </div>
@@ -231,6 +239,7 @@
     </div>
   </div>
 
+  <!-- TEAM ROSTER -->
   <div id="teamRosterScreen" class="hidden">
     <h2 id="teamRosterTitle">Team Roster</h2>
 
@@ -240,6 +249,7 @@
     </div>
   </div>
 
+  <!-- SETTINGS -->
   <div id="settingsScreen" class="hidden">
     <h2>Settings</h2>
 
@@ -250,17 +260,20 @@
     </div>
   </div>
 
+  <!-- TEAM EDIT -->
   <div id="teamScreen" class="hidden">
     <h2>Team Names</h2>
 
     <div class="card">
       <input id="teamAInput" placeholder="Team A Name"/>
       <input id="teamBInput" placeholder="Team B Name"/>
+
       <button onclick="saveTeams()">Save</button>
       <button onclick="openSettings()" class="secondary">Back</button>
     </div>
   </div>
 
+  <!-- PLAYER LIST -->
   <div id="playerListScreen" class="hidden">
     <h2>Players</h2>
 
@@ -271,6 +284,7 @@
     </div>
   </div>
 
+  <!-- PLAYER PROFILE -->
   <div id="playerScreen" class="hidden">
     <h2 id="playerScreenTitle">Player Profile</h2>
 
@@ -298,6 +312,7 @@
 <script>
 let editingPlayerIndex = null;
 
+/* NAV */
 function show(id) {
   [
     "appHome",
@@ -355,6 +370,7 @@ function openPlayer(index = null) {
   }
 }
 
+/* TEAM LOGIC */
 function saveTeams() {
   const teamA = document.getElementById("teamAInput").value || "Team A";
   const teamB = document.getElementById("teamBInput").value || "Team B";
@@ -464,6 +480,7 @@ function renderTeamRoster(teamName) {
   });
 }
 
+/* PLAYER TRAITS */
 const strengths = [
   "Driver Accuracy",
   "Iron Play",
