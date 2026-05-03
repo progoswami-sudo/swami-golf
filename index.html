@@ -118,6 +118,74 @@
       margin-top: 8px;
     }
 
+    .feed-card {
+      max-height: 360px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .feed-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .feed-subtitle {
+      font-size: 12px;
+      color: #dbeafe;
+    }
+
+    .feed-list {
+      overflow-y: auto;
+      padding-right: 4px;
+      max-height: 220px;
+    }
+
+    .feed-post {
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .feed-author {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .feed-time {
+      font-size: 11px;
+      color: #bfdbfe;
+      margin-top: 2px;
+    }
+
+    .feed-text {
+      font-size: 14px;
+      color: #ffffff;
+      line-height: 1.35;
+      margin-top: 8px;
+    }
+
+    .feed-empty {
+      color: #dbeafe;
+      text-align: center;
+      padding: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .feed-input-row {
+      margin-top: 12px;
+    }
+
     button {
       width: 100%;
       padding: 16px;
@@ -180,6 +248,10 @@
       min-height: 120px;
       resize: vertical;
       font-family: Arial, sans-serif;
+    }
+
+    #feedCommentInput {
+      min-height: 72px;
     }
 
     #importDataText {
@@ -363,6 +435,22 @@
             <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
             <div id="teamBScore" class="score">0</div>
           </div>
+        </div>
+      </div>
+
+      <div class="card feed-card">
+        <div class="feed-header">
+          <div>
+            <div class="feed-title">Trip Feed</div>
+            <div class="feed-subtitle">Trash talk, updates, and Swami wisdom</div>
+          </div>
+        </div>
+
+        <div id="feedList" class="feed-list"></div>
+
+        <div class="feed-input-row">
+          <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..."></textarea>
+          <button onclick="postUserComment()">Post Comment</button>
         </div>
       </div>
     </div>
@@ -625,17 +713,9 @@ function tripKey(key) {
   return `swamiGolf.${activeTripId}.${key}`;
 }
 
-function allTripIds() {
-  return Object.keys(trips);
-}
-
 function migrateLegacyPinehurstDataIfNeeded() {
   const migrationFlag = "swamiGolf.legacyMigrationComplete";
-
   if (localStorage.getItem(migrationFlag)) return;
-
-  const legacyPlayers = localStorage.getItem("players");
-  const legacyItinerary = localStorage.getItem("itineraryEvents");
 
   if (localStorage.getItem("teamA")) {
     localStorage.setItem("swamiGolf.pinehurst2026.teamA", localStorage.getItem("teamA"));
@@ -653,12 +733,16 @@ function migrateLegacyPinehurstDataIfNeeded() {
     localStorage.setItem("swamiGolf.pinehurst2026.teamBScore", localStorage.getItem("teamBScore"));
   }
 
-  if (legacyPlayers) {
-    localStorage.setItem("swamiGolf.pinehurst2026.players", legacyPlayers);
+  if (localStorage.getItem("players")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.players", localStorage.getItem("players"));
   }
 
-  if (legacyItinerary) {
-    localStorage.setItem("swamiGolf.pinehurst2026.itineraryEvents", legacyItinerary);
+  if (localStorage.getItem("itineraryEvents")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.itineraryEvents", localStorage.getItem("itineraryEvents"));
+  }
+
+  if (localStorage.getItem("feedPosts")) {
+    localStorage.setItem("swamiGolf.pinehurst2026.feedPosts", localStorage.getItem("feedPosts"));
   }
 
   localStorage.setItem(migrationFlag, "true");
@@ -696,6 +780,10 @@ function initializeTripIfNeeded(tripId) {
     localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(defaultEvents));
   }
 
+  if (!localStorage.getItem(tripKey("feedPosts"))) {
+    localStorage.setItem(tripKey("feedPosts"), JSON.stringify([]));
+  }
+
   activeTripId = previousTripId;
 }
 
@@ -725,6 +813,7 @@ function openTripHome(tripId = activeTripId) {
   show("tripHome");
   loadTeams();
   loadScores();
+  renderFeed();
 }
 
 function openItinerary() {
@@ -785,6 +874,7 @@ function saveTeams() {
   localStorage.setItem(tripKey("teamB"), teamB);
 
   updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
+  addSwamiPost("teams", `${teamA} vs. ${teamB}`);
 
   loadTeams();
   openSettings();
@@ -1000,6 +1090,8 @@ function saveItineraryEvent() {
     details
   };
 
+  const wasEditing = Boolean(editingItineraryEventId);
+
   if (editingItineraryEventId) {
     events = events.map(event =>
       event.id === editingItineraryEventId ? eventData : event
@@ -1009,19 +1101,29 @@ function saveItineraryEvent() {
   }
 
   saveItineraryEvents(events);
+
+  addSwamiPost(
+    wasEditing ? "itineraryEdit" : "itineraryAdd",
+    title
+  );
+
   editingItineraryEventId = null;
   openItinerary();
 }
 
 function deleteItineraryEvent() {
   if (!editingItineraryEventId) return;
-
   if (!confirm("Delete this event?")) return;
 
-  let events = getItineraryEvents();
-  events = events.filter(event => event.id !== editingItineraryEventId);
+  const events = getItineraryEvents();
+  const event = events.find(x => x.id === editingItineraryEventId);
+  const eventTitle = event ? event.title : "an event";
 
-  saveItineraryEvents(events);
+  const updatedEvents = events.filter(event => event.id !== editingItineraryEventId);
+
+  saveItineraryEvents(updatedEvents);
+  addSwamiPost("itineraryDelete", eventTitle);
+
   editingItineraryEventId = null;
   openItinerary();
 }
@@ -1072,6 +1174,145 @@ function formatDisplayTime(timeString) {
     hour: "numeric",
     minute: "2-digit"
   });
+}
+
+function getFeedPosts() {
+  return JSON.parse(localStorage.getItem(tripKey("feedPosts")) || "[]");
+}
+
+function saveFeedPosts(posts) {
+  localStorage.setItem(tripKey("feedPosts"), JSON.stringify(posts));
+}
+
+function renderFeed() {
+  const list = document.getElementById("feedList");
+  const posts = getFeedPosts()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  list.innerHTML = "";
+
+  if (posts.length === 0) {
+    list.innerHTML = `
+      <div class="feed-empty">
+        The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.
+      </div>
+    `;
+    return;
+  }
+
+  posts.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "feed-post";
+
+    div.innerHTML = `
+      <div class="feed-author">${post.author}</div>
+      <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
+      <div class="feed-text">${escapeHtml(post.text)}</div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function addFeedPost(author, text, type = "user") {
+  const posts = getFeedPosts();
+
+  posts.push({
+    id: `post-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    author,
+    text,
+    type,
+    createdAt: new Date().toISOString()
+  });
+
+  saveFeedPosts(posts);
+}
+
+function addSwamiPost(action, subject) {
+  const text = getSwamiComment(action, subject);
+  addFeedPost("Swami Says", text, "admin");
+}
+
+function getSwamiComment(action, subject) {
+  const comments = {
+    itineraryAdd: [
+      `New itinerary item added: ${subject}. Excellent. Nothing says "relaxing golf trip" like another scheduled commitment.`,
+      `${subject} just hit the itinerary. The boys are now officially over-managed and under-hydrated.`,
+      `Added ${subject}. Somewhere, a guy who "doesn't need details" is already asking what time it starts.`
+    ],
+    itineraryEdit: [
+      `${subject} was updated. Because apparently the first plan was too easy to understand.`,
+      `Itinerary update: ${subject}. Please pretend you read it before asking the group chat.`,
+      `${subject} changed. Adjust your excuses accordingly.`
+    ],
+    itineraryDelete: [
+      `${subject} was removed from the itinerary. A rare victory for free time and poor decision-making.`,
+      `Deleted ${subject}. The schedule has lost weight. If only some swings could do the same.`,
+      `${subject} is gone. Pour one out, then check if you were supposed to be there.`
+    ],
+    playerAdd: [
+      `${subject} joined the trip. May his handicap be honest and his breakfast ball usage be limited.`,
+      `${subject} has been added. Another swing enters the evidence locker.`,
+      `Welcome ${subject}. The field gets deeper, though not necessarily better.`
+    ],
+    playerEdit: [
+      `${subject}'s profile was updated. Bold move editing the scouting report before the first tee.`,
+      `${subject} has new player info. The handicap committee is already suspicious.`,
+      `${subject}'s profile changed. Somewhere a sandbagger just felt seen.`
+    ],
+    teams: [
+      `Team update: ${subject}. Rivalries are forming and friendships are already on probation.`,
+      `The teams are now ${subject}. Somebody is about to claim they "don't care" very loudly.`,
+      `${subject}. May the better team win, and may the worse team have a deep cooler.`
+    ],
+    userComment: [
+      `The group chat has spoken. Accuracy level: questionable. Confidence level: elite.`,
+      `A new comment has entered the arena. Grammar optional, trash talk encouraged.`,
+      `Someone posted in the feed. Productivity is down, vibes are up.`
+    ]
+  };
+
+  const list = comments[action] || [
+    `Something changed: ${subject}. Swami has reviewed it and remains mildly concerned.`
+  ];
+
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function postUserComment() {
+  const input = document.getElementById("feedCommentInput");
+  const text = input.value.trim();
+
+  if (!text) {
+    alert("Please enter a comment.");
+    return;
+  }
+
+  addFeedPost("User", text, "user");
+  input.value = "";
+
+  if (Math.random() < 0.45) {
+    addSwamiPost("userComment", "comment");
+  }
+
+  renderFeed();
+}
+
+function formatFeedTime(isoString) {
+  const date = new Date(isoString);
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.innerText = text;
+  return div.innerHTML;
 }
 
 const strengths = [
@@ -1211,6 +1452,7 @@ function savePlayer() {
   };
 
   let players = JSON.parse(localStorage.getItem(tripKey("players")) || "[]");
+  const wasEditing = editingPlayerIndex !== null;
 
   if (editingPlayerIndex === null) {
     players.push(player);
@@ -1219,6 +1461,8 @@ function savePlayer() {
   }
 
   localStorage.setItem(tripKey("players"), JSON.stringify(players));
+
+  addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
 
   editingPlayerIndex = null;
   openPlayerList();
@@ -1270,7 +1514,8 @@ function getSingleTripData(tripId) {
     teamAScore: localStorage.getItem(tripKey("teamAScore")) || "0",
     teamBScore: localStorage.getItem(tripKey("teamBScore")) || "0",
     players: JSON.parse(localStorage.getItem(tripKey("players")) || "[]"),
-    itineraryEvents: JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]")
+    itineraryEvents: JSON.parse(localStorage.getItem(tripKey("itineraryEvents")) || "[]"),
+    feedPosts: JSON.parse(localStorage.getItem(tripKey("feedPosts")) || "[]")
   };
 
   activeTripId = previousTripId;
@@ -1329,6 +1574,7 @@ function importData() {
         localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
         localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
         localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
+        localStorage.setItem(tripKey("feedPosts"), JSON.stringify(data.feedPosts || []));
 
         activeTripId = previousTripId;
       });
@@ -1343,6 +1589,7 @@ function importData() {
       localStorage.setItem(tripKey("teamBScore"), data.teamBScore || "0");
       localStorage.setItem(tripKey("players"), JSON.stringify(data.players || []));
       localStorage.setItem(tripKey("itineraryEvents"), JSON.stringify(data.itineraryEvents || []));
+      localStorage.setItem(tripKey("feedPosts"), JSON.stringify(data.feedPosts || []));
     }
 
     alert("Data imported successfully.");
