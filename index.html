@@ -411,7 +411,7 @@
     .hamburger-wrap {
       position: relative;
       display: flex;
-      justify-content: flex-end;
+      justify-content: flex-start;
       margin-top: -8px;
       margin-bottom: 4px;
     }
@@ -429,7 +429,7 @@
 
     .home-menu {
       position: absolute;
-      right: 0;
+      left: 0;
       top: 48px;
       width: 230px;
       background: #13294d;
@@ -608,11 +608,11 @@
 
     <div class="sync-status" id="syncStatus">Connecting to Swami...</div>
 
-    <div class="tile" onclick="openTripHome('pinehurst2026')">
+    <div class="tile trip-tile" data-trip-id="pinehurst2026" onclick="openTripHome('pinehurst2026')">
       🏌️ Pinehurst 2026
     </div>
 
-    <div class="tile" onclick="openTripHome('testGolfTrip')">
+    <div class="tile trip-tile" data-trip-id="testGolfTrip" onclick="openTripHome('testGolfTrip')">
       🧪 Test Golf Trip
     </div>
   </div>
@@ -1483,6 +1483,14 @@
     container.innerHTML = "";
 
     let fields = [];
+    const stablefordDefaults = {
+      "Albatross (3 under)": "5.00",
+      "Eagle (2 under)": "4.00",
+      "Birdie (1 under)": "3.00",
+      "Par": "2.00",
+      "Bogey (1 over)": "1.00",
+      "Double or Worse (2+ over)": "0.00"
+    };
 
     if (format === "Best Ball (Nassau)") {
       fields = ["Front 9", "Back 9", "Overall"];
@@ -1501,10 +1509,11 @@
 
     fields.forEach(label => {
       const key = makeValueKey(label);
+      const defaultValue = format === "Stableford" ? stablefordDefaults[label] : "";
       const wrapper = document.createElement("div");
       wrapper.innerHTML = `
         <label class="form-label" for="value-${key}">${label}</label>
-        <input id="value-${key}" inputmode="decimal" pattern="^\\d+(\\.\\d{1,2})?$" placeholder="0.00">
+        <input id="value-${key}" inputmode="decimal" pattern="^\\d+(\\.\\d{1,2})?$" placeholder="0.00" value="${defaultValue}">
       `;
       container.appendChild(wrapper);
     });
@@ -1683,10 +1692,17 @@
   function openEnterScore(matchId) { alert("Enter Score screen is coming next. Match ID: " + matchId); }
 
   async function openTripHome(tripId = activeTripId) {
-    activeTripId = tripId;
-    await initializeTripIfNeeded(activeTripId);
-    subscribeToTrip(activeTripId);
-    show("tripHome");
+    try {
+      activeTripId = tripId;
+      document.getElementById("syncStatus").innerText = "Opening trip...";
+      await initializeTripIfNeeded(activeTripId);
+      subscribeToTrip(activeTripId);
+      show("tripHome");
+    } catch (error) {
+      console.error("Unable to open trip:", error);
+      document.getElementById("syncStatus").innerText = "Could not open trip. Check Firebase rules / connection.";
+      alert("Could not open this trip. Please check Firebase rules, internet connection, or browser console.");
+    }
   }
 
   function renderTripHeader() {
@@ -2656,6 +2672,16 @@
   window.savePlayer = savePlayer;
   window.exportData = exportData;
   window.importData = importData;
+
+  document.querySelectorAll(".trip-tile").forEach(tile => {
+    tile.addEventListener("click", () => {
+      const tripId = tile.getAttribute("data-trip-id");
+      if (tripId) {
+        openTripHome(tripId);
+      }
+    });
+  });
+
 </script>
 
 </body>
