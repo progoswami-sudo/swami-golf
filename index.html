@@ -119,7 +119,7 @@
     }
 
     .feed-card {
-      max-height: 360px;
+      max-height: 460px;
       display: flex;
       flex-direction: column;
     }
@@ -138,7 +138,7 @@
     .feed-list {
       overflow-y: auto;
       padding-right: 4px;
-      max-height: 220px;
+      max-height: 300px;
     }
 
     .feed-post {
@@ -541,6 +541,7 @@
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
       <button onclick="openPlayerList()">Add / Edit Players</button>
+      <button onclick="setDisplayName()">Set Display Name</button>
       <button onclick="exportData()" class="backup">Export Data</button>
       <button onclick="openImportScreen()" class="import">Import Data</button>
       <button onclick="goTripHome()" class="secondary">Back</button>
@@ -653,6 +654,7 @@
   let editingPlayerId = null;
   let editingItineraryEventId = null;
   let unsubscribers = [];
+  let displayName = localStorage.getItem("swamiGolf.displayName") || "";
 
   const trips = {
     pinehurst2026: {
@@ -1314,41 +1316,131 @@
   }
 
   function getSwamiComment(action, subject) {
+    const tripName = activeTripData.name || trips[activeTripId].name;
     const comments = {
       itineraryAdd: [
-        `New itinerary item added: ${subject}. Excellent. Nothing says "relaxing golf trip" like another scheduled commitment.`,
-        `${subject} just hit the itinerary. The boys are now officially over-managed and under-hydrated.`,
-        `Added ${subject}. Somewhere, a guy who "doesn't need details" is already asking what time it starts.`
+        `New itinerary item added: ${subject}. Nothing says "relaxing golf trip" like another scheduled obligation.`,
+        `${subject} just hit the itinerary. The group is now officially over-managed and under-hydrated.`,
+        `Added ${subject}. Somewhere, someone is already asking what time it starts.`,
+        `${subject} is now on the schedule. Please update your excuses accordingly.`,
+        `The itinerary gained ${subject}. The odds of everyone being on time remain deeply suspicious.`,
+        `${subject} has been added. Another chance for grown adults to prove they can read a schedule.`,
+        `New plan for ${tripName}: ${subject}. May the logistics be smoother than the collective putting stroke.`,
+        `${subject} is official. The spreadsheet guy is smiling somewhere.`,
+        `Added ${subject}. This trip now has more structure than most backswings.`,
+        `${subject} made the itinerary. Hydration optional, confusion guaranteed.`,
+        `${subject} has joined the schedule. Somebody please notify the guy who refuses to check texts.`,
+        `Itinerary update: ${subject}. The Swami gives it two thumbs up and one skeptical eyebrow.`,
+        `${subject} is locked in. Still no guarantee anyone knows where their room key is.`,
+        `Added ${subject}. Another opportunity for the group to arrive in three separate waves.`,
+        `${subject} is on the board. The trip is becoming dangerously organized.`
       ],
       itineraryEdit: [
-        `${subject} was updated. Because apparently the first plan was too easy to understand.`,
+        `${subject} was updated. Because the first version was apparently too easy to understand.`,
         `Itinerary update: ${subject}. Please pretend you read it before asking the group chat.`,
-        `${subject} changed. Adjust your excuses accordingly.`
+        `${subject} changed. Adjust your excuses and alarm clocks.`,
+        `Updated ${subject}. The schedule has entered its committee-reviewed phase.`,
+        `${subject} has new details. Confidence remains high, punctuality remains questionable.`,
+        `The Swami has reviewed the ${subject} update and found it mildly concerning but legally binding.`,
+        `${subject} was edited. Somewhere a calendar invite just gave up.`,
+        `Updated ${subject}. This is why we can't have simple trips.`,
+        `${subject} has changed. Blame the guy who said "let's just wing it."`,
+        `New details for ${subject}. Please act like this was always the plan.`,
+        `${subject} got revised. The itinerary now has more edits than a wedding seating chart.`,
+        `Update posted for ${subject}. Someone will still ask if shorts are okay.`,
+        `${subject} has been refreshed. The Swami recommends pretending you knew.`,
+        `The details for ${subject} changed. The group chat legal department has been notified.`,
+        `${subject} was updated. Everyone remain calm and continue overpacking.`
       ],
       itineraryDelete: [
-        `${subject} was removed from the itinerary. A rare victory for free time and poor decision-making.`,
-        `Deleted ${subject}. The schedule has lost weight. If only some swings could do the same.`,
-        `${subject} is gone. Pour one out, then check if you were supposed to be there.`
+        `${subject} was removed. A rare victory for free time and poor decision-making.`,
+        `Deleted ${subject}. The schedule lost weight. If only some swings could do the same.`,
+        `${subject} is gone. Pour one out, then check if you were supposed to be there.`,
+        `Removed ${subject}. The itinerary is healing.`,
+        `${subject} has been cut. Ruthless, but probably necessary.`,
+        `Deleted ${subject}. Somewhere, a man in cargo shorts just gained 90 minutes.`,
+        `${subject} got dropped faster than a provisional into the woods.`,
+        `Removed ${subject}. The Swami approves this act of calendar mercy.`,
+        `${subject} is off the board. Chaos has reclaimed a small territory.`,
+        `Deleted ${subject}. One less thing to be late for.`,
+        `${subject} has vanished from the itinerary. Nobody panic unless it was dinner.`,
+        `${subject} was removed. The group now has more time for questionable decisions.`,
+        `The schedule said goodbye to ${subject}. It was emotional for almost no one.`,
+        `${subject} has been erased. The Swami calls this addition by subtraction.`,
+        `Removed ${subject}. The itinerary just found the short grass.`
       ],
       playerAdd: [
         `${subject} joined the trip. May his handicap be honest and his breakfast ball usage be limited.`,
         `${subject} has been added. Another swing enters the evidence locker.`,
-        `Welcome ${subject}. The field gets deeper, though not necessarily better.`
+        `Welcome ${subject}. The field gets deeper, though not necessarily better.`,
+        `${subject} is now on the roster. Hide the good cigars and count the golf balls.`,
+        `${subject} has entered the arena. The course has been notified.`,
+        `Added ${subject}. Statistically, someone just became less likely to finish last.`,
+        `${subject} is in. The handicap committee has opened a fresh file.`,
+        `Roster update: ${subject}. Confidence high, swing path unknown.`,
+        `${subject} joins the trip. The Swami senses both potential and a double bogey.`,
+        `Welcome ${subject}. May your drives be long and your Venmo payments timely.`,
+        `${subject} has been added. The group text just got 12% worse.`,
+        `${subject} is officially part of this circus. Please issue him a scorecard and emotional support wedge.`,
+        `Added ${subject}. The leaderboard trembles, or maybe that's just someone's putting grip.`,
+        `${subject} is in. Another adult man ready to blame wind on a calm day.`,
+        `Welcome ${subject}. The trip needed more personality and possibly fewer swing thoughts.`,
+        `${subject} has joined. Vegas immediately moved the line toward chaos.`,
+        `${subject} is on the team sheet. The cart assignments just got more interesting.`,
+        `Added ${subject}. May his first tee ball be findable and his stories be brief.`,
+        `${subject} is confirmed. The Swami predicts at least one heroic bogey.`,
+        `Welcome ${subject}. Another man prepared to say "I never play this bad" for four straight days.`
       ],
       playerEdit: [
         `${subject}'s profile was updated. Bold move editing the scouting report before the first tee.`,
         `${subject} has new player info. The handicap committee is already suspicious.`,
-        `${subject}'s profile changed. Somewhere a sandbagger just felt seen.`
+        `${subject}'s profile changed. Somewhere a sandbagger just felt seen.`,
+        `Updated ${subject}. The legend grows, mostly through selective memory.`,
+        `${subject}'s details were edited. This feels like pre-round gamesmanship.`,
+        `${subject} got a profile refresh. Still no guarantee of finding the fairway.`,
+        `Scouting report updated for ${subject}. Opponents are pretending not to care.`,
+        `${subject}'s profile changed. The Swami has adjusted the sarcasm model.`,
+        `Updated ${subject}. Numbers changed, excuses remain unlimited.`,
+        `${subject}'s profile was revised. Very official. Very suspicious.`,
+        `${subject} received a profile update. Somewhere, a spreadsheet became more dangerous.`,
+        `Player update: ${subject}. The vibes shifted, but the handicap math remains under investigation.`,
+        `${subject}'s info changed. The Swami recommends a provisional ruling.`,
+        `Updated ${subject}. The self-assessment portion appears optimistic.`,
+        `${subject}'s scouting report was refreshed. The course remains unimpressed.`
       ],
       teams: [
         `Team update: ${subject}. Rivalries are forming and friendships are already on probation.`,
         `The teams are now ${subject}. Somebody is about to claim they "don't care" very loudly.`,
-        `${subject}. May the better team win, and may the worse team have a deep cooler.`
+        `${subject}. May the better team win, and may the worse team have a deep cooler.`,
+        `Teams set: ${subject}. The chirping can now begin with structure.`,
+        `${subject}. This has "bad blood over a conceded putt" written all over it.`,
+        `Team alignment complete: ${subject}. The Swami predicts drama by hole 4.`,
+        `${subject}. Please remember this is about friendship, until the first press.`,
+        `The matchup is ${subject}. Emotional stability not included.`,
+        `${subject}. One team will win, the other will blame formats.`,
+        `Teams updated: ${subject}. Let the quiet resentment begin.`,
+        `${subject}. The Swami sees handshake smiles and private grudges.`,
+        `New teams: ${subject}. Somebody already thinks they got stuck with the anchor.`,
+        `${subject}. Good luck pretending this won't get personal.`,
+        `The sides are set: ${subject}. May the trash talk be better than the wedge play.`,
+        `${subject}. The group dynamic has officially entered match-play mode.`
       ],
       userComment: [
-        `The group chat has spoken. Accuracy level: questionable. Confidence level: elite.`,
-        `A new comment has entered the arena. Grammar optional, trash talk encouraged.`,
-        `Someone posted in the feed. Productivity is down, vibes are up.`
+        `${subject} has spoken. Accuracy questionable, confidence elite.`,
+        `New feed comment from ${subject}. Productivity down, vibes up.`,
+        `${subject} added to the discourse. The Swami is monitoring for excessive optimism.`,
+        `${subject} posted. The group chat energy has officially escaped containment.`,
+        `A comment from ${subject}. Somewhere, a notification ruined someone's meeting.`,
+        `${subject} has entered the feed. Please keep all takes below PGA Tour legal speed.`,
+        `New comment by ${subject}. The Swami detects confidence unsupported by recent scorecards.`,
+        `${subject} contributed to the thread. Democracy has consequences.`,
+        `${subject} posted. That sound you hear is six grown men checking their phones.`,
+        `Feed update from ${subject}. Strong words from a man who may still need two off the first.`,
+        `${subject} chimed in. The Swami appreciates the confidence, if not the evidence.`,
+        `Comment posted by ${subject}. The vibes committee will review.`,
+        `${subject} added a thought. It was brave to call it that.`,
+        `New post from ${subject}. The trash talk market remains volatile.`,
+        `${subject} entered the conversation. Group productivity has been downgraded to questionable.`
       ]
     };
 
@@ -1356,7 +1448,20 @@
       `Something changed: ${subject}. Swami has reviewed it and remains mildly concerned.`
     ];
 
-    return list[Math.floor(Math.random() * list.length)];
+    const recentKey = `swamiGolf.${activeTripId}.recentSwamiComments`;
+    const recent = JSON.parse(localStorage.getItem(recentKey) || "[]");
+    let available = list.filter(comment => !recent.includes(comment));
+
+    if (available.length === 0) {
+      available = list;
+    }
+
+    const selected = available[Math.floor(Math.random() * available.length)];
+
+    recent.unshift(selected);
+    localStorage.setItem(recentKey, JSON.stringify(recent.slice(0, 15)));
+
+    return selected;
   }
 
   async function postUserComment() {
@@ -1368,11 +1473,31 @@
       return;
     }
 
-    await addFeedPost("User", text, "user");
+    if (!displayName) {
+      setDisplayName();
+    }
+
+    if (!displayName) {
+      alert("Please enter a display name before posting.");
+      return;
+    }
+
+    await addFeedPost(displayName, text, "user");
     input.value = "";
 
     if (Math.random() < 0.45) {
-      await addSwamiPost("userComment", "comment");
+      await addSwamiPost("userComment", displayName);
+    }
+  }
+
+  function setDisplayName() {
+    const currentName = localStorage.getItem("swamiGolf.displayName") || "";
+    const name = prompt("Enter your display name for Trip Feed comments:", currentName);
+
+    if (name && name.trim()) {
+      displayName = name.trim();
+      localStorage.setItem("swamiGolf.displayName", displayName);
+      alert("Display name saved.");
     }
   }
 
@@ -1665,6 +1790,7 @@
   window.saveItineraryEvent = saveItineraryEvent;
   window.deleteItineraryEvent = deleteItineraryEvent;
   window.postUserComment = postUserComment;
+  window.setDisplayName = setDisplayName;
   window.savePlayer = savePlayer;
   window.exportData = exportData;
   window.importData = importData;
