@@ -25,11 +25,11 @@
       display: flex;
       justify-content: center;
       margin-top: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
 
     .logo-img {
-      max-width: 140px;
+      max-width: 160px;
       width: 100%;
       height: auto;
       display: block;
@@ -53,19 +53,6 @@
     .tile:hover {
       transform: scale(1.02);
       border-color: #4c7dff;
-    }
-
-    h1 {
-      text-align: center;
-      margin: 10px 0;
-      font-size: 28px;
-      letter-spacing: 1px;
-    }
-
-    .sub {
-      text-align: center;
-      font-size: 13px;
-      color: #a9b7d0;
     }
 
     /* ================= SCREENS ================= */
@@ -121,7 +108,7 @@
 
     .gear {
       position: absolute;
-      top: 12px;
+      top: 6px; /* moved slightly higher */
       right: 12px;
       font-size: 22px;
       cursor: pointer;
@@ -129,11 +116,10 @@
 
     .homeBtn {
       position: absolute;
-      top: 12px;
+      top: 6px; /* aligned with gear */
       left: 12px;
-      font-size: 14px;
+      font-size: 22px;
       cursor: pointer;
-      color: #cbd5e1;
     }
 
     /* ================= FORM ================= */
@@ -152,6 +138,10 @@
       gap: 8px;
       font-size: 13px;
       margin: 4px 0;
+    }
+
+    h2 {
+      text-align: center;
     }
 
     h4 {
@@ -174,9 +164,6 @@
       <img src="/Swami Golf Logo.png" alt="Swami Golf Logo" class="logo-img">
     </div>
 
-    <h1>Swami Golf</h1>
-    <div class="sub">Your golf trip universe</div>
-
     <div class="tile" onclick="openTripHome()">
       🏌️ Pinehurst 2026
     </div>
@@ -188,10 +175,10 @@
 
     <div style="position:relative;">
 
-      <div class="homeBtn" onclick="goHome()">← Home</div>
+      <div class="homeBtn" onclick="goHome()">🏠</div>
       <div class="gear" onclick="openSettings()">⚙️</div>
 
-      <h1>Pinehurst 2026</h1>
+      <h2>Pinehurst 2026</h2>
 
       <div class="card">
         <div class="scoreboard">
