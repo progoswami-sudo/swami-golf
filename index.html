@@ -21,7 +21,6 @@
       margin: auto;
     }
 
-    /* LOGO */
     .logo {
       display: flex;
       justify-content: center;
@@ -33,7 +32,6 @@
       width: 100%;
     }
 
-    /* TILE */
     .tile {
       margin-top: 25px;
       padding: 22px;
@@ -55,20 +53,6 @@
 
     .hidden { display: none; }
 
-    /* SCOREBOARD */
-    .scoreboard {
-      display: flex;
-      justify-content: space-between;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .score {
-      font-size: 44px;
-      font-weight: bold;
-    }
-
-    /* BUTTONS */
     button {
       width: 100%;
       padding: 16px;
@@ -82,7 +66,6 @@
       cursor: pointer;
     }
 
-    /* ICONS */
     .gear {
       position: absolute;
       top: 6px;
@@ -99,7 +82,6 @@
       cursor: pointer;
     }
 
-    /* INPUT */
     input {
       width: 100%;
       padding: 10px;
@@ -110,13 +92,6 @@
 
     h2 { text-align: center; }
 
-    h4 {
-      margin: 10px 0 5px;
-      font-size: 14px;
-      color: #cbd5e1;
-    }
-
-    /* TRAITS GRID */
     .traits-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -136,6 +111,33 @@
     .trait-card.selected {
       background: #2563eb;
       border-color: #60a5fa;
+    }
+
+    .player-card {
+      padding: 12px;
+      border-radius: 10px;
+      background: #0f1b33;
+      border: 1px solid #2b3d5c;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .player-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .small-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 12px;
+      border-radius: 8px;
+      background: #1d4ed8;
+    }
+
+    .danger {
+      background: #dc2626;
     }
 
   </style>
@@ -186,7 +188,7 @@
 
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
-      <button onclick="openPlayer()">Add / Edit Players</button>
+      <button onclick="openPlayerList()">Add / Edit Players</button>
       <button onclick="goTripHome()">Back</button>
     </div>
   </div>
@@ -203,6 +205,19 @@
     </div>
   </div>
 
+  <!-- PLAYER LIST -->
+  <div id="playerListScreen" class="hidden">
+    <h2>Players</h2>
+
+    <div class="card">
+      <button onclick="openPlayer()">+ Add New Player</button>
+    </div>
+
+    <div id="playerList"></div>
+
+    <button onclick="openSettings()">Back</button>
+  </div>
+
   <!-- PLAYER PROFILE -->
   <div id="playerScreen" class="hidden">
     <h2>Player Profile</h2>
@@ -211,14 +226,14 @@
       <input id="playerName" placeholder="Name"/>
       <input id="nickname" placeholder="Nickname"/>
 
-      <h4>Strengths</h4>
+      <h2 style="font-size:14px;">Strengths</h2>
       <div id="strengths" class="traits-grid"></div>
 
-      <h4>Weaknesses</h4>
+      <h2 style="font-size:14px;">Weaknesses</h2>
       <div id="weaknesses" class="traits-grid"></div>
 
       <button onclick="savePlayer()">Save Player</button>
-      <button onclick="openSettings()">Back</button>
+      <button onclick="openPlayerList()">Back</button>
     </div>
   </div>
 
@@ -227,8 +242,8 @@
 <script>
 
 /* NAV */
-function show(id) {
-  ["appHome","tripHome","settingsScreen","teamScreen","playerScreen"]
+function show(id){
+  ["appHome","tripHome","settingsScreen","teamScreen","playerScreen","playerListScreen"]
     .forEach(x => document.getElementById(x).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
@@ -236,105 +251,151 @@ function show(id) {
 function openTripHome(){show("tripHome"); loadTeams();}
 function goHome(){show("appHome")}
 function openSettings(){show("settingsScreen")}
-function goTripHome(){show("tripHome"); loadTeams();}
 function openTeamEdit(){show("teamScreen"); loadInputs();}
-function openPlayer(){show("playerScreen"); renderTraits();}
+function openPlayer(){resetPlayerForm(); show("playerScreen"); renderTraits();}
+function openPlayerList(){show("playerListScreen"); renderPlayerList();}
 
-/* TEAM LOGIC */
-function saveTeams() {
-  const teamA = document.getElementById("teamAInput").value || "Team A";
-  const teamB = document.getElementById("teamBInput").value || "Team B";
-
-  localStorage.setItem("teamA", teamA);
-  localStorage.setItem("teamB", teamB);
-
+/* TEAMS */
+function saveTeams(){
+  localStorage.setItem("teamA", document.getElementById("teamAInput").value || "Team A");
+  localStorage.setItem("teamB", document.getElementById("teamBInput").value || "Team B");
   loadTeams();
   openSettings();
 }
 
-function loadTeams() {
-  document.getElementById("teamAName").innerText =
-    localStorage.getItem("teamA") || "Team A";
-  document.getElementById("teamBName").innerText =
-    localStorage.getItem("teamB") || "Team B";
+function loadTeams(){
+  document.getElementById("teamAName").innerText = localStorage.getItem("teamA") || "Team A";
+  document.getElementById("teamBName").innerText = localStorage.getItem("teamB") || "Team B";
 }
 
-function loadInputs() {
-  document.getElementById("teamAInput").value =
-    localStorage.getItem("teamA") || "";
-  document.getElementById("teamBInput").value =
-    localStorage.getItem("teamB") || "";
+function loadInputs(){
+  document.getElementById("teamAInput").value = localStorage.getItem("teamA") || "";
+  document.getElementById("teamBInput").value = localStorage.getItem("teamB") || "";
 }
 
-/* PLAYER TRAITS */
+/* PLAYERS */
+let editIndex = null;
 
-const strengths = [
-  "Driver Accuracy","Iron Play","Short Game","Putting",
-  "Beer Consistency","Trash Talk Volume","Cart Navigation Skills",
-  "Mental Toughness","Snack Management"
-];
+function getPlayers(){
+  return JSON.parse(localStorage.getItem("players") || "[]");
+}
 
-const weaknesses = [
-  "3-Putt Specialist","Slice Machine","Hook Under Pressure",
-  "Slow Play Offender","Bunker Magnet","Ball Disappearance Expert",
-  "Water Hazard Addiction","Driver Meltdown","Putting Confidence Issues"
-];
+function savePlayers(players){
+  localStorage.setItem("players", JSON.stringify(players));
+}
+
+/* LIST */
+function renderPlayerList(){
+  const list = document.getElementById("playerList");
+  list.innerHTML = "";
+
+  const players = getPlayers();
+
+  players.forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "player-card";
+
+    div.innerHTML = `
+      <strong>${p.name}</strong> (${p.nickname || ""})<br/>
+      <small>Team: ${p.team || "Unassigned"}</small>
+
+      <div class="player-actions">
+        <button class="small-btn" onclick="editPlayer(${i})">Edit</button>
+        <button class="small-btn danger" onclick="deletePlayer(${i})">Delete</button>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function editPlayer(i){
+  const p = getPlayers()[i];
+  editIndex = i;
+
+  document.getElementById("playerName").value = p.name;
+  document.getElementById("nickname").value = p.nickname;
+
+  show("playerScreen");
+  renderTraits();
+}
+
+/* DELETE */
+function deletePlayer(i){
+  const players = getPlayers();
+  players.splice(i,1);
+  savePlayers(players);
+  renderPlayerList();
+}
+
+/* PLAYER FORM */
+const strengths = ["Driver Accuracy","Iron Play","Short Game","Putting","Beer Consistency","Trash Talk Volume","Cart Navigation Skills","Mental Toughness","Snack Management"];
+const weaknesses = ["3-Putt Specialist","Slice Machine","Hook Under Pressure","Slow Play Offender","Bunker Magnet","Ball Disappearance Expert","Water Hazard Addiction","Driver Meltdown","Putting Confidence Issues"];
 
 let selectedStrengths = [];
 let selectedWeaknesses = [];
 
-function renderTraits() {
+function resetPlayerForm(){
+  editIndex = null;
+  selectedStrengths = [];
+  selectedWeaknesses = [];
+}
+
+function renderTraits(){
   const s = document.getElementById("strengths");
   const w = document.getElementById("weaknesses");
 
   if (s.innerHTML) return;
 
-  strengths.forEach(x => {
-    const div = document.createElement("div");
-    div.className = "trait-card";
-    div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "strength");
-    s.appendChild(div);
+  strengths.forEach(x=>{
+    const d = document.createElement("div");
+    d.className="trait-card";
+    d.innerText=x;
+    d.onclick=()=>toggle(d,x,"s");
+    s.appendChild(d);
   });
 
-  weaknesses.forEach(x => {
-    const div = document.createElement("div");
-    div.className = "trait-card";
-    div.innerText = x;
-    div.onclick = () => toggleTrait(div, x, "weakness");
-    w.appendChild(div);
+  weaknesses.forEach(x=>{
+    const d = document.createElement("div");
+    d.className="trait-card";
+    d.innerText=x;
+    d.onclick=()=>toggle(d,x,"w");
+    w.appendChild(d);
   });
 }
 
-function toggleTrait(el, value, type) {
+function toggle(el,val,type){
   el.classList.toggle("selected");
 
-  let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
+  const arr = type==="s"?selectedStrengths:selectedWeaknesses;
 
-  if (arr.includes(value)) {
-    arr.splice(arr.indexOf(value), 1);
-  } else {
-    arr.push(value);
+  if(arr.includes(val)){
+    arr.splice(arr.indexOf(val),1);
+  }else{
+    arr.push(val);
   }
 }
 
-function savePlayer() {
-  const name = document.getElementById("playerName").value;
-  const nickname = document.getElementById("nickname").value;
+/* SAVE PLAYER */
+function savePlayer(){
+  const players = getPlayers();
 
   const player = {
-    name,
-    nickname,
+    name: document.getElementById("playerName").value,
+    nickname: document.getElementById("nickname").value,
     strengths: selectedStrengths,
-    weaknesses: selectedWeaknesses
+    weaknesses: selectedWeaknesses,
+    team: "Unassigned"
   };
 
-  let players = JSON.parse(localStorage.getItem("players") || "[]");
-  players.push(player);
-  localStorage.setItem("players", JSON.stringify(players));
+  if(editIndex !== null){
+    players[editIndex] = player;
+  }else{
+    players.push(player);
+  }
 
-  alert("Player Saved");
-  openSettings();
+  savePlayers(players);
+  openPlayerList();
 }
 
 </script>
