@@ -407,6 +407,110 @@
       text-align: center;
       margin-top: 8px;
     }
+
+    .hamburger-wrap {
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -8px;
+      margin-bottom: 4px;
+    }
+
+    .hamburger-btn {
+      width: auto;
+      margin-top: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #13294d;
+      border: 1px solid #375984;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .home-menu {
+      position: absolute;
+      right: 0;
+      top: 48px;
+      width: 230px;
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 10;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+
+    .home-menu-item {
+      padding: 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+    }
+
+    .home-menu-item:hover {
+      background: #1f4f7a;
+    }
+
+    .score-click-zone {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+
+    .score-click-zone:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .match-row {
+      padding: 15px;
+      border-radius: 12px;
+      background: #13294d;
+      border: 1px solid #375984;
+      margin-top: 10px;
+    }
+
+    .match-title {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .match-detail {
+      font-size: 13px;
+      color: #dbeafe;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .match-score-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .match-score-grid input {
+      margin-top: 4px;
+    }
+
+    .inline-label {
+      font-size: 12px;
+      color: #dbeafe;
+      font-weight: bold;
+      margin-top: 8px;
+      display: block;
+    }
+
+    .multi-select {
+      min-height: 120px;
+    }
+
+    .small-note {
+      font-size: 12px;
+      color: #bfdbfe;
+      line-height: 1.35;
+      margin-top: 8px;
+    }
   </style>
 </head>
 
@@ -415,6 +519,13 @@
 <div class="container">
 
   <div id="appHome">
+    <div class="hamburger-wrap">
+      <button class="hamburger-btn" onclick="toggleHomeMenu()">☰</button>
+      <div id="homeMenu" class="home-menu hidden">
+        <div class="home-menu-item" onclick="requestNotifications()">Notifications</div>
+      </div>
+    </div>
+
     <div class="logo">
       <img src="/Swami Golf Logo.png" class="logo-img">
     </div>
@@ -442,18 +553,22 @@
         View Trip Itinerary
       </div>
 
-      <div class="card score-card">
+      <div class="card score-card" onclick="openMatchHome()">
         <div class="scoreboard">
           <div>
-            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">Team A</div>
-            <div id="teamAScore" class="score">0</div>
+            <div id="teamAName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('A')">Team A</div>
+            <div class="score-click-zone">
+              <div id="teamAScore" class="score">0</div>
+            </div>
           </div>
 
-          <div>VS</div>
+          <div class="score-click-zone">VS</div>
 
           <div>
-            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
-            <div id="teamBScore" class="score">0</div>
+            <div id="teamBName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('B')">Team B</div>
+            <div class="score-click-zone">
+              <div id="teamBScore" class="score">0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -479,31 +594,31 @@
     <div class="card">
       <div class="itinerary-section-header">
         <h3>Golf</h3>
-        <button class="small-add-btn" onclick="openItineraryEditor('golf')">Add Event</button>
+        <button class="small-add-btn" onclick="openItineraryEditor('golf')">Add</button>
       </div>
       <div id="golfItineraryList"></div>
 
       <div class="itinerary-section-header">
         <h3>Lodging</h3>
-        <button class="small-add-btn" onclick="openItineraryEditor('lodging')">Add Event</button>
+        <button class="small-add-btn" onclick="openItineraryEditor('lodging')">Add</button>
       </div>
       <div id="lodgingItineraryList"></div>
 
       <div class="itinerary-section-header">
         <h3>Reservations</h3>
-        <button class="small-add-btn" onclick="openItineraryEditor('reservations')">Add Event</button>
+        <button class="small-add-btn" onclick="openItineraryEditor('reservations')">Add</button>
       </div>
       <div id="reservationsItineraryList"></div>
 
       <div class="itinerary-section-header">
         <h3>Flights</h3>
-        <button class="small-add-btn" onclick="openItineraryEditor('flights')">Add Event</button>
+        <button class="small-add-btn" onclick="openItineraryEditor('flights')">Add</button>
       </div>
       <div id="flightsItineraryList"></div>
 
       <div class="itinerary-section-header">
         <h3>Other Events</h3>
-        <button class="small-add-btn" onclick="openItineraryEditor('other')">Add Event</button>
+        <button class="small-add-btn" onclick="openItineraryEditor('other')">Add</button>
       </div>
       <div id="otherItineraryList"></div>
 
@@ -545,6 +660,54 @@
       <button onclick="saveItineraryEvent()">Save Event</button>
       <button id="deleteItineraryButton" onclick="deleteItineraryEvent()" class="danger">Delete Event</button>
       <button onclick="openItinerary()" class="secondary">Back</button>
+    </div>
+  </div>
+
+
+  <div id="matchHomeScreen" class="hidden">
+    <button onclick="goTripHome()" class="secondary">Back</button>
+    <h2>Matches</h2>
+
+    <div class="card">
+      <div class="mini-tile" onclick="openMatchSetup()">
+        Set Up New Match
+      </div>
+
+      <div id="matchList"></div>
+    </div>
+  </div>
+
+  <div id="matchSetupScreen" class="hidden">
+    <h2 id="matchSetupTitle">Set Up Match</h2>
+
+    <div class="card">
+      <label class="form-label" for="matchFormat">Match Format</label>
+      <select id="matchFormat" onchange="handleMatchFormatChange()">
+        <option value="Best Ball">Best Ball</option>
+        <option value="Best Ball (Nassau)">Best Ball (Nassau)</option>
+        <option value="Scramble">Scramble</option>
+        <option value="Stableford">Stableford</option>
+      </select>
+
+      <label class="form-label" for="matchName">Match Name</label>
+      <input id="matchName" placeholder="e.g., Match 1, Morning Best Ball"/>
+
+      <label class="form-label" for="matchTeamAPlayers">Team A Player(s)</label>
+      <select id="matchTeamAPlayers" class="multi-select" multiple></select>
+      <div class="small-note">Hold Ctrl/Cmd to select multiple players on desktop. Mobile multi-select support varies by browser.</div>
+
+      <label class="form-label" for="matchTeamBPlayers">Team B Player(s)</label>
+      <select id="matchTeamBPlayers" class="multi-select" multiple></select>
+
+      <label class="form-label" for="matchPointSystem">Point System</label>
+      <input id="matchPointSystem" placeholder="e.g., 1 point per match, 2 points total, Nassau 1/1/1"/>
+
+      <div id="nassauHelp" class="small-note hidden">
+        Nassau scoring tracks three sub-matches: Front 9, Back 9, and Overall.
+      </div>
+
+      <button onclick="saveMatch()">Save Match</button>
+      <button onclick="openMatchHome()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -616,6 +779,13 @@
       <input id="nickname" placeholder="Nickname"/>
       <input id="handicapIndex" type="number" step="0.1" placeholder="Handicap Index"/>
 
+      <select id="playerGender">
+        <option value="">Gender / Pronouns</option>
+        <option value="male">Male / he-him</option>
+        <option value="female">Female / she-her</option>
+        <option value="neutral">Neutral / they-them</option>
+      </select>
+
       <select id="playerTeam">
         <option value="">Assign to Team</option>
       </select>
@@ -673,6 +843,8 @@
   let players = [];
   let itineraryEvents = [];
   let feedPosts = [];
+  let matches = [];
+  let editingMatchId = null;
   let editingPlayerId = null;
   let editingItineraryEventId = null;
   let unsubscribers = [];
@@ -797,6 +969,21 @@
       { title: "Team Room Tension", caption: "Someone already thinks they got stuck with the anchor.", tone: "team" },
       { title: "Cooler Advantage", caption: "May the worse team have the deeper cooler.", tone: "team" },
       { title: "Quiet Resentment", caption: "The sides are set. The grudges are loading.", tone: "team" }
+    ],
+    matchAdd: [
+      { title: "Match Created", caption: "The friendly competition has become legally binding.", tone: "team" },
+      { title: "First Tee Trial", caption: "The court will now hear opening drives.", tone: "team" },
+      { title: "Pressure Cooker", caption: "Nothing casual about match play.", tone: "team" }
+    ],
+    matchEdit: [
+      { title: "Rules Committee", caption: "The match format has been reviewed by absolutely nobody qualified.", tone: "team" },
+      { title: "Fine Print", caption: "The format changed. The excuses improved.", tone: "team" },
+      { title: "Match Tinkering", caption: "Somebody smelled disadvantage.", tone: "team" }
+    ],
+    scoreUpdate: [
+      { title: "Scoreboard Heat", caption: "The numbers are speaking. Some players wish they would stop.", tone: "team" },
+      { title: "Momentum Shift", caption: "Cue the nervous practice swings.", tone: "team" },
+      { title: "Live Scoring Drama", caption: "Egos are now updating in real time.", tone: "team" }
     ],
     userComment: [
       { title: "Group Chat Energy", caption: "Productivity down. Vibes up.", tone: "chat" },
@@ -954,6 +1141,10 @@
     return collection(db, "trips", tripId, "feedPosts");
   }
 
+  function matchesCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "matches");
+  }
+
   async function initializeTripIfNeeded(tripId) {
     const tripRef = tripDocRef(tripId);
     const tripSnap = await getDoc(tripRef);
@@ -1029,11 +1220,23 @@
 
     unsubscribers.push(
       onSnapshot(feedCollection(tripId), snapshot => {
+        const previousCount = feedPosts.length;
         feedPosts = snapshot.docs.map(docSnap => ({
           id: docSnap.id,
           ...docSnap.data()
         }));
+        maybeNotifyNewFeedPost(previousCount);
         renderFeed();
+      })
+    );
+
+    unsubscribers.push(
+      onSnapshot(matchesCollection(tripId), snapshot => {
+        matches = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderMatchList();
       })
     );
   }
@@ -1044,6 +1247,8 @@
       "tripHome",
       "itineraryScreen",
       "itineraryEditorScreen",
+      "matchHomeScreen",
+      "matchSetupScreen",
       "teamRosterScreen",
       "settingsScreen",
       "importScreen",
@@ -1054,6 +1259,281 @@
 
     document.getElementById(id).classList.remove("hidden");
   }
+
+
+  function toggleHomeMenu() {
+    document.getElementById("homeMenu").classList.toggle("hidden");
+  }
+
+  async function requestNotifications() {
+    document.getElementById("homeMenu").classList.add("hidden");
+
+    if (!("Notification" in window)) {
+      alert("This browser does not support notifications.");
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      localStorage.setItem("swamiGolf.notificationsEnabled", "true");
+      alert("Notifications are already enabled on this device.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+      localStorage.setItem("swamiGolf.notificationsEnabled", "true");
+      new Notification("Swami Golf notifications enabled", {
+        body: "You can receive trip feed alerts while the app is open. Full background push comes next with Firebase Cloud Messaging."
+      });
+    } else {
+      localStorage.setItem("swamiGolf.notificationsEnabled", "false");
+      alert("Notifications were not enabled.");
+    }
+  }
+
+  function maybeNotifyNewFeedPost(previousCount) {
+    if (feedPosts.length <= previousCount) return;
+    if (localStorage.getItem("swamiGolf.notificationsEnabled") !== "true") return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const sortedPosts = [...feedPosts].sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    const latest = sortedPosts[0];
+    if (!latest) return;
+
+    const seenKey = `swamiGolf.${activeTripId}.lastNotifiedPostId`;
+
+    if (localStorage.getItem(seenKey) === latest.id) return;
+
+    localStorage.setItem(seenKey, latest.id);
+
+    if (document.visibilityState === "visible") return;
+
+    new Notification(`${latest.author} posted in Swami Golf`, {
+      body: latest.text || "New trip feed activity"
+    });
+  }
+
+  function openMatchHome() {
+    show("matchHomeScreen");
+    renderMatchList();
+  }
+
+  function openMatchSetup(matchId = null, copyFromId = null) {
+    editingMatchId = matchId;
+    show("matchSetupScreen");
+    loadMatchPlayerSelectors();
+
+    document.getElementById("matchName").value = "";
+    document.getElementById("matchFormat").value = "Best Ball";
+    document.getElementById("matchPointSystem").value = "";
+    document.getElementById("matchSetupTitle").innerText = matchId ? "Edit Match" : "Set Up Match";
+
+    let sourceMatch = null;
+
+    if (matchId) {
+      sourceMatch = matches.find(match => match.id === matchId);
+    } else if (copyFromId) {
+      sourceMatch = matches.find(match => match.id === copyFromId);
+      document.getElementById("matchSetupTitle").innerText = "Copy Match";
+    }
+
+    if (sourceMatch) {
+      document.getElementById("matchName").value = copyFromId ? `${sourceMatch.name || "Match"} Copy` : (sourceMatch.name || "");
+      document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
+      document.getElementById("matchPointSystem").value = sourceMatch.pointSystem || "";
+      setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
+      setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
+    }
+
+    handleMatchFormatChange();
+  }
+
+  function handleMatchFormatChange() {
+    const format = document.getElementById("matchFormat").value;
+    document.getElementById("nassauHelp").classList.toggle("hidden", format !== "Best Ball (Nassau)");
+
+    if (format === "Best Ball (Nassau)" && !document.getElementById("matchPointSystem").value) {
+      document.getElementById("matchPointSystem").value = "1 point front / 1 point back / 1 point overall";
+    }
+  }
+
+  function loadMatchPlayerSelectors() {
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+    fillPlayerSelect("matchTeamAPlayers", players.filter(player => player.team === teamA));
+    fillPlayerSelect("matchTeamBPlayers", players.filter(player => player.team === teamB));
+  }
+
+  function fillPlayerSelect(elementId, playerList) {
+    const select = document.getElementById(elementId);
+    select.innerHTML = "";
+
+    playerList.forEach(player => {
+      const option = document.createElement("option");
+      option.value = player.id;
+      option.textContent = `${player.name}${player.handicapIndex ? ` (HI ${player.handicapIndex})` : ""}`;
+      select.appendChild(option);
+    });
+  }
+
+  function getMultiSelectValues(elementId) {
+    return Array.from(document.getElementById(elementId).selectedOptions).map(option => option.value);
+  }
+
+  function setMultiSelectValues(elementId, values) {
+    const valueSet = new Set(values || []);
+    Array.from(document.getElementById(elementId).options).forEach(option => {
+      option.selected = valueSet.has(option.value);
+    });
+  }
+
+  async function saveMatch() {
+    const format = document.getElementById("matchFormat").value;
+    const name = document.getElementById("matchName").value.trim() || format;
+    const pointSystem = document.getElementById("matchPointSystem").value.trim();
+    const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
+    const teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
+
+    if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) {
+      alert("Please select player(s) for both sides.");
+      return;
+    }
+
+    const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
+
+    const matchData = {
+      name,
+      format,
+      pointSystem,
+      teamAPlayerIds,
+      teamBPlayerIds,
+      teamAScore: baseScores.teamAScore || "0",
+      teamBScore: baseScores.teamBScore || "0",
+      frontA: baseScores.frontA || "0",
+      frontB: baseScores.frontB || "0",
+      backA: baseScores.backA || "0",
+      backB: baseScores.backB || "0",
+      overallA: baseScores.overallA || "0",
+      overallB: baseScores.overallB || "0",
+      updatedAt: new Date().toISOString()
+    };
+
+    const wasEditing = Boolean(editingMatchId);
+
+    if (editingMatchId) {
+      await updateDoc(doc(db, "trips", activeTripId, "matches", editingMatchId), matchData);
+    } else {
+      await addDoc(matchesCollection(), {
+        ...matchData,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", name);
+    editingMatchId = null;
+    openMatchHome();
+  }
+
+  function renderMatchList() {
+    const list = document.getElementById("matchList");
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (matches.length === 0) {
+      list.innerHTML = `<div class="empty-state">No matches set up yet. Tap “Set Up New Match” to create one.</div>`;
+      return;
+    }
+
+    matches
+      .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""))
+      .forEach(match => {
+        const div = document.createElement("div");
+        div.className = "match-row";
+
+        const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
+        const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
+        const isNassau = match.format === "Best Ball (Nassau)";
+
+        div.innerHTML = `
+          <div class="match-title">${escapeHtml(match.name || match.format)}</div>
+          <div class="match-detail">
+            <strong>Format:</strong> ${escapeHtml(match.format || "")}<br>
+            <strong>Match:</strong> ${escapeHtml(teamAPlayers)} vs. ${escapeHtml(teamBPlayers)}<br>
+            <strong>Points:</strong> ${escapeHtml(match.pointSystem || "Not set")}
+          </div>
+
+          ${
+            isNassau
+              ? `
+                <div class="match-score-grid">
+                  <div><label class="inline-label">Front A</label><input id="frontA-${match.id}" value="${escapeAttr(match.frontA || "0")}"></div>
+                  <div><label class="inline-label">Front B</label><input id="frontB-${match.id}" value="${escapeAttr(match.frontB || "0")}"></div>
+                  <div><label class="inline-label">Back A</label><input id="backA-${match.id}" value="${escapeAttr(match.backA || "0")}"></div>
+                  <div><label class="inline-label">Back B</label><input id="backB-${match.id}" value="${escapeAttr(match.backB || "0")}"></div>
+                  <div><label class="inline-label">Overall A</label><input id="overallA-${match.id}" value="${escapeAttr(match.overallA || "0")}"></div>
+                  <div><label class="inline-label">Overall B</label><input id="overallB-${match.id}" value="${escapeAttr(match.overallB || "0")}"></div>
+                </div>
+              `
+              : `
+                <div class="match-score-grid">
+                  <div><label class="inline-label">Team A Score</label><input id="teamAScoreMatch-${match.id}" value="${escapeAttr(match.teamAScore || "0")}"></div>
+                  <div><label class="inline-label">Team B Score</label><input id="teamBScoreMatch-${match.id}" value="${escapeAttr(match.teamBScore || "0")}"></div>
+                </div>
+              `
+          }
+
+          <button onclick="updateMatchScore('${match.id}')">Update Score</button>
+          <button onclick="openMatchSetup('${match.id}')" class="secondary">Edit Match</button>
+          <button onclick="openMatchSetup(null, '${match.id}')" class="secondary">Copy Match</button>
+        `;
+
+        list.appendChild(div);
+      });
+  }
+
+  function getPlayerNames(playerIds) {
+    return playerIds
+      .map(id => {
+        const player = players.find(p => p.id === id);
+        return player ? player.name : "Unknown Player";
+      })
+      .join(", ");
+  }
+
+  async function updateMatchScore(matchId) {
+    const match = matches.find(item => item.id === matchId);
+    if (!match) return;
+
+    const isNassau = match.format === "Best Ball (Nassau)";
+    let update = { updatedAt: new Date().toISOString() };
+
+    if (isNassau) {
+      update = {
+        ...update,
+        frontA: document.getElementById(`frontA-${matchId}`).value,
+        frontB: document.getElementById(`frontB-${matchId}`).value,
+        backA: document.getElementById(`backA-${matchId}`).value,
+        backB: document.getElementById(`backB-${matchId}`).value,
+        overallA: document.getElementById(`overallA-${matchId}`).value,
+        overallB: document.getElementById(`overallB-${matchId}`).value
+      };
+    } else {
+      update = {
+        ...update,
+        teamAScore: document.getElementById(`teamAScoreMatch-${matchId}`).value,
+        teamBScore: document.getElementById(`teamBScoreMatch-${matchId}`).value
+      };
+    }
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", matchId), update);
+    await addSwamiPost("scoreUpdate", match.name || match.format || "match");
+  }
+
 
   async function openTripHome(tripId = activeTripId) {
     activeTripId = tripId;
@@ -1220,6 +1700,7 @@
         <div class="player-detail">
           ${player.nickname ? `"${escapeHtml(player.nickname)}"<br>` : ""}
           <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
+          <strong>Pronouns:</strong> ${formatPronouns(player.gender)}<br>
           <strong>Strengths:</strong>
           ${player.strengths && player.strengths.length ? player.strengths.map(escapeHtml).join(", ") : "None selected"}
           <br>
@@ -1589,6 +2070,27 @@
         `The sides are set: ${subject}. May the trash talk be better than the wedge play.`,
         `${subject}. The group dynamic has officially entered match-play mode.`
       ],
+      matchAdd: [
+        `New match created: ${subject}. The paperwork is complete. The excuses are pending.`,
+        `${subject} has been set up. Somebody is about to learn that "friendly match" is a lie.`,
+        `Match added: ${subject}. The Swami recommends stretching and emotional preparation.`,
+        `${subject} is live. May the handicaps be accurate and the concessions be generous.`,
+        `New match: ${subject}. This has side-eye and calculator math written all over it.`
+      ],
+      matchEdit: [
+        `${subject} was updated. The match committee has adjusted the chaos.`,
+        `Match update: ${subject}. The fine print now has fine print.`,
+        `${subject} changed. Someone definitely complained about strokes.`,
+        `Updated ${subject}. The Swami detects pre-match negotiation tactics.`,
+        `${subject} has been revised. Please act surprised when this matters later.`
+      ],
+      scoreUpdate: [
+        `Score update for ${subject}. The pressure is now entering the group chat.`,
+        `${subject} has new numbers. Several egos are currently recalculating.`,
+        `Score posted for ${subject}. The Swami recommends verifying with someone sober.`,
+        `${subject} score update. Momentum is real, but so is choking.`,
+        `Updated scoring for ${subject}. Somewhere, a man is explaining how he "actually played better than that."`
+      ],
       userComment: [
         `${subject} has spoken. Accuracy questionable, confidence elite.`,
         `New feed comment from ${subject}. Productivity down, vibes up.`,
@@ -1676,6 +2178,24 @@
     });
   }
 
+
+  function getPronouns(gender) {
+    if (gender === "female") {
+      return { subject: "she", object: "her", possessive: "her" };
+    }
+    if (gender === "neutral") {
+      return { subject: "they", object: "them", possessive: "their" };
+    }
+    return { subject: "he", object: "him", possessive: "his" };
+  }
+
+  function formatPronouns(gender) {
+    if (gender === "female") return "she/her";
+    if (gender === "neutral") return "they/them";
+    if (gender === "male") return "he/him";
+    return "Not entered";
+  }
+
   function renderTraits() {
     const s = document.getElementById("strengths");
     const w = document.getElementById("weaknesses");
@@ -1716,6 +2236,7 @@
     document.getElementById("playerName").value = "";
     document.getElementById("nickname").value = "";
     document.getElementById("handicapIndex").value = "";
+    document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
 
     selectedStrengths = [];
@@ -1733,6 +2254,7 @@
     document.getElementById("playerName").value = player.name || "";
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
+    document.getElementById("playerGender").value = player.gender || "";
     document.getElementById("playerTeam").value = player.team || "";
 
     selectedStrengths = player.strengths || [];
@@ -1755,6 +2277,7 @@
     const name = document.getElementById("playerName").value;
     const nickname = document.getElementById("nickname").value;
     const handicapIndex = document.getElementById("handicapIndex").value;
+    const gender = document.getElementById("playerGender").value;
     const team = document.getElementById("playerTeam").value;
 
     if (!name.trim()) {
@@ -1766,6 +2289,7 @@
       name,
       nickname,
       handicapIndex,
+      gender,
       team,
       strengths: selectedStrengths,
       weaknesses: selectedWeaknesses,
@@ -1831,6 +2355,7 @@
     const playerSnap = await getDocs(playersCollection(tripId));
     const itinerarySnap = await getDocs(itineraryCollection(tripId));
     const feedSnap = await getDocs(feedCollection(tripId));
+    const matchSnap = await getDocs(matchesCollection(tripId));
 
     return {
       tripId,
@@ -1838,7 +2363,8 @@
       ...(tripSnap.data() || {}),
       players: playerSnap.docs.map(d => ({ id: d.id, ...d.data() })),
       itineraryEvents: itinerarySnap.docs.map(d => ({ id: d.id, ...d.data() })),
-      feedPosts: feedSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      feedPosts: feedSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      matches: matchSnap.docs.map(d => ({ id: d.id, ...d.data() }))
     };
   }
 
@@ -1902,6 +2428,7 @@
         await replaceCollection(playersCollection(tripId), data.players || []);
         await replaceCollection(itineraryCollection(tripId), data.itineraryEvents || []);
         await replaceCollection(feedCollection(tripId), data.feedPosts || []);
+        await replaceCollection(matchesCollection(tripId), data.matches || []);
       }
 
       alert("Data imported successfully into Firebase.");
@@ -1939,6 +2466,13 @@
     return String(text ?? "").replace(/"/g, "&quot;");
   }
 
+  window.toggleHomeMenu = toggleHomeMenu;
+  window.requestNotifications = requestNotifications;
+  window.openMatchHome = openMatchHome;
+  window.openMatchSetup = openMatchSetup;
+  window.handleMatchFormatChange = handleMatchFormatChange;
+  window.saveMatch = saveMatch;
+  window.updateMatchScore = updateMatchScore;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
