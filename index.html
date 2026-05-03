@@ -62,6 +62,13 @@
       align-items: center;
     }
 
+    .team-name {
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
     .score {
       font-size: 44px;
       font-weight: bold;
@@ -161,6 +168,7 @@
       font-size: 13px;
       color: #cbd5e1;
       margin-top: 4px;
+      line-height: 1.35;
     }
 
     .empty-state {
@@ -198,16 +206,26 @@
       <div class="card">
         <div class="scoreboard">
           <div>
-            <div id="teamAName">Team A</div>
+            <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">Team A</div>
             <div class="score">0</div>
           </div>
           <div>VS</div>
           <div>
-            <div id="teamBName">Team B</div>
+            <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">Team B</div>
             <div class="score">0</div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- TEAM ROSTER -->
+  <div id="teamRosterScreen" class="hidden">
+    <h2 id="teamRosterTitle">Team Roster</h2>
+
+    <div class="card">
+      <div id="teamRosterList"></div>
+      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -275,8 +293,15 @@ let editingPlayerIndex = null;
 
 /* NAV */
 function show(id) {
-  ["appHome","tripHome","settingsScreen","teamScreen","playerListScreen","playerScreen"]
-    .forEach(x => document.getElementById(x).classList.add("hidden"));
+  [
+    "appHome",
+    "tripHome",
+    "teamRosterScreen",
+    "settingsScreen",
+    "teamScreen",
+    "playerListScreen",
+    "playerScreen"
+  ].forEach(x => document.getElementById(x).classList.add("hidden"));
 
   document.getElementById(id).classList.remove("hidden");
 }
@@ -312,11 +337,34 @@ function saveTeams() {
   const teamA = document.getElementById("teamAInput").value || "Team A";
   const teamB = document.getElementById("teamBInput").value || "Team B";
 
+  const oldTeamA = localStorage.getItem("teamA") || "Team A";
+  const oldTeamB = localStorage.getItem("teamB") || "Team B";
+
   localStorage.setItem("teamA", teamA);
   localStorage.setItem("teamB", teamB);
 
+  updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
+
   loadTeams();
   openSettings();
+}
+
+function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
+  let players = JSON.parse(localStorage.getItem("players") || "[]");
+
+  players = players.map(player => {
+    if (player.team === oldTeamA) {
+      player.team = newTeamA;
+    }
+
+    if (player.team === oldTeamB) {
+      player.team = newTeamB;
+    }
+
+    return player;
+  });
+
+  localStorage.setItem("players", JSON.stringify(players));
 }
 
 function loadTeams() {
@@ -345,6 +393,49 @@ function loadTeamDropdown() {
     <option value="${teamA}">${teamA}</option>
     <option value="${teamB}">${teamB}</option>
   `;
+}
+
+function openTeamRoster(teamKey) {
+  const teamName = teamKey === "A"
+    ? localStorage.getItem("teamA") || "Team A"
+    : localStorage.getItem("teamB") || "Team B";
+
+  document.getElementById("teamRosterTitle").innerText = teamName;
+  renderTeamRoster(teamName);
+  show("teamRosterScreen");
+}
+
+function renderTeamRoster(teamName) {
+  const list = document.getElementById("teamRosterList");
+  const players = JSON.parse(localStorage.getItem("players") || "[]");
+  const teamPlayers = players.filter(player => player.team === teamName);
+
+  list.innerHTML = "";
+
+  if (teamPlayers.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        No players assigned to ${teamName} yet.
+      </div>
+    `;
+    return;
+  }
+
+  teamPlayers.forEach(player => {
+    const div = document.createElement("div");
+    div.className = "player-row";
+
+    div.innerHTML = `
+      <div class="player-name">${player.name}</div>
+      <div class="player-detail">
+        ${player.nickname ? `"${player.nickname}"<br>` : ""}
+        <strong>Strengths:</strong> ${player.strengths && player.strengths.length ? player.strengths.join(", ") : "None selected"}<br>
+        <strong>Weaknesses:</strong> ${player.weaknesses && player.weaknesses.length ? player.weaknesses.join(", ") : "None selected"}
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
 }
 
 /* PLAYER TRAITS */
