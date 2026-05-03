@@ -32,7 +32,6 @@
       max-width: 160px;
       width: 100%;
       height: auto;
-      display: block;
     }
 
     /* ================= HOME TILE ================= */
@@ -86,13 +85,14 @@
 
     button {
       width: 100%;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 12px;
       border: none;
       background: #3b82f6;
       color: white;
       font-weight: bold;
-      margin-top: 10px;
+      font-size: 16px;
+      margin-top: 12px;
       cursor: pointer;
     }
 
@@ -108,7 +108,7 @@
 
     .gear {
       position: absolute;
-      top: 6px; /* moved slightly higher */
+      top: 6px;
       right: 12px;
       font-size: 22px;
       cursor: pointer;
@@ -116,7 +116,7 @@
 
     .homeBtn {
       position: absolute;
-      top: 6px; /* aligned with gear */
+      top: 6px;
       left: 12px;
       font-size: 22px;
       cursor: pointer;
@@ -136,8 +136,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      margin: 4px 0;
+      font-size: 14px;
+      margin: 6px 0;
+      line-height: 1.2;
+    }
+
+    label input {
+      flex-shrink: 0;
     }
 
     h2 {
@@ -272,14 +277,27 @@ function openPlayer() { show("playerScreen"); renderTraits(); }
 /* ================= TRAITS ================= */
 
 const strengths = [
-  "Driver Accuracy","Iron Play","Short Game","Putting",
-  "Beer Consistency","Trash Talk Volume","Cart Navigation Skills",
-  "Mental Toughness","Snack Management"
+  "Driver Accuracy",
+  "Iron Play",
+  "Short Game",
+  "Putting",
+  "Beer Consistency",
+  "Trash Talk Volume",
+  "Cart Navigation Skills",
+  "Mental Toughness",
+  "Snack Management"
 ];
 
 const weaknesses = [
-  "3-Putt Specialist","Slice Machine","Hook Under Pressure",
-  "Slow Play Offender","Bunker Magnet","Ball Disappearance Expert"
+  "3-Putt Specialist",
+  "Slice Machine",
+  "Hook Under Pressure",
+  "Slow Play Offender",
+  "Bunker Magnet",
+  "Ball Disappearance Expert",
+  "Water Hazard Addiction",
+  "Driver Meltdown",
+  "Putting Confidence Issues"
 ];
 
 function renderTraits() {
