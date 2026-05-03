@@ -167,6 +167,28 @@
       margin-top: 8px;
     }
 
+    .feed-media {
+      margin-top: 10px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #375984;
+      background: #081226;
+    }
+
+    .feed-media img {
+      width: 100%;
+      display: block;
+      max-height: 240px;
+      object-fit: cover;
+    }
+
+    .feed-media-caption {
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #dbeafe;
+      background: rgba(8, 18, 38, 0.9);
+    }
+
     .feed-empty {
       color: #dbeafe;
       text-align: center;
@@ -737,6 +759,129 @@
     }
   ];
 
+
+  const swamiMediaLibrary = {
+    itineraryAdd: [
+      { title: "Clipboard Guy", caption: "The itinerary now has a foreman.", tone: "schedule" },
+      { title: "Calendar Panic", caption: "When the trip starts looking like a work conference.", tone: "schedule" },
+      { title: "Group Text Chaos", caption: "Eight grown men, one schedule, zero chance everyone reads it.", tone: "schedule" },
+      { title: "Tee Time Alarm", caption: "Set three alarms. Ignore two.", tone: "schedule" }
+    ],
+    itineraryEdit: [
+      { title: "Audible at the Line", caption: "Same trip, new confusion.", tone: "schedule" },
+      { title: "Fine Print Update", caption: "The details changed. The excuses did not.", tone: "schedule" },
+      { title: "Meeting That Could Have Been a Text", caption: "Another itinerary revision enters the chat.", tone: "schedule" },
+      { title: "Logistics Department", caption: "Someone with cargo shorts is now in charge.", tone: "schedule" }
+    ],
+    itineraryDelete: [
+      { title: "Calendar Mercy", caption: "One less thing to be late for.", tone: "schedule" },
+      { title: "Free Time Found", caption: "The schedule made a bogey and somehow improved.", tone: "schedule" },
+      { title: "Deleted Event Energy", caption: "The itinerary lost weight. Miracles happen.", tone: "schedule" },
+      { title: "Open Slot Alert", caption: "Nature is healing. The boys are unsupervised.", tone: "schedule" }
+    ],
+    playerAdd: [
+      { title: "New Contender", caption: "Another swing enters the evidence locker.", tone: "player" },
+      { title: "Handicap Committee", caption: "A fresh file has been opened.", tone: "player" },
+      { title: "First Tee Energy", caption: "Confidence high. Ball flight unknown.", tone: "player" },
+      { title: "Roster Alert", caption: "Hide the good cigars and count the golf balls.", tone: "player" },
+      { title: "Welcome to the Circus", caption: "Please collect your scorecard and emotional support wedge.", tone: "player" }
+    ],
+    playerEdit: [
+      { title: "Scouting Report", caption: "Profile updated. Sandbagger radar activated.", tone: "player" },
+      { title: "Revisionist History", caption: "The legend grows through selective memory.", tone: "player" },
+      { title: "Profile Refresh", caption: "Still no guarantee of finding the fairway.", tone: "player" },
+      { title: "Numbers Changed", caption: "Excuses remain unlimited.", tone: "player" }
+    ],
+    teams: [
+      { title: "Match Play Mode", caption: "Friendships are now conditional.", tone: "team" },
+      { title: "Team Room Tension", caption: "Someone already thinks they got stuck with the anchor.", tone: "team" },
+      { title: "Cooler Advantage", caption: "May the worse team have the deeper cooler.", tone: "team" },
+      { title: "Quiet Resentment", caption: "The sides are set. The grudges are loading.", tone: "team" }
+    ],
+    userComment: [
+      { title: "Group Chat Energy", caption: "Productivity down. Vibes up.", tone: "chat" },
+      { title: "Bold Take", caption: "Confidence unsupported by recent scorecards.", tone: "chat" },
+      { title: "Phone Buzz", caption: "Another meeting ruined by golf nonsense.", tone: "chat" },
+      { title: "Thread Activity", caption: "Democracy has consequences.", tone: "chat" }
+    ]
+  };
+
+  function getSwamiMedia(action) {
+    const list = swamiMediaLibrary[action] || swamiMediaLibrary.userComment;
+    const recentKey = `swamiGolf.${activeTripId}.recentSwamiMedia`;
+    const recent = JSON.parse(localStorage.getItem(recentKey) || "[]");
+
+    let available = list.filter(item => !recent.includes(item.title));
+
+    if (available.length === 0) {
+      available = list;
+    }
+
+    const selected = available[Math.floor(Math.random() * available.length)];
+    recent.unshift(selected.title);
+    localStorage.setItem(recentKey, JSON.stringify(recent.slice(0, 12)));
+
+    return {
+      mediaType: "image",
+      imageUrl: buildSwamiMemeSvg(selected.title, selected.caption, selected.tone),
+      imageCaption: selected.caption
+    };
+  }
+
+  function buildSwamiMemeSvg(title, caption, tone) {
+    const palettes = {
+      schedule: ["#16375d", "#1f4f7a", "#bfdbfe"],
+      player: ["#0f3b2e", "#0f766e", "#ccfbf1"],
+      team: ["#3b2463", "#7c3aed", "#ede9fe"],
+      chat: ["#4a2d13", "#b45309", "#ffedd5"]
+    };
+
+    const palette = palettes[tone] || palettes.chat;
+    const safeTitle = escapeSvg(title);
+    const safeCaption = escapeSvg(caption);
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+        <defs>
+          <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="${palette[0]}"/>
+            <stop offset="100%" stop-color="${palette[1]}"/>
+          </linearGradient>
+          <radialGradient id="spot" cx="50%" cy="20%" r="70%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+        </defs>
+        <rect width="900" height="500" fill="url(#bg)"/>
+        <rect width="900" height="500" fill="url(#spot)"/>
+        <circle cx="450" cy="145" r="72" fill="#f8fafc"/>
+        <circle cx="420" cy="125" r="7" fill="#94a3b8"/>
+        <circle cx="470" cy="132" r="7" fill="#94a3b8"/>
+        <circle cx="430" cy="170" r="7" fill="#94a3b8"/>
+        <circle cx="490" cy="175" r="7" fill="#94a3b8"/>
+        <path d="M380 118 C410 58, 493 58, 524 118 C489 96, 418 96, 380 118 Z" fill="${palette[2]}"/>
+        <path d="M390 228 C430 198, 472 198, 512 228 C478 248, 424 248, 390 228 Z" fill="#111827"/>
+        <text x="450" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="800" fill="#ffffff">${safeTitle}</text>
+        <foreignObject x="80" y="355" width="740" height="100">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: Arial, sans-serif; font-size: 30px; line-height: 1.2; color: ${palette[2]}; text-align: center; font-weight: 700;">
+            ${safeCaption}
+          </div>
+        </foreignObject>
+        <text x="450" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">SWAMI SAYS</text>
+      </svg>
+    `.trim();
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
+  function escapeSvg(text) {
+    return String(text ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+
   const strengths = [
     "Fairway Finder-ish",
     "Green-Seeking Missiles",
@@ -1291,28 +1436,47 @@
       const div = document.createElement("div");
       div.className = "feed-post";
 
+      const mediaHtml = post.imageUrl
+        ? `
+          <div class="feed-media">
+            <img src="${escapeAttr(post.imageUrl)}" alt="${escapeAttr(post.imageCaption || "Swami Says media")}">
+            ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
+          </div>
+        `
+        : "";
+
       div.innerHTML = `
         <div class="feed-author">${escapeHtml(post.author)}</div>
         <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
         <div class="feed-text">${escapeHtml(post.text)}</div>
+        ${mediaHtml}
       `;
 
       list.appendChild(div);
     });
   }
 
-  async function addFeedPost(author, text, type = "user") {
-    await addDoc(feedCollection(), {
+  async function addFeedPost(author, text, type = "user", media = null) {
+    const post = {
       author,
       text,
       type,
       createdAt: new Date().toISOString()
-    });
+    };
+
+    if (media && media.imageUrl) {
+      post.imageUrl = media.imageUrl;
+      post.mediaType = media.mediaType || "image";
+      post.imageCaption = media.imageCaption || "";
+    }
+
+    await addDoc(feedCollection(), post);
   }
 
   async function addSwamiPost(action, subject) {
     const text = getSwamiComment(action, subject);
-    await addFeedPost("Swami Says", text, "admin");
+    const media = Math.random() < 0.45 ? getSwamiMedia(action) : null;
+    await addFeedPost("Swami Says", text, "admin", media);
   }
 
   function getSwamiComment(action, subject) {
