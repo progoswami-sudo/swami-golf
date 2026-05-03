@@ -132,6 +132,7 @@
     button.secondary { background: #334155; }
     button.backup { background: #0f766e; }
     button.import { background: #7c3aed; }
+    button.danger { background: #dc2626; }
 
     .gear {
       position: absolute;
@@ -162,15 +163,20 @@
     }
 
     textarea {
-      min-height: 180px;
+      min-height: 120px;
       resize: vertical;
+      font-family: Arial, sans-serif;
+    }
+
+    #importDataText {
+      min-height: 180px;
       font-family: monospace;
     }
 
     h2 { text-align: center; }
 
     h3 {
-      margin: 18px 0 8px;
+      margin: 20px 0 8px;
       color: #ffffff;
       font-size: 18px;
     }
@@ -181,12 +187,34 @@
       color: #dbeafe;
     }
 
+    .itinerary-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .itinerary-section-header h3 {
+      margin: 0;
+    }
+
+    .small-add-btn {
+      width: auto;
+      padding: 9px 12px;
+      font-size: 13px;
+      margin-top: 0;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
     .itinerary-item {
       padding: 14px;
       border-radius: 12px;
       background: #13294d;
       border: 1px solid #375984;
       margin-top: 10px;
+      cursor: pointer;
     }
 
     .itinerary-date {
@@ -206,6 +234,14 @@
       font-size: 14px;
       margin-top: 4px;
       line-height: 1.35;
+    }
+
+    .form-label {
+      display: block;
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #dbeafe;
     }
 
     .traits-grid {
@@ -293,7 +329,7 @@
       </div>
 
       <div class="mini-tile" onclick="openItinerary()">
-        📅 View Trip Itinerary
+        View Trip Itinerary
       </div>
 
       <div class="card score-card">
@@ -315,64 +351,76 @@
   </div>
 
   <div id="itineraryScreen" class="hidden">
+    <button onclick="goTripHome()" class="secondary">Back</button>
     <h2>Trip Itinerary</h2>
 
     <div class="card">
-      <h3>Golf</h3>
-
-      <div class="itinerary-item">
-        <div class="itinerary-date">Wed Sep 30, 2026</div>
-        <div class="itinerary-title">Tobacco Road Golf Club</div>
-        <div class="itinerary-detail">Tee Times: 1:12 PM, 1:24 PM</div>
+      <div class="itinerary-section-header">
+        <h3>Golf</h3>
+        <button class="small-add-btn" onclick="openItineraryEditor('golf')">Add Event</button>
       </div>
+      <div id="golfItineraryList"></div>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Thu Oct 1, 2026</div>
-        <div class="itinerary-title">Pinehurst 9</div>
-        <div class="itinerary-detail">Tee Times: 1:35 PM, 1:44 PM</div>
+      <div class="itinerary-section-header">
+        <h3>Lodging</h3>
+        <button class="small-add-btn" onclick="openItineraryEditor('lodging')">Add Event</button>
       </div>
+      <div id="lodgingItineraryList"></div>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Fri Oct 2, 2026</div>
-        <div class="itinerary-title">Pinehurst 4</div>
-        <div class="itinerary-detail">Tee Times: 9:10 AM, 9:20 AM</div>
+      <div class="itinerary-section-header">
+        <h3>Reservations</h3>
+        <button class="small-add-btn" onclick="openItineraryEditor('reservations')">Add Event</button>
       </div>
+      <div id="reservationsItineraryList"></div>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Fri Oct 2, 2026</div>
-        <div class="itinerary-title">The Cradle</div>
-        <div class="itinerary-detail">Tee Times: 2:20 PM, 2:30 PM</div>
+      <div class="itinerary-section-header">
+        <h3>Flights</h3>
+        <button class="small-add-btn" onclick="openItineraryEditor('flights')">Add Event</button>
       </div>
+      <div id="flightsItineraryList"></div>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Sat Oct 1, 2026</div>
-        <div class="itinerary-title">Pinehurst 2</div>
-        <div class="itinerary-detail">Tee Times: 12:50 PM, 1:00 PM</div>
+      <div class="itinerary-section-header">
+        <h3>Other Events</h3>
+        <button class="small-add-btn" onclick="openItineraryEditor('other')">Add Event</button>
       </div>
+      <div id="otherItineraryList"></div>
+    </div>
+  </div>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Sun Oct 2, 2026</div>
-        <div class="itinerary-title">Pinehurst 8</div>
-        <div class="itinerary-detail">Tee Times: 8:30 AM, 8:40 AM</div>
-      </div>
+  <div id="itineraryEditorScreen" class="hidden">
+    <h2 id="itineraryEditorTitle">Edit Event</h2>
 
-      <h3>Lodging</h3>
+    <div class="card">
+      <label class="form-label" for="eventSection">Section</label>
+      <select id="eventSection">
+        <option value="golf">Golf</option>
+        <option value="lodging">Lodging</option>
+        <option value="reservations">Reservations</option>
+        <option value="flights">Flights</option>
+        <option value="other">Other Events</option>
+      </select>
 
-      <div class="itinerary-item">
-        <div class="itinerary-date">Oct 1-4, 2026</div>
-        <div class="itinerary-title">The Holly Inn</div>
-      </div>
+      <label class="form-label" for="eventTitle">Event Name</label>
+      <input id="eventTitle" placeholder="Event Name"/>
 
-      <h3>Meal Reservations</h3>
-      <div class="empty-state">No meal reservations added yet.</div>
+      <label class="form-label" for="eventStartDate">Start Date</label>
+      <input id="eventStartDate" type="date"/>
 
-      <h3>Flights</h3>
-      <div class="empty-state">No flights added yet.</div>
+      <label class="form-label" for="eventEndDate">End Date</label>
+      <input id="eventEndDate" type="date"/>
 
-      <h3>Other Events</h3>
-      <div class="empty-state">No other planned events added yet.</div>
+      <label class="form-label" for="eventStartTime">Start Time</label>
+      <input id="eventStartTime" type="time"/>
 
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <label class="form-label" for="eventEndTime">End Time</label>
+      <input id="eventEndTime" type="time"/>
+
+      <label class="form-label" for="eventDetails">Details</label>
+      <textarea id="eventDetails" placeholder="Tee times, address, reservation notes, confirmation numbers, etc."></textarea>
+
+      <button onclick="saveItineraryEvent()">Save Event</button>
+      <button id="deleteItineraryButton" onclick="deleteItineraryEvent()" class="danger">Delete Event</button>
+      <button onclick="openItinerary()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -462,12 +510,87 @@
 
 <script>
 let editingPlayerIndex = null;
+let editingItineraryEventId = null;
+
+const defaultItineraryEvents = [
+  {
+    id: "golf-tobacco-road-2026-09-30",
+    section: "golf",
+    title: "Tobacco Road Golf Club",
+    startDate: "2026-09-30",
+    endDate: "2026-09-30",
+    startTime: "13:12",
+    endTime: "",
+    details: "Tee Times: 1:12 PM, 1:24 PM"
+  },
+  {
+    id: "golf-pinehurst-9-2026-10-01",
+    section: "golf",
+    title: "Pinehurst 9",
+    startDate: "2026-10-01",
+    endDate: "2026-10-01",
+    startTime: "13:35",
+    endTime: "",
+    details: "Tee Times: 1:35 PM, 1:44 PM"
+  },
+  {
+    id: "golf-pinehurst-4-2026-10-02",
+    section: "golf",
+    title: "Pinehurst 4",
+    startDate: "2026-10-02",
+    endDate: "2026-10-02",
+    startTime: "09:10",
+    endTime: "",
+    details: "Tee Times: 9:10 AM, 9:20 AM"
+  },
+  {
+    id: "golf-cradle-2026-10-02",
+    section: "golf",
+    title: "The Cradle",
+    startDate: "2026-10-02",
+    endDate: "2026-10-02",
+    startTime: "14:20",
+    endTime: "",
+    details: "Tee Times: 2:20 PM, 2:30 PM"
+  },
+  {
+    id: "golf-pinehurst-2-2026-10-01",
+    section: "golf",
+    title: "Pinehurst 2",
+    startDate: "2026-10-01",
+    endDate: "2026-10-01",
+    startTime: "12:50",
+    endTime: "",
+    details: "Tee Times: 12:50 PM, 1:00 PM"
+  },
+  {
+    id: "golf-pinehurst-8-2026-10-02",
+    section: "golf",
+    title: "Pinehurst 8",
+    startDate: "2026-10-02",
+    endDate: "2026-10-02",
+    startTime: "08:30",
+    endTime: "",
+    details: "Tee Times: 8:30 AM, 8:40 AM"
+  },
+  {
+    id: "lodging-holly-inn-2026-10-01",
+    section: "lodging",
+    title: "The Holly Inn",
+    startDate: "2026-10-01",
+    endDate: "2026-10-04",
+    startTime: "",
+    endTime: "",
+    details: "Lodging: Oct 1-4, 2026"
+  }
+];
 
 function show(id) {
   [
     "appHome",
     "tripHome",
     "itineraryScreen",
+    "itineraryEditorScreen",
     "teamRosterScreen",
     "settingsScreen",
     "importScreen",
@@ -486,7 +609,9 @@ function openTripHome() {
 }
 
 function openItinerary() {
+  initializeItineraryIfNeeded();
   show("itineraryScreen");
+  renderItinerary();
 }
 
 function goHome() {
@@ -642,6 +767,201 @@ function renderTeamRoster(teamName) {
     `;
 
     list.appendChild(div);
+  });
+}
+
+function initializeItineraryIfNeeded() {
+  if (!localStorage.getItem("itineraryEvents")) {
+    localStorage.setItem("itineraryEvents", JSON.stringify(defaultItineraryEvents));
+  }
+}
+
+function getItineraryEvents() {
+  initializeItineraryIfNeeded();
+  return JSON.parse(localStorage.getItem("itineraryEvents") || "[]");
+}
+
+function saveItineraryEvents(events) {
+  localStorage.setItem("itineraryEvents", JSON.stringify(events));
+}
+
+function renderItinerary() {
+  const events = getItineraryEvents();
+
+  renderItinerarySection("golf", "golfItineraryList", events);
+  renderItinerarySection("lodging", "lodgingItineraryList", events);
+  renderItinerarySection("reservations", "reservationsItineraryList", events);
+  renderItinerarySection("flights", "flightsItineraryList", events);
+  renderItinerarySection("other", "otherItineraryList", events);
+}
+
+function renderItinerarySection(section, elementId, events) {
+  const list = document.getElementById(elementId);
+  const sectionEvents = events
+    .filter(event => event.section === section)
+    .sort((a, b) => {
+      const aSort = `${a.startDate || ""} ${a.startTime || ""}`;
+      const bSort = `${b.startDate || ""} ${b.startTime || ""}`;
+      return aSort.localeCompare(bSort);
+    });
+
+  list.innerHTML = "";
+
+  if (sectionEvents.length === 0) {
+    list.innerHTML = `<div class="empty-state">No events added yet.</div>`;
+    return;
+  }
+
+  sectionEvents.forEach(event => {
+    const div = document.createElement("div");
+    div.className = "itinerary-item";
+    div.onclick = () => openItineraryEditor(event.section, event.id);
+
+    div.innerHTML = `
+      <div class="itinerary-date">${formatDateRange(event.startDate, event.endDate)}</div>
+      <div class="itinerary-title">${event.title || "Untitled Event"}</div>
+      <div class="itinerary-detail">
+        ${formatTimeRange(event.startTime, event.endTime)}
+        ${event.details ? `<br>${event.details}` : ""}
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function openItineraryEditor(section, eventId = null) {
+  editingItineraryEventId = eventId;
+
+  document.getElementById("eventSection").value = section;
+  document.getElementById("eventTitle").value = "";
+  document.getElementById("eventStartDate").value = "";
+  document.getElementById("eventEndDate").value = "";
+  document.getElementById("eventStartTime").value = "";
+  document.getElementById("eventEndTime").value = "";
+  document.getElementById("eventDetails").value = "";
+
+  if (eventId) {
+    const events = getItineraryEvents();
+    const event = events.find(x => x.id === eventId);
+
+    if (event) {
+      document.getElementById("itineraryEditorTitle").innerText = "Edit Event";
+      document.getElementById("eventSection").value = event.section || section;
+      document.getElementById("eventTitle").value = event.title || "";
+      document.getElementById("eventStartDate").value = event.startDate || "";
+      document.getElementById("eventEndDate").value = event.endDate || "";
+      document.getElementById("eventStartTime").value = event.startTime || "";
+      document.getElementById("eventEndTime").value = event.endTime || "";
+      document.getElementById("eventDetails").value = event.details || "";
+      document.getElementById("deleteItineraryButton").classList.remove("hidden");
+    }
+  } else {
+    document.getElementById("itineraryEditorTitle").innerText = "Add Event";
+    document.getElementById("deleteItineraryButton").classList.add("hidden");
+  }
+
+  show("itineraryEditorScreen");
+}
+
+function saveItineraryEvent() {
+  const section = document.getElementById("eventSection").value;
+  const title = document.getElementById("eventTitle").value.trim();
+  const startDate = document.getElementById("eventStartDate").value;
+  const endDate = document.getElementById("eventEndDate").value;
+  const startTime = document.getElementById("eventStartTime").value;
+  const endTime = document.getElementById("eventEndTime").value;
+  const details = document.getElementById("eventDetails").value.trim();
+
+  if (!title) {
+    alert("Please enter an event name.");
+    return;
+  }
+
+  let events = getItineraryEvents();
+
+  const eventData = {
+    id: editingItineraryEventId || `event-${Date.now()}`,
+    section,
+    title,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    details
+  };
+
+  if (editingItineraryEventId) {
+    events = events.map(event =>
+      event.id === editingItineraryEventId ? eventData : event
+    );
+  } else {
+    events.push(eventData);
+  }
+
+  saveItineraryEvents(events);
+  editingItineraryEventId = null;
+  openItinerary();
+}
+
+function deleteItineraryEvent() {
+  if (!editingItineraryEventId) return;
+
+  if (!confirm("Delete this event?")) return;
+
+  let events = getItineraryEvents();
+  events = events.filter(event => event.id !== editingItineraryEventId);
+
+  saveItineraryEvents(events);
+  editingItineraryEventId = null;
+  openItinerary();
+}
+
+function formatDateRange(startDate, endDate) {
+  if (!startDate && !endDate) return "Date TBD";
+
+  const start = startDate ? formatDisplayDate(startDate) : "";
+  const end = endDate ? formatDisplayDate(endDate) : "";
+
+  if (start && end && start !== end) {
+    return `${start} - ${end}`;
+  }
+
+  return start || end;
+}
+
+function formatDisplayDate(dateString) {
+  const date = new Date(`${dateString}T12:00:00`);
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function formatTimeRange(startTime, endTime) {
+  if (!startTime && !endTime) return "";
+
+  const start = startTime ? formatDisplayTime(startTime) : "";
+  const end = endTime ? formatDisplayTime(endTime) : "";
+
+  if (start && end) {
+    return `${start} - ${end}`;
+  }
+
+  return start || end;
+}
+
+function formatDisplayTime(timeString) {
+  const [hours, minutes] = timeString.split(":");
+  const date = new Date();
+  date.setHours(Number(hours));
+  date.setMinutes(Number(minutes));
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit"
   });
 }
 
@@ -829,6 +1149,8 @@ function renderPlayerList() {
 }
 
 function getSwamiGolfData() {
+  initializeItineraryIfNeeded();
+
   return {
     appName: "Swami Golf",
     appVersion: "development",
@@ -838,7 +1160,8 @@ function getSwamiGolfData() {
       teamB: localStorage.getItem("teamB") || "Team B",
       teamAScore: localStorage.getItem("teamAScore") || "0",
       teamBScore: localStorage.getItem("teamBScore") || "0",
-      players: JSON.parse(localStorage.getItem("players") || "[]")
+      players: JSON.parse(localStorage.getItem("players") || "[]"),
+      itineraryEvents: JSON.parse(localStorage.getItem("itineraryEvents") || "[]")
     }
   };
 }
@@ -873,6 +1196,7 @@ function importData() {
     localStorage.setItem("teamAScore", data.teamAScore || "0");
     localStorage.setItem("teamBScore", data.teamBScore || "0");
     localStorage.setItem("players", JSON.stringify(data.players || []));
+    localStorage.setItem("itineraryEvents", JSON.stringify(data.itineraryEvents || defaultItineraryEvents));
 
     alert("Data imported successfully.");
     openSettings();
