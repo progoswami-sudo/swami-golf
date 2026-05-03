@@ -125,6 +125,14 @@
       background: #334155;
     }
 
+    button.backup {
+      background: #0f766e;
+    }
+
+    button.import {
+      background: #7c3aed;
+    }
+
     .gear {
       position: absolute;
       right: 0;
@@ -143,7 +151,7 @@
       cursor: pointer;
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 14px;
@@ -151,6 +159,12 @@
       border-radius: 10px;
       border: none;
       font-size: 16px;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      font-family: monospace;
     }
 
     h2 {
@@ -215,6 +229,13 @@
       padding: 18px;
       font-size: 14px;
     }
+
+    .helper-text {
+      font-size: 13px;
+      color: #dbeafe;
+      line-height: 1.4;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -246,7 +267,7 @@
             <div id="teamAName" class="team-name" onclick="openTeamRoster('A')">
               Team A
             </div>
-            <div class="score">0</div>
+            <div id="teamAScore" class="score">0</div>
           </div>
 
           <div>VS</div>
@@ -255,7 +276,7 @@
             <div id="teamBName" class="team-name" onclick="openTeamRoster('B')">
               Team B
             </div>
-            <div class="score">0</div>
+            <div id="teamBScore" class="score">0</div>
           </div>
         </div>
       </div>
@@ -277,7 +298,25 @@
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
       <button onclick="openPlayerList()">Add / Edit Players</button>
+      <button onclick="exportData()" class="backup">Export Data</button>
+      <button onclick="openImportScreen()" class="import">Import Data</button>
       <button onclick="goTripHome()" class="secondary">Back</button>
+    </div>
+  </div>
+
+  <div id="importScreen" class="hidden">
+    <h2>Import Data</h2>
+
+    <div class="card">
+      <div class="helper-text">
+        Paste your exported Swami Golf backup data below, then tap Import.
+        This will replace the saved data on this device.
+      </div>
+
+      <textarea id="importDataText" placeholder="Paste exported backup JSON here"></textarea>
+
+      <button onclick="importData()" class="import">Import</button>
+      <button onclick="openSettings()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -336,6 +375,7 @@ function show(id) {
     "tripHome",
     "teamRosterScreen",
     "settingsScreen",
+    "importScreen",
     "teamScreen",
     "playerListScreen",
     "playerScreen"
@@ -347,6 +387,7 @@ function show(id) {
 function openTripHome() {
   show("tripHome");
   loadTeams();
+  loadScores();
 }
 
 function goHome() {
@@ -357,9 +398,15 @@ function openSettings() {
   show("settingsScreen");
 }
 
+function openImportScreen() {
+  document.getElementById("importDataText").value = "";
+  show("importScreen");
+}
+
 function goTripHome() {
   show("tripHome");
   loadTeams();
+  loadScores();
 }
 
 function openTeamEdit() {
@@ -427,6 +474,14 @@ function loadTeams() {
 
   document.getElementById("teamBName").innerText =
     localStorage.getItem("teamB") || "Team B";
+}
+
+function loadScores() {
+  document.getElementById("teamAScore").innerText =
+    localStorage.getItem("teamAScore") || "0";
+
+  document.getElementById("teamBScore").innerText =
+    localStorage.getItem("teamBScore") || "0";
 }
 
 function loadInputs() {
@@ -672,6 +727,59 @@ function renderPlayerList() {
 
     list.appendChild(div);
   });
+}
+
+function getSwamiGolfData() {
+  return {
+    appName: "Swami Golf",
+    appVersion: "development",
+    exportedAt: new Date().toISOString(),
+    data: {
+      teamA: localStorage.getItem("teamA") || "Team A",
+      teamB: localStorage.getItem("teamB") || "Team B",
+      teamAScore: localStorage.getItem("teamAScore") || "0",
+      teamBScore: localStorage.getItem("teamBScore") || "0",
+      players: JSON.parse(localStorage.getItem("players") || "[]")
+    }
+  };
+}
+
+function exportData() {
+  const backup = getSwamiGolfData();
+  const backupText = JSON.stringify(backup, null, 2);
+
+  navigator.clipboard.writeText(backupText)
+    .then(() => {
+      alert("Backup copied to clipboard. Save it somewhere safe before updating the app.");
+    })
+    .catch(() => {
+      prompt("Copy this backup data and save it somewhere safe:", backupText);
+    });
+}
+
+function importData() {
+  const importText = document.getElementById("importDataText").value.trim();
+
+  if (!importText) {
+    alert("Please paste backup data first.");
+    return;
+  }
+
+  try {
+    const backup = JSON.parse(importText);
+    const data = backup.data || backup;
+
+    localStorage.setItem("teamA", data.teamA || "Team A");
+    localStorage.setItem("teamB", data.teamB || "Team B");
+    localStorage.setItem("teamAScore", data.teamAScore || "0");
+    localStorage.setItem("teamBScore", data.teamBScore || "0");
+    localStorage.setItem("players", JSON.stringify(data.players || []));
+
+    alert("Data imported successfully.");
+    openSettings();
+  } catch (error) {
+    alert("Import failed. Please make sure you pasted valid backup data.");
+  }
 }
 </script>
 
