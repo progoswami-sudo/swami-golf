@@ -2850,16 +2850,26 @@ ${closer}`;
     let text = escapeHtml(post.text || "");
 
     const taggedIds = Array.isArray(post.taggedPlayerIds) ? post.taggedPlayerIds : [];
-    const taggedPlayers = taggedIds
+    const taggedPlayersById = taggedIds
       .map(id => players.find(player => player.id === id))
-      .filter(Boolean)
+      .filter(Boolean);
+
+    const literalMentionPlayers = players.filter(player => {
+      if (!player.name) return false;
+      const escapedName = escapeHtml(player.name);
+      const pattern = new RegExp(`@${escapeRegExp(escapedName)}(?=\\s|$|[.,!?])`, "i");
+      return pattern.test(text);
+    });
+
+    const allMentionPlayers = [...taggedPlayersById, ...literalMentionPlayers]
+      .filter((player, index, arr) => arr.findIndex(p => p.id === player.id) === index)
       .sort((a, b) => (b.name || "").length - (a.name || "").length);
 
-    taggedPlayers.forEach(player => {
+    allMentionPlayers.forEach(player => {
       const escapedName = escapeHtml(player.name || "");
       if (!escapedName) return;
 
-      const pattern = new RegExp(`@${escapeRegExp(escapedName)}\\\\b`, "g");
+      const pattern = new RegExp(`@${escapeRegExp(escapedName)}(?=\\s|$|[.,!?])`, "g");
       text = text.replace(pattern, `<span class="feed-mention">@${escapedName}</span>`);
     });
 
