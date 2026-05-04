@@ -168,6 +168,11 @@
       margin-top: 8px;
     }
 
+    .feed-mention {
+      font-weight: 800;
+      color: #bfdbfe;
+    }
+
     .feed-media {
       margin-top: 10px;
       border-radius: 12px;
@@ -2838,6 +2843,31 @@ ${closer}`;
     });
   }
 
+
+  function renderPostText(post) {
+    let text = escapeHtml(post.text || "");
+
+    const taggedIds = Array.isArray(post.taggedPlayerIds) ? post.taggedPlayerIds : [];
+    const taggedPlayers = taggedIds
+      .map(id => players.find(player => player.id === id))
+      .filter(Boolean)
+      .sort((a, b) => (b.name || "").length - (a.name || "").length);
+
+    taggedPlayers.forEach(player => {
+      const escapedName = escapeHtml(player.name || "");
+      if (!escapedName) return;
+
+      const pattern = new RegExp(`@${escapeRegExp(escapedName)}\\\\b`, "g");
+      text = text.replace(pattern, `<span class="feed-mention">@${escapedName}</span>`);
+    });
+
+    return text;
+  }
+
+  function escapeRegExp(text) {
+    return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   function renderFeed() {
     const list = document.getElementById("feedList");
 
@@ -2872,7 +2902,7 @@ ${closer}`;
       div.innerHTML = `
         <div class="feed-author">${escapeHtml(post.author)}</div>
         <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
-        <div class="feed-text">${escapeHtml(post.text)}</div>
+        <div class="feed-text">${renderPostText(post)}</div>
         ${mediaHtml}
       `;
 
@@ -3090,12 +3120,15 @@ ${closer}`;
 
     if (!input || !picker) return;
 
-    if (input.value.includes("@")) {
+    const cursor = input.selectionStart || input.value.length;
+    const textBeforeCursor = input.value.slice(0, cursor);
+    const hasActiveAt = /(^|\s)@[\w-]*$/.test(textBeforeCursor);
+
+    if (hasActiveAt) {
       picker.classList.remove("hidden");
       renderMentionOptions();
     } else {
       picker.classList.add("hidden");
-      selectedMentionPlayerIds = [];
     }
   }
 
@@ -3105,18 +3138,38 @@ ${closer}`;
 
     container.innerHTML = players.map(player => {
       const selected = selectedMentionPlayerIds.includes(player.id) ? "selected" : "";
-      return `<div class="mention-chip ${selected}" onclick="toggleMentionPlayer('${escapeAttr(player.id)}')">@${escapeHtml(player.name)}</div>`;
+      return `<div class="mention-chip ${selected}" onclick="insertMentionPlayer('${escapeAttr(player.id)}')">@${escapeHtml(player.name)}</div>`;
     }).join("");
   }
 
-  function toggleMentionPlayer(playerId) {
-    if (selectedMentionPlayerIds.includes(playerId)) {
-      selectedMentionPlayerIds = selectedMentionPlayerIds.filter(id => id !== playerId);
-    } else {
+  function insertMentionPlayer(playerId) {
+    const input = document.getElementById("feedCommentInput");
+    const player = players.find(item => item.id === playerId);
+
+    if (!input || !player) return;
+
+    const cursor = input.selectionStart || input.value.length;
+    const before = input.value.slice(0, cursor);
+    const after = input.value.slice(cursor);
+
+    const mentionText = `@${player.name}`;
+    const replacedBefore = before.replace(/(^|\s)@[\w-]*$/, `$1${mentionText} `);
+
+    input.value = replacedBefore + after;
+
+    const newCursor = replacedBefore.length;
+    input.focus();
+    input.setSelectionRange(newCursor, newCursor);
+
+    if (!selectedMentionPlayerIds.includes(playerId)) {
       selectedMentionPlayerIds.push(playerId);
     }
 
-    renderMentionOptions();
+    document.getElementById("mentionPicker").classList.add("hidden");
+  }
+
+  function toggleMentionPlayer(playerId) {
+    insertMentionPlayer(playerId);
   }
 
   function openTags() {
@@ -3175,7 +3228,7 @@ ${closer}`;
       <div class="tagged-post">
         <div class="feed-author">${escapeHtml(post.author)}</div>
         <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
-        <div class="feed-text">${escapeHtml(post.text)}</div>
+        <div class="feed-text">${renderPostText(post)}</div>
       </div>
     `).join("");
   }
@@ -3185,6 +3238,21 @@ ${closer}`;
     localStorage.setItem(taggedReadKey(), JSON.stringify(ids));
     updateTagBadge();
     renderTaggedMessages();
+  }
+
+
+  function getTaggedPlayerIdsFromText(text) {
+    const ids = new Set(selectedMentionPlayerIds);
+
+    players.forEach(player => {
+      if (!player.name) return;
+      const pattern = new RegExp(`@${escapeRegExp(player.name)}\\b`, "i");
+      if (pattern.test(text)) {
+        ids.add(player.id);
+      }
+    });
+
+    return Array.from(ids);
   }
 
   async function postUserComment() {
@@ -3203,7 +3271,8 @@ ${closer}`;
       return;
     }
 
-    await addFeedPost(assignedPlayer.name, text, "user", null, selectedMentionPlayerIds);
+    const taggedIds = getTaggedPlayerIdsFromText(text);
+    await addFeedPost(assignedPlayer.name, text, "user", null, taggedIds);
     input.value = "";
     selectedMentionPlayerIds = [];
     document.getElementById("mentionPicker").classList.add("hidden");
