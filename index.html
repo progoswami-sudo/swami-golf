@@ -701,6 +701,8 @@
       font-size: 13px;
       cursor: pointer;
       text-align: center;
+      touch-action: manipulation;
+      user-select: none;
     }
 
     .mention-chip.selected {
@@ -3138,8 +3140,17 @@ ${closer}`;
 
     container.innerHTML = players.map(player => {
       const selected = selectedMentionPlayerIds.includes(player.id) ? "selected" : "";
-      return `<div class="mention-chip ${selected}" onclick="insertMentionPlayer('${escapeAttr(player.id)}')">@${escapeHtml(player.name)}</div>`;
+      return `<div class="mention-chip ${selected}" data-player-id="${escapeAttr(player.id)}">@${escapeHtml(player.name)}</div>`;
     }).join("");
+
+    container.querySelectorAll(".mention-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const playerId = chip.getAttribute("data-player-id");
+        if (playerId) {
+          insertMentionPlayer(playerId);
+        }
+      });
+    });
   }
 
   function insertMentionPlayer(playerId) {
@@ -3629,6 +3640,8 @@ ${closer}`;
   window.openTags = openTags;
   window.markTagsRead = markTagsRead;
   window.toggleRoundGroup = toggleRoundGroup;
+  window.insertMentionPlayer = insertMentionPlayer;
+  window.renderMentionOptions = renderMentionOptions;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
