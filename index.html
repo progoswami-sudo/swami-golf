@@ -588,6 +588,168 @@
       background: #0f766e;
     }
 
+  
+
+    .trip-menu-wrap {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .trip-menu-btn {
+      width: auto;
+      margin-top: 0;
+      padding: 8px 11px;
+      border-radius: 10px;
+      background: #13294d;
+      border: 1px solid #375984;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .trip-menu {
+      position: absolute;
+      right: 0;
+      top: 42px;
+      width: 210px;
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 20;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+
+    .recap-card {
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+
+    .recap-title {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .recap-meta {
+      font-size: 12px;
+      color: #bfdbfe;
+      margin-top: 4px;
+    }
+
+    .recap-body {
+      white-space: pre-wrap;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: white;
+    }
+
+  
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .trip-menu-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mention-picker {
+      background: rgba(19, 41, 77, 0.9);
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .mention-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mention-chip {
+      padding: 10px;
+      border-radius: 10px;
+      background: #0f2442;
+      border: 1px solid #375984;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .mention-chip.selected {
+      background: #2563eb;
+      border-color: #60a5fa;
+    }
+
+    .assigned-player-box {
+      background: rgba(15, 118, 110, 0.2);
+      border: 1px solid #0f766e;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #ccfbf1;
+      line-height: 1.35;
+    }
+
+    .round-group {
+      margin-top: 12px;
+      border: 1px solid #375984;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(19, 41, 77, 0.6);
+    }
+
+    .round-header {
+      padding: 14px;
+      background: #13294d;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .round-body {
+      padding: 10px;
+    }
+
+    .tagged-post {
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .danger-zone {
+      border-top: 1px solid #375984;
+      margin-top: 14px;
+      padding-top: 10px;
+    }
+
   </style>
 </head>
 
@@ -599,7 +761,9 @@
     <div class="hamburger-wrap">
       <button class="hamburger-btn" onclick="toggleHomeMenu()">☰</button>
       <div id="homeMenu" class="home-menu hidden">
-        <div class="home-menu-item" onclick="requestNotifications()">Notifications</div>
+        <div class="home-menu-item" onclick="createTrip()">Create Trip</div>
+        <div class="home-menu-item" onclick="requestNotifications()">Notifications On</div>
+        <div class="home-menu-item" onclick="turnOffNotifications()">Notifications Off</div>
       </div>
     </div>
 
@@ -609,13 +773,7 @@
 
     <div class="sync-status" id="syncStatus">Connecting to Swami...</div>
 
-    <div class="tile trip-tile" data-trip-id="pinehurst2026" onclick="openTripHome('pinehurst2026')">
-      🏌️ Pinehurst 2026
-    </div>
-
-    <div class="tile trip-tile" data-trip-id="testGolfTrip" onclick="openTripHome('testGolfTrip')">
-      🧪 Test Golf Trip
-    </div>
+    <div id="tripTiles"></div>
   </div>
 
   <div id="tripHome" class="hidden">
@@ -623,7 +781,20 @@
       <div class="page-header">
         <div class="homeBtn" onclick="goHome()">🏠</div>
         <h2 id="tripTitle">Golf Trip</h2>
-        <div class="gear" onclick="openSettings()">⚙️</div>
+        <div class="trip-menu-wrap">
+          <button class="trip-menu-btn" onclick="toggleTripMenu()">☰</button>
+          <div id="tripMenu" class="trip-menu hidden">
+            <div class="home-menu-item" onclick="openSettings()">Settings</div>
+            <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
+            <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
+              <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
+            </div>
+            <div class="danger-zone">
+              <div class="home-menu-item" onclick="editTrip()">Edit Trip</div>
+              <div class="home-menu-item" onclick="deleteTrip()" style="color:#fecaca;">Delete Trip</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="mini-tile" onclick="openItinerary()">
@@ -658,7 +829,11 @@
 
         <div id="feedList" class="feed-list"></div>
 
-        <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..."></textarea>
+        <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..." oninput="handleFeedInput()"></textarea>
+        <div id="mentionPicker" class="mention-picker hidden">
+          <div class="small-note">Tag player(s):</div>
+          <div id="mentionOptions" class="mention-options"></div>
+        </div>
         <button onclick="postUserComment()">Post Comment</button>
       </div>
     </div>
@@ -741,6 +916,43 @@
   </div>
 
 
+
+
+  <div id="tagsScreen" class="hidden">
+    <button onclick="goTripHome()" class="secondary">Back</button>
+    <h2>Tagged Messages</h2>
+
+    <div class="card">
+      <div id="taggedMessagesList"></div>
+      <button onclick="markTagsRead()" class="secondary">Mark Tags Read</button>
+    </div>
+  </div>
+
+  <div id="recapsScreen" class="hidden">
+    <button onclick="goTripHome()" class="secondary">Back</button>
+    <h2>Swami Recaps</h2>
+
+    <div class="card">
+      <label class="form-label" for="recapType">Recap Type</label>
+      <select id="recapType" onchange="renderRecapControls()">
+        <option value="day">Day</option>
+        <option value="round">Round</option>
+        <option value="match">Match</option>
+        <option value="trip">Full Trip</option>
+      </select>
+
+      <div id="recapControls"></div>
+
+      <button onclick="generateRecap()">Generate Recap</button>
+      <div id="recapPreview"></div>
+    </div>
+
+    <div class="card">
+      <h3>Saved Recaps</h3>
+      <div id="recapList"></div>
+    </div>
+  </div>
+
   <div id="matchHomeScreen" class="hidden">
     <button onclick="goTripHome()" class="secondary">Back</button>
     <h2>Matches</h2>
@@ -763,6 +975,20 @@
 
       <label class="form-label" for="matchCourse">Golf Course</label>
       <input id="matchCourse" placeholder="e.g., Pinehurst No. 2"/>
+
+      <label class="form-label" for="matchRound">Round</label>
+      <select id="matchRound">
+        <option value="1">Round 1</option>
+        <option value="2">Round 2</option>
+        <option value="3">Round 3</option>
+        <option value="4">Round 4</option>
+        <option value="5">Round 5</option>
+        <option value="6">Round 6</option>
+        <option value="7">Round 7</option>
+        <option value="8">Round 8</option>
+        <option value="9">Round 9</option>
+        <option value="10">Round 10</option>
+      </select>
 
       <label class="form-label" for="matchFormat">Match Format</label>
       <select id="matchFormat" onchange="handleMatchFormatChange()">
@@ -819,7 +1045,6 @@
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
       <button onclick="openPlayerList()">Add / Edit Players</button>
-      <button onclick="setDisplayName()">Set Display Name</button>
       <button onclick="exportData()" class="backup">Export Data</button>
       <button onclick="openImportScreen()" class="import">Import Data</button>
       <button onclick="goTripHome()" class="secondary">Back</button>
@@ -892,6 +1117,8 @@
       <h4>Weaknesses</h4>
       <div id="weaknesses" class="traits-grid"></div>
 
+      <div id="assignedPlayerStatus" class="assigned-player-box hidden"></div>
+      <button id="assignMeButton" onclick="assignMeToCurrentPlayer()" class="backup">Assign Me to This Player</button>
       <button onclick="savePlayer()">Save Player</button>
       <button onclick="openPlayerList()" class="secondary">Back to Player List</button>
     </div>
@@ -975,13 +1202,15 @@
   let itineraryEvents = [];
   let feedPosts = [];
   let matches = [];
+  let recaps = [];
   let editingMatchId = null;
   let editingPlayerId = null;
   let editingItineraryEventId = null;
   let unsubscribers = [];
-  let displayName = localStorage.getItem("swamiGolf.displayName") || "";
+  let selectedMentionPlayerIds = [];
+  let expandedRounds = JSON.parse(localStorage.getItem("swamiGolf.expandedRounds") || "{}");
 
-  const trips = {
+  let trips = {
     pinehurst2026: {
       id: "pinehurst2026",
       name: "Pinehurst 2026",
@@ -995,6 +1224,8 @@
       defaultTeamB: "Team B"
     }
   };
+
+  const defaultTripIds = ["pinehurst2026", "testGolfTrip"];
 
   const defaultPinehurstItineraryEvents = [
     {
@@ -1100,6 +1331,10 @@
       { title: "Team Room Tension", caption: "Someone already thinks they got stuck with the anchor.", tone: "team" },
       { title: "Cooler Advantage", caption: "May the worse team have the deeper cooler.", tone: "team" },
       { title: "Quiet Resentment", caption: "The sides are set. The grudges are loading.", tone: "team" }
+    ],
+    recapAdd: [
+      { title: "Swami Recap", caption: "The evidence has been reviewed.", tone: "chat" },
+      { title: "Trip Historian", caption: "Some stories get better when documented.", tone: "chat" }
     ],
     matchAdd: [
       { title: "Match Created", caption: "The friendly competition has become legally binding.", tone: "team" },
@@ -1258,6 +1493,8 @@
 
     await initializeTripIfNeeded("pinehurst2026");
     await initializeTripIfNeeded("testGolfTrip");
+    await loadTrips();
+    renderTripTiles();
   });
 
   function tripDocRef(tripId = activeTripId) {
@@ -1279,6 +1516,104 @@
   function matchesCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "matches");
   }
+
+  function recapsCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "recaps");
+  }
+
+  function assignedPlayerKey(tripId = activeTripId) {
+    return `swamiGolf.${tripId}.assignedPlayerId`;
+  }
+
+  function taggedReadKey(tripId = activeTripId) {
+    return `swamiGolf.${tripId}.readTaggedPostIds`;
+  }
+
+  function getAssignedPlayerId() {
+    return localStorage.getItem(assignedPlayerKey()) || "";
+  }
+
+  function getAssignedPlayer() {
+    const assignedId = getAssignedPlayerId();
+    return players.find(player => player.id === assignedId) || null;
+  }
+
+  async function loadTrips() {
+    const snap = await getDocs(collection(db, "trips"));
+    snap.docs.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      const tripId = docSnap.id;
+      trips[tripId] = {
+        id: tripId,
+        name: data.name || trips[tripId]?.name || "Golf Trip",
+        defaultTeamA: data.teamA || trips[tripId]?.defaultTeamA || "Team A",
+        defaultTeamB: data.teamB || trips[tripId]?.defaultTeamB || "Team B",
+        custom: !defaultTripIds.includes(tripId)
+      };
+    });
+  }
+
+  function renderTripTiles() {
+    const container = document.getElementById("tripTiles");
+    if (!container) return;
+
+    const ordered = Object.values(trips).sort((a, b) => {
+      const aDefaultIndex = defaultTripIds.indexOf(a.id);
+      const bDefaultIndex = defaultTripIds.indexOf(b.id);
+
+      if (aDefaultIndex !== -1 || bDefaultIndex !== -1) {
+        if (aDefaultIndex === -1) return 1;
+        if (bDefaultIndex === -1) return -1;
+        return aDefaultIndex - bDefaultIndex;
+      }
+
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+    container.innerHTML = ordered.map(trip => `
+      <div class="tile trip-tile" data-trip-id="${escapeAttr(trip.id)}" onclick="openTripHome('${escapeAttr(trip.id)}')">
+        ${trip.id === "testGolfTrip" ? "🧪" : "🏌️"} ${escapeHtml(trip.name)}
+      </div>
+    `).join("");
+  }
+
+  async function createTrip() {
+    document.getElementById("homeMenu").classList.add("hidden");
+    const name = prompt("Name your new golf trip:");
+
+    if (!name || !name.trim()) return;
+
+    const tripId = `trip-${Date.now()}`;
+
+    await setDoc(tripDocRef(tripId), {
+      id: tripId,
+      name: name.trim(),
+      teamA: "Team A",
+      teamB: "Team B",
+      teamAScore: "0",
+      teamBScore: "0",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    trips[tripId] = {
+      id: tripId,
+      name: name.trim(),
+      defaultTeamA: "Team A",
+      defaultTeamB: "Team B",
+      custom: true
+    };
+
+    renderTripTiles();
+  }
+
+  function turnOffNotifications() {
+    localStorage.setItem("swamiGolf.notificationsEnabled", "false");
+    document.getElementById("homeMenu").classList.add("hidden");
+    alert("Notifications turned off on this device.");
+  }
+
+
 
   async function initializeTripIfNeeded(tripId) {
     const tripRef = tripDocRef(tripId);
@@ -1340,6 +1675,8 @@
           ...docSnap.data()
         }));
         renderPlayerList();
+        updateAssignedPlayerStatus();
+        updateTagBadge();
       })
     );
 
@@ -1362,6 +1699,8 @@
         }));
         maybeNotifyNewFeedPost(previousCount);
         renderFeed();
+        updateTagBadge();
+        renderTaggedMessages();
       })
     );
 
@@ -1372,6 +1711,17 @@
           ...docSnap.data()
         }));
         renderMatchList();
+        renderRecapControls();
+      })
+    );
+
+    unsubscribers.push(
+      onSnapshot(recapsCollection(tripId), snapshot => {
+        recaps = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderRecapList();
       })
     );
   }
@@ -1382,6 +1732,8 @@
       "tripHome",
       "itineraryScreen",
       "itineraryEditorScreen",
+      "tagsScreen",
+      "recapsScreen",
       "matchHomeScreen",
       "matchSetupScreen",
       "teamRosterScreen",
@@ -1445,9 +1797,12 @@
 
     localStorage.setItem(seenKey, latest.id);
 
-    if (document.visibilityState === "visible") return;
+    const assignedId = getAssignedPlayerId();
+    const isTagged = Array.isArray(latest.taggedPlayerIds) && latest.taggedPlayerIds.includes(assignedId);
 
-    new Notification(`${latest.author} posted in Swami Golf`, {
+    if (!isTagged && document.visibilityState === "visible") return;
+
+    new Notification(isTagged ? `You were tagged by ${latest.author}` : `${latest.author} posted in Swami Golf`, {
       body: latest.text || "New trip feed activity"
     });
   }
@@ -1464,6 +1819,7 @@
 
     document.getElementById("matchDate").value = getTodayDateString();
     document.getElementById("matchCourse").value = "";
+    if (document.getElementById("matchRound")) document.getElementById("matchRound").value = "1";
     document.getElementById("matchFormat").value = "Best Ball";
     document.getElementById("matchScoringType").value = "Gross";
     document.getElementById("matchValueType").value = "Points";
@@ -1481,6 +1837,7 @@
     if (sourceMatch) {
       document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
       document.getElementById("matchCourse").value = sourceMatch.course || "";
+      if (document.getElementById("matchRound")) document.getElementById("matchRound").value = sourceMatch.round || "1";
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
@@ -1622,6 +1979,7 @@
   async function saveMatch() {
     const matchDate = document.getElementById("matchDate").value;
     const course = document.getElementById("matchCourse").value.trim();
+    const round = document.getElementById("matchRound") ? document.getElementById("matchRound").value : "1";
     const format = document.getElementById("matchFormat").value;
     const scoringType = document.getElementById("matchScoringType").value;
     const valueType = document.getElementById("matchValueType").value;
@@ -1659,6 +2017,7 @@
   function renderMatchList() {
     const list = document.getElementById("matchList");
     if (!list) return;
+
     list.innerHTML = "";
 
     if (matches.length === 0) {
@@ -1666,38 +2025,103 @@
       return;
     }
 
-    matches.sort((a,b) => `${a.matchDate || ""} ${a.createdAt || ""}`.localeCompare(`${b.matchDate || ""} ${b.createdAt || ""}`)).forEach(match => {
-      const div = document.createElement("div");
-      div.className = "match-scorecard";
-      const teamAName = activeTripData.teamA || "Team A";
-      const teamBName = activeTripData.teamB || "Team B";
-      const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
-      const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
-      const isNassau = match.format === "Best Ball (Nassau)";
+    const grouped = {};
 
-      div.innerHTML = `
+    matches.forEach(match => {
+      const round = String(match.round || "1");
+      if (!grouped[round]) grouped[round] = [];
+      grouped[round].push(match);
+    });
+
+    const rounds = Object.keys(grouped).sort((a, b) => Number(a) - Number(b));
+
+    list.innerHTML = rounds.map(round => {
+      const isOpen = expandedRounds[activeTripId]?.[round] !== false;
+      const body = grouped[round]
+        .sort((a, b) => `${a.matchDate || ""} ${a.createdAt || ""}`.localeCompare(`${b.matchDate || ""} ${b.createdAt || ""}`))
+        .map(renderMatchCard)
+        .join("");
+
+      return `
+        <div class="round-group">
+          <div class="round-header" onclick="toggleRoundGroup('${escapeAttr(round)}')">
+            <span>Round ${escapeHtml(round)} (${grouped[round].length} match${grouped[round].length === 1 ? "" : "es"})</span>
+            <span>${isOpen ? "▾" : "▸"}</span>
+          </div>
+          <div class="round-body ${isOpen ? "" : "hidden"}">
+            ${body}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function toggleRoundGroup(round) {
+    if (!expandedRounds[activeTripId]) {
+      expandedRounds[activeTripId] = {};
+    }
+
+    expandedRounds[activeTripId][round] = expandedRounds[activeTripId][round] === false ? true : false;
+    localStorage.setItem("swamiGolf.expandedRounds", JSON.stringify(expandedRounds));
+    renderMatchList();
+  }
+
+  function renderMatchCard(match) {
+    const teamAName = activeTripData.teamA || "Team A";
+    const teamBName = activeTripData.teamB || "Team B";
+    const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
+    const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
+    const isNassau = match.format === "Best Ball (Nassau)";
+
+    return `
+      <div class="match-scorecard">
         <div class="match-scorecard-header">
           <div>
             <div class="match-title">${escapeHtml(match.course || "Golf Course TBD")}</div>
-            <div class="match-detail">${escapeHtml(formatMatchDate(match.matchDate))}<br>${escapeHtml(match.format || "")} • ${escapeHtml(match.scoringType || "Gross")} • ${escapeHtml(match.valueType || "Points")}</div>
+            <div class="match-detail">
+              ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}<br>
+              ${escapeHtml(match.format || "")} • ${escapeHtml(match.scoringType || "Gross")} • ${escapeHtml(match.valueType || "Points")}
+            </div>
           </div>
           <button class="match-gear" onclick="toggleMatchMenu('${match.id}')">⚙️</button>
         </div>
+
         <div id="matchMenu-${match.id}" class="match-actions-menu hidden">
           <button onclick="openMatchSetup('${match.id}')" class="secondary">Edit Match</button>
           <button onclick="openMatchSetup(null, '${match.id}')" class="secondary">Copy Match</button>
           <button onclick="deleteMatch('${match.id}')" class="danger">Delete Match</button>
         </div>
+
         <div class="match-scorecard-body">
-          <div class="match-detail"><strong>${escapeHtml(teamAName)}:</strong> ${escapeHtml(teamAPlayers)}<br><strong>${escapeHtml(teamBName)}:</strong> ${escapeHtml(teamBPlayers)}</div>
+          <div class="match-detail">
+            <strong>${escapeHtml(teamAName)}:</strong> ${escapeHtml(teamAPlayers)}<br>
+            <strong>${escapeHtml(teamBName)}:</strong> ${escapeHtml(teamBPlayers)}
+          </div>
+
           ${renderMatchValueSummary(match)}
-          ${isNassau ? `
-            <table class="scorecard-table"><tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr><tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.frontA || "0")}</td><td>${escapeHtml(match.backA || "0")}</td><td>${escapeHtml(match.overallA || "0")}</td></tr><tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.frontB || "0")}</td><td>${escapeHtml(match.backB || "0")}</td><td>${escapeHtml(match.overallB || "0")}</td></tr></table>` : `
-            <table class="scorecard-table"><tr><th></th><th>Score</th></tr><tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.teamAScore || "0")}</td></tr><tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.teamBScore || "0")}</td></tr></table>`}
+
+          ${
+            isNassau
+              ? `
+                <table class="scorecard-table">
+                  <tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr>
+                  <tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.frontA || "0")}</td><td>${escapeHtml(match.backA || "0")}</td><td>${escapeHtml(match.overallA || "0")}</td></tr>
+                  <tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.frontB || "0")}</td><td>${escapeHtml(match.backB || "0")}</td><td>${escapeHtml(match.overallB || "0")}</td></tr>
+                </table>
+              `
+              : `
+                <table class="scorecard-table">
+                  <tr><th></th><th>Score</th></tr>
+                  <tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.teamAScore || "0")}</td></tr>
+                  <tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.teamBScore || "0")}</td></tr>
+                </table>
+              `
+          }
+
           <button class="enter-score-btn" onclick="openEnterScore('${match.id}')">Enter Score</button>
-        </div>`;
-      list.appendChild(div);
-    });
+        </div>
+      </div>
+    `;
   }
 
   function renderMatchValueSummary(match) {
@@ -1726,6 +2150,273 @@
   }
 
   function openEnterScore(matchId) { alert("Enter Score screen is coming next. Match ID: " + matchId); }
+
+
+  function toggleTripMenu() {
+    document.getElementById("tripMenu").classList.toggle("hidden");
+  }
+
+  async function editTrip() {
+    document.getElementById("tripMenu").classList.add("hidden");
+    const currentName = activeTripData.name || trips[activeTripId].name;
+    const name = prompt("Edit trip name:", currentName);
+
+    if (!name || !name.trim()) return;
+
+    await updateDoc(tripDocRef(), {
+      name: name.trim(),
+      updatedAt: new Date().toISOString()
+    });
+
+    trips[activeTripId].name = name.trim();
+    renderTripTiles();
+  }
+
+  async function deleteTrip() {
+    document.getElementById("tripMenu").classList.add("hidden");
+
+    if (!confirm("Are you sure you want to delete this trip? All players, itinerary, matches, recaps, feed posts, and trip data will be deleted from the app.")) {
+      return;
+    }
+
+    await deleteTripData(activeTripId);
+    delete trips[activeTripId];
+    activeTripId = "pinehurst2026";
+    renderTripTiles();
+    goHome();
+  }
+
+  async function deleteTripData(tripId) {
+    await deleteCollection(playersCollection(tripId));
+    await deleteCollection(itineraryCollection(tripId));
+    await deleteCollection(feedCollection(tripId));
+    await deleteCollection(matchesCollection(tripId));
+    if (typeof recapsCollection === "function") {
+      await deleteCollection(recapsCollection(tripId));
+    }
+    await deleteDoc(tripDocRef(tripId));
+  }
+
+  async function deleteCollection(collectionRef) {
+    const snap = await getDocs(collectionRef);
+    const batch = writeBatch(db);
+    snap.docs.forEach(docSnap => batch.delete(docSnap.ref));
+    await batch.commit();
+  }
+
+  function openRecaps() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    show("recapsScreen");
+    renderRecapControls();
+    renderRecapList();
+  }
+
+  function renderRecapControls() {
+    const controls = document.getElementById("recapControls");
+    const typeSelect = document.getElementById("recapType");
+    if (!controls || !typeSelect) return;
+
+    const type = typeSelect.value;
+    controls.innerHTML = "";
+
+    if (type === "day") {
+      const dates = getMatchDates();
+      controls.innerHTML = `
+        <label class="form-label" for="recapDayDate">Date</label>
+        <select id="recapDayDate">
+          ${dates.map(date => `<option value="${escapeAttr(date)}">${escapeHtml(formatDisplayDate(date))}</option>`).join("")}
+        </select>
+      `;
+    } else if (type === "round") {
+      const rounds = getRounds();
+      controls.innerHTML = `
+        <label class="form-label" for="recapRoundNumber">Round</label>
+        <select id="recapRoundNumber">
+          ${rounds.map(round => `<option value="${escapeAttr(round)}">Round ${escapeHtml(round)}</option>`).join("")}
+        </select>
+      `;
+    } else if (type === "match") {
+      controls.innerHTML = `
+        <label class="form-label" for="recapMatchId">Match</label>
+        <select id="recapMatchId">
+          ${matches.map(match => `<option value="${escapeAttr(match.id)}">${escapeHtml(getMatchLabel(match))}</option>`).join("")}
+        </select>
+      `;
+    } else {
+      controls.innerHTML = `<div class="small-note">This will summarize the full trip based on matches, players, itinerary, and feed activity.</div>`;
+    }
+  }
+
+  function getMatchDates() {
+    const dates = [...new Set(matches.map(match => match.matchDate).filter(Boolean))].sort();
+    return dates.length ? dates : [getTodayDateString()];
+  }
+
+  function getRounds() {
+    const rounds = [...new Set(matches.map(match => match.round || "1"))].sort((a, b) => Number(a) - Number(b));
+    return rounds.length ? rounds : ["1"];
+  }
+
+  function getMatchLabel(match) {
+    return `${formatMatchDate(match.matchDate)} • Round ${match.round || "1"} • ${match.format || "Match"} at ${match.course || "Course TBD"}`;
+  }
+
+  async function generateRecap() {
+    const type = document.getElementById("recapType").value;
+    let scopeLabel = "";
+    let relevantMatches = [];
+
+    if (type === "day") {
+      const date = document.getElementById("recapDayDate")?.value || getTodayDateString();
+      scopeLabel = formatDisplayDate(date);
+      relevantMatches = matches.filter(match => match.matchDate === date);
+    } else if (type === "round") {
+      const round = document.getElementById("recapRoundNumber")?.value || "1";
+      scopeLabel = `Round ${round}`;
+      relevantMatches = matches.filter(match => String(match.round || "1") === String(round));
+    } else if (type === "match") {
+      const matchId = document.getElementById("recapMatchId")?.value;
+      const match = matches.find(item => item.id === matchId);
+      scopeLabel = match ? getMatchLabel(match) : "Selected Match";
+      relevantMatches = match ? [match] : [];
+    } else {
+      scopeLabel = activeTripData.name || trips[activeTripId].name;
+      relevantMatches = matches;
+    }
+
+    const body = buildRecapText(type, scopeLabel, relevantMatches);
+    const title = getRecapTitle(type, scopeLabel);
+
+    const recap = {
+      title,
+      type,
+      scopeLabel,
+      body,
+      createdAt: new Date().toISOString()
+    };
+
+    await addDoc(recapsCollection(), recap);
+    document.getElementById("recapPreview").innerHTML = renderRecapHtml(recap);
+    await addSwamiPost("recapAdd", title);
+  }
+
+  function getRecapTitle(type, scopeLabel) {
+    const labels = {
+      day: "Daily Recap",
+      round: "Round Recap",
+      match: "Match Recap",
+      trip: "Full Trip Recap"
+    };
+    return `${labels[type] || "Recap"} — ${scopeLabel}`;
+  }
+
+  function buildRecapText(type, scopeLabel, relevantMatches) {
+    const tripName = activeTripData.name || trips[activeTripId].name;
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+    const itineraryCount = itineraryEvents.length;
+    const feedCount = feedPosts.length;
+    const matchCount = relevantMatches.length;
+    const formats = [...new Set(relevantMatches.map(match => match.format).filter(Boolean))];
+    const courses = [...new Set(relevantMatches.map(match => match.course).filter(Boolean))];
+
+    const openers = [
+      `The Swami reviewed the evidence for ${scopeLabel}. Some of it was golf. Some of it was performance art.`,
+      `${tripName} continues to produce exactly what golf trips are built for: questionable math, fragile confidence, and adults arguing about points.`,
+      `The official recap for ${scopeLabel}: the swings were loose, the logic was looser, and the group chat remains undefeated.`
+    ];
+    const opener = openers[Math.floor(Math.random() * openers.length)];
+
+    const matchSummary = matchCount
+      ? `Matches covered: ${matchCount}. Format mix: ${formats.length ? formats.join(", ") : "not specified"}. Courses: ${courses.length ? courses.join(", ") : "not specified"}.`
+      : `No matches were found for this recap. Which is either a data issue or the most peaceful golf trip in history.`;
+
+    const leaderboardFlavor = getMatchScoreFlavor(relevantMatches, teamA, teamB);
+    const playerFlavor = getPlayerFlavor();
+    const itineraryFlavor = itineraryCount
+      ? `The itinerary currently has ${itineraryCount} planned items, because apparently relaxation requires logistics.`
+      : `The itinerary is empty, a bold strategy known as "let's just see what happens."`;
+    const feedFlavor = feedCount
+      ? `Trip Feed activity sits at ${feedCount} posts, proving once again that the phones are getting more action than most wedges.`
+      : `The Trip Feed is quiet. Either everyone is focused, or nobody has figured out how typing works.`;
+
+    const closers = [
+      `Swami's verdict: momentum is temporary, screenshots are forever.`,
+      `Final note: the scores matter less than the stories, unless you won. Then the scores matter a lot.`,
+      `Swami recommends hydration, sunscreen, and a legally binding definition of "gimme."`
+    ];
+    const closer = closers[Math.floor(Math.random() * closers.length)];
+
+    return `${opener}
+
+${matchSummary}
+
+${leaderboardFlavor}
+
+${playerFlavor}
+
+${itineraryFlavor}
+
+${feedFlavor}
+
+${closer}`;
+  }
+
+  function getMatchScoreFlavor(relevantMatches, teamA, teamB) {
+    if (!relevantMatches.length) return `No match results to analyze yet. The Swami is powerful, but even he needs numbers.`;
+
+    let teamAWins = 0;
+    let teamBWins = 0;
+    let ties = 0;
+
+    relevantMatches.forEach(match => {
+      const a = Number(match.teamAScore || match.overallA || 0);
+      const b = Number(match.teamBScore || match.overallB || 0);
+      if (a > b) teamAWins++;
+      else if (b > a) teamBWins++;
+      else ties++;
+    });
+
+    return `${teamA} led ${teamAWins} match scorecards, ${teamB} led ${teamBWins}, and ${ties} were tied or too emotionally complicated to judge.`;
+  }
+
+  function getPlayerFlavor() {
+    if (!players.length) return `No players are loaded yet. A golf trip without players is just a calendar with delusions.`;
+
+    const sorted = [...players].sort((a, b) => Number(a.handicapIndex || 99) - Number(b.handicapIndex || 99));
+    const low = sorted[0];
+    const high = sorted[sorted.length - 1];
+
+    if (!low || !high || low === high) return `There is ${players.length} player in the system. The Swami awaits a larger sample size and better excuses.`;
+
+    return `Low handicap watch: ${low.name} (${low.handicapIndex || "N/A"}). High handicap chaos engine: ${high.name} (${high.handicapIndex || "N/A"}). Both remain capable of ruining a perfectly good hole.`;
+  }
+
+  function renderRecapList() {
+    const list = document.getElementById("recapList");
+    if (!list) return;
+
+    const sorted = [...recaps].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    if (!sorted.length) {
+      list.innerHTML = `<div class="empty-state">No recaps yet. Generate one when the Swami has enough evidence.</div>`;
+      return;
+    }
+
+    list.innerHTML = sorted.map(renderRecapHtml).join("");
+  }
+
+  function renderRecapHtml(recap) {
+    return `
+      <div class="recap-card">
+        <div class="recap-title">${escapeHtml(recap.title || "Swami Recap")}</div>
+        <div class="recap-meta">${escapeHtml(formatFeedTime(recap.createdAt))}</div>
+        <div class="recap-body">${escapeHtml(recap.body || "")}</div>
+      </div>
+    `;
+  }
+
 
   async function openTripHome(tripId = activeTripId) {
     try {
@@ -1790,6 +2481,59 @@
     } else {
       document.getElementById("playerScreenTitle").innerText = "Edit Player";
       loadPlayerForEdit(playerId);
+    }
+
+    updateAssignedPlayerStatus();
+  }
+
+  function assignMeToCurrentPlayer() {
+    if (!editingPlayerId) {
+      alert("Save the player first, then reopen the player profile to assign yourself.");
+      return;
+    }
+
+    const player = players.find(item => item.id === editingPlayerId);
+
+    if (!player) {
+      alert("Player not found.");
+      return;
+    }
+
+    localStorage.setItem(assignedPlayerKey(), editingPlayerId);
+    updateAssignedPlayerStatus();
+    updateTagBadge();
+    alert(`You are now assigned to ${player.name}.`);
+  }
+
+  function updateAssignedPlayerStatus() {
+    const box = document.getElementById("assignedPlayerStatus");
+    const button = document.getElementById("assignMeButton");
+    if (!box || !button) return;
+
+    const assignedId = getAssignedPlayerId();
+    const assignedPlayer = players.find(item => item.id === assignedId);
+
+    if (!editingPlayerId) {
+      box.classList.remove("hidden");
+      box.innerText = assignedPlayer
+        ? `You are currently assigned to ${assignedPlayer.name}. Save this new player first if you want to assign yourself to them.`
+        : "You are not assigned to a player yet. Save this player first, then reopen the profile to assign yourself.";
+      button.classList.add("hidden");
+      return;
+    }
+
+    button.classList.remove("hidden");
+
+    if (assignedId === editingPlayerId) {
+      box.classList.remove("hidden");
+      box.innerText = "This is you. Your feed posts and tag notifications are tied to this player on this device.";
+      button.innerText = "Assigned to Me";
+    } else {
+      box.classList.remove("hidden");
+      box.innerText = assignedPlayer
+        ? `You are currently assigned to ${assignedPlayer.name}. Tap below to switch to this player.`
+        : "You are not assigned to a player yet. Assign yourself before posting in the Trip Feed.";
+      button.innerText = "Assign Me to This Player";
     }
   }
 
@@ -2136,11 +2880,12 @@
     });
   }
 
-  async function addFeedPost(author, text, type = "user", media = null) {
+  async function addFeedPost(author, text, type = "user", media = null, taggedPlayerIds = []) {
     const post = {
       author,
       text,
       type,
+      taggedPlayerIds,
       createdAt: new Date().toISOString()
     };
 
@@ -2269,6 +3014,11 @@
         `The sides are set: ${subject}. May the trash talk be better than the wedge play.`,
         `${subject}. The group dynamic has officially entered match-play mode.`
       ],
+      recapAdd: [
+        `New recap posted: ${subject}. The Swami has reviewed the evidence and judged accordingly.`,
+        `${subject} is ready. Some reputations may not survive the paragraph format.`,
+        `Recap generated: ${subject}. History is written by the app with the best data.`
+      ],
       matchAdd: [
         `New match created: ${subject}. The paperwork is complete. The excuses are pending.`,
         `${subject} has been set up. Somebody is about to learn that "friendly match" is a lie.`,
@@ -2334,6 +3084,109 @@
     return selected;
   }
 
+  function handleFeedInput() {
+    const input = document.getElementById("feedCommentInput");
+    const picker = document.getElementById("mentionPicker");
+
+    if (!input || !picker) return;
+
+    if (input.value.includes("@")) {
+      picker.classList.remove("hidden");
+      renderMentionOptions();
+    } else {
+      picker.classList.add("hidden");
+      selectedMentionPlayerIds = [];
+    }
+  }
+
+  function renderMentionOptions() {
+    const container = document.getElementById("mentionOptions");
+    if (!container) return;
+
+    container.innerHTML = players.map(player => {
+      const selected = selectedMentionPlayerIds.includes(player.id) ? "selected" : "";
+      return `<div class="mention-chip ${selected}" onclick="toggleMentionPlayer('${escapeAttr(player.id)}')">@${escapeHtml(player.name)}</div>`;
+    }).join("");
+  }
+
+  function toggleMentionPlayer(playerId) {
+    if (selectedMentionPlayerIds.includes(playerId)) {
+      selectedMentionPlayerIds = selectedMentionPlayerIds.filter(id => id !== playerId);
+    } else {
+      selectedMentionPlayerIds.push(playerId);
+    }
+
+    renderMentionOptions();
+  }
+
+  function openTags() {
+    document.getElementById("tripMenu").classList.add("hidden");
+    show("tagsScreen");
+    renderTaggedMessages();
+  }
+
+  function getTaggedPostsForAssignedPlayer() {
+    const assignedId = getAssignedPlayerId();
+    if (!assignedId) return [];
+
+    return feedPosts
+      .filter(post => Array.isArray(post.taggedPlayerIds) && post.taggedPlayerIds.includes(assignedId))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  function getReadTaggedPostIds() {
+    return JSON.parse(localStorage.getItem(taggedReadKey()) || "[]");
+  }
+
+  function updateTagBadge() {
+    const badge = document.getElementById("tagBadge");
+    if (!badge) return;
+
+    const readIds = new Set(getReadTaggedPostIds());
+    const unread = getTaggedPostsForAssignedPlayer().filter(post => !readIds.has(post.id));
+
+    if (unread.length) {
+      badge.innerText = unread.length;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+
+  function renderTaggedMessages() {
+    const list = document.getElementById("taggedMessagesList");
+    if (!list) return;
+
+    const assigned = getAssignedPlayer();
+
+    if (!assigned) {
+      list.innerHTML = `<div class="empty-state">Assign yourself to a player first. Open a player profile and tap “Assign Me to This Player.”</div>`;
+      return;
+    }
+
+    const posts = getTaggedPostsForAssignedPlayer();
+
+    if (!posts.length) {
+      list.innerHTML = `<div class="empty-state">No tagged messages for ${escapeHtml(assigned.name)} yet.</div>`;
+      return;
+    }
+
+    list.innerHTML = posts.map(post => `
+      <div class="tagged-post">
+        <div class="feed-author">${escapeHtml(post.author)}</div>
+        <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
+        <div class="feed-text">${escapeHtml(post.text)}</div>
+      </div>
+    `).join("");
+  }
+
+  function markTagsRead() {
+    const ids = getTaggedPostsForAssignedPlayer().map(post => post.id);
+    localStorage.setItem(taggedReadKey(), JSON.stringify(ids));
+    updateTagBadge();
+    renderTaggedMessages();
+  }
+
   async function postUserComment() {
     const input = document.getElementById("feedCommentInput");
     const text = input.value.trim();
@@ -2343,31 +3196,20 @@
       return;
     }
 
-    if (!displayName) {
-      setDisplayName();
-    }
+    const assignedPlayer = getAssignedPlayer();
 
-    if (!displayName) {
-      alert("Please enter a display name before posting.");
+    if (!assignedPlayer) {
+      alert("Assign yourself to a player before posting. Open Add/Edit Players, tap your player profile, then tap “Assign Me to This Player.”");
       return;
     }
 
-    await addFeedPost(displayName, text, "user");
+    await addFeedPost(assignedPlayer.name, text, "user", null, selectedMentionPlayerIds);
     input.value = "";
+    selectedMentionPlayerIds = [];
+    document.getElementById("mentionPicker").classList.add("hidden");
 
     if (Math.random() < 0.45) {
-      await addSwamiPost("userComment", displayName);
-    }
-  }
-
-  function setDisplayName() {
-    const currentName = localStorage.getItem("swamiGolf.displayName") || "";
-    const name = prompt("Enter your display name for Trip Feed comments:", currentName);
-
-    if (name && name.trim()) {
-      displayName = name.trim();
-      localStorage.setItem("swamiGolf.displayName", displayName);
-      alert("Display name saved.");
+      await addSwamiPost("userComment", assignedPlayer.name);
     }
   }
 
@@ -2568,6 +3410,7 @@
     const itinerarySnap = await getDocs(itineraryCollection(tripId));
     const feedSnap = await getDocs(feedCollection(tripId));
     const matchSnap = await getDocs(matchesCollection(tripId));
+    const recapSnap = await getDocs(recapsCollection(tripId));
 
     return {
       tripId,
@@ -2576,20 +3419,24 @@
       players: playerSnap.docs.map(d => ({ id: d.id, ...d.data() })),
       itineraryEvents: itinerarySnap.docs.map(d => ({ id: d.id, ...d.data() })),
       feedPosts: feedSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-      matches: matchSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      matches: matchSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      recaps: recapSnap.docs.map(d => ({ id: d.id, ...d.data() }))
     };
   }
 
   async function getSwamiGolfData() {
+    const tripExports = {};
+
+    for (const tripId of Object.keys(trips)) {
+      tripExports[tripId] = await getSingleTripData(tripId);
+    }
+
     return {
       appName: "Swami Golf",
       appVersion: "firebase-realtime",
       exportedAt: new Date().toISOString(),
       activeTripId,
-      trips: {
-        pinehurst2026: await getSingleTripData("pinehurst2026"),
-        testGolfTrip: await getSingleTripData("testGolfTrip")
-      }
+      trips: tripExports
     };
   }
 
@@ -2623,9 +3470,17 @@
       }
 
       for (const tripId of Object.keys(backup.trips)) {
-        if (!trips[tripId]) continue;
-
         const data = backup.trips[tripId];
+
+        if (!trips[tripId]) {
+          trips[tripId] = {
+            id: tripId,
+            name: data.name || data.tripName || "Golf Trip",
+            defaultTeamA: data.teamA || "Team A",
+            defaultTeamB: data.teamB || "Team B",
+            custom: !defaultTripIds.includes(tripId)
+          };
+        }
 
         await setDoc(tripDocRef(tripId), {
           id: tripId,
@@ -2641,9 +3496,12 @@
         await replaceCollection(itineraryCollection(tripId), data.itineraryEvents || []);
         await replaceCollection(feedCollection(tripId), data.feedPosts || []);
         await replaceCollection(matchesCollection(tripId), data.matches || []);
+        await replaceCollection(recapsCollection(tripId), data.recaps || []);
       }
 
       alert("Data imported successfully into Firebase.");
+      await loadTrips();
+      renderTripTiles();
       openSettings();
     } catch (error) {
       console.error(error);
@@ -2688,6 +3546,20 @@
   window.deleteMatch = deleteMatch;
   window.openEnterScore = openEnterScore;
   window.renderMatchValueFields = renderMatchValueFields;
+  window.toggleTripMenu = toggleTripMenu;
+  window.openRecaps = openRecaps;
+  window.renderRecapControls = renderRecapControls;
+  window.generateRecap = generateRecap;
+  window.createTrip = createTrip;
+  window.turnOffNotifications = turnOffNotifications;
+  window.editTrip = editTrip;
+  window.deleteTrip = deleteTrip;
+  window.assignMeToCurrentPlayer = assignMeToCurrentPlayer;
+  window.handleFeedInput = handleFeedInput;
+  window.toggleMentionPlayer = toggleMentionPlayer;
+  window.openTags = openTags;
+  window.markTagsRead = markTagsRead;
+  window.toggleRoundGroup = toggleRoundGroup;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
@@ -2703,7 +3575,6 @@
   window.saveItineraryEvent = saveItineraryEvent;
   window.deleteItineraryEvent = deleteItineraryEvent;
   window.postUserComment = postUserComment;
-  window.setDisplayName = setDisplayName;
   window.savePlayer = savePlayer;
   window.exportData = exportData;
   window.importData = importData;
