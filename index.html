@@ -2211,8 +2211,10 @@
     if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return alert("Please select player(s) for both sides.");
 
     const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
+    console.log("Saving match round", round);
+
     const matchData = {
-      matchDate, course, format, scoringType, valueType, valueSettings,
+      matchDate, course, round, format, scoringType, valueType, valueSettings,
       teamAPlayerIds, teamBPlayerIds,
       teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
       frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
@@ -2222,7 +2224,7 @@
     };
 
     const wasEditing = Boolean(editingMatchId);
-    const matchLabel = `${format} at ${course}`;
+    const matchLabel = `Round ${round} ${format} at ${course}`;
 
     if (editingMatchId) await updateDoc(doc(db, "trips", activeTripId, "matches", editingMatchId), matchData);
     else await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
