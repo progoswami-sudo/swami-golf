@@ -2021,7 +2021,7 @@
 
     document.getElementById("matchDate").value = getTodayDateString();
     document.getElementById("matchCourse").value = "";
-    if (document.getElementById("matchRound")) document.getElementById("matchRound").value = "1";
+    setMatchRoundValue("1");
     document.getElementById("matchFormat").value = "Best Ball";
     document.getElementById("matchScoringType").value = "Gross";
     document.getElementById("matchValueType").value = "Points";
@@ -2039,7 +2039,7 @@
     if (sourceMatch) {
       document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
       document.getElementById("matchCourse").value = sourceMatch.course || "";
-      if (document.getElementById("matchRound")) document.getElementById("matchRound").value = sourceMatch.round || "1";
+      setMatchRoundValue(sourceMatch.round || "1");
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
@@ -2052,6 +2052,22 @@
     if (sourceMatch && sourceMatch.valueSettings) {
       populateMatchValueFields(sourceMatch.valueSettings);
     }
+  }
+
+  function setMatchRoundValue(value) {
+    const select = document.getElementById("matchRound");
+    if (!select) return;
+
+    const normalizedValue = String(value || "1");
+
+    if (![...select.options].some(option => option.value === normalizedValue)) {
+      const option = document.createElement("option");
+      option.value = normalizedValue;
+      option.textContent = `Round ${normalizedValue}`;
+      select.appendChild(option);
+    }
+
+    select.value = normalizedValue;
   }
 
   function getTodayDateString() {
@@ -2181,7 +2197,7 @@
   async function saveMatch() {
     const matchDate = document.getElementById("matchDate").value;
     const course = document.getElementById("matchCourse").value.trim();
-    const round = document.getElementById("matchRound") ? document.getElementById("matchRound").value : "1";
+    const round = String(document.getElementById("matchRound")?.value || "1");
     const format = document.getElementById("matchFormat").value;
     const scoringType = document.getElementById("matchScoringType").value;
     const valueType = document.getElementById("matchValueType").value;
