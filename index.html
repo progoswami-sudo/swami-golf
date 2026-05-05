@@ -796,25 +796,34 @@
     }
 
 
-    /* Strong secondary-page fix: remove retained-scroll gaps and pin headers */
+    /* Secondary pages: independent full-screen scroll panels */
     .secondary-screen {
-      padding-top: 0 !important;
-      margin-top: 0 !important;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
+      padding: 8px max(18px, calc((100vw - 650px) / 2 + 18px)) 18px;
+      background: radial-gradient(circle at top, #21436f 0%, #0d1b35 72%);
+    }
+
+    .secondary-screen.hidden {
+      display: none;
     }
 
     .secondary-screen .sticky-page-header {
-      position: fixed;
+      position: sticky;
       top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(650px, calc(100% - 36px));
       z-index: 1000;
+      width: 100%;
+      box-sizing: border-box;
       background: rgba(13, 27, 53, 0.98);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid rgba(55, 89, 132, 0.9);
       padding: 8px 0 10px;
-      margin: 0;
+      margin: 0 0 10px;
     }
 
     .secondary-screen .sticky-page-header button {
@@ -825,17 +834,22 @@
       margin: 8px 0 0;
     }
 
-    .secondary-screen .sticky-page-header + .card,
-    .secondary-screen .sticky-page-header + .card.feed-card {
-      margin-top: 100px;
+    .secondary-screen > .card:first-of-type {
+      margin-top: 10px;
     }
 
     #tripFeedScreen .feed-card {
-      max-height: 640px;
+      max-height: none;
     }
 
     #tripFeedScreen .feed-list {
-      max-height: 420px;
+      max-height: 588px;
+    }
+
+    @media (max-height: 720px) {
+      #tripFeedScreen .feed-list {
+        max-height: 430px;
+      }
     }
 
   </style>
@@ -1844,7 +1858,29 @@
     );
   }
 
+  function resetScrollToTop() {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+  }
+
   function show(id) {
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      document.activeElement.blur();
+    }
+
     [
       "appHome",
       "tripHome",
@@ -1863,15 +1899,26 @@
       "playerScreen"
     ].forEach(x => {
       const el = document.getElementById(x);
-      if (el) el.classList.add("hidden");
+      if (el) {
+        el.classList.add("hidden");
+        el.scrollTop = 0;
+      }
     });
 
     const target = document.getElementById(id);
-    if (target) target.classList.remove("hidden");
+    if (target) {
+      target.classList.remove("hidden");
+      target.scrollTop = 0;
+    }
 
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+
+    requestAnimationFrame(() => {
+      if (target) target.scrollTop = 0;
+      window.scrollTo(0, 0);
+    });
   }
 
 
@@ -1935,7 +1982,6 @@
   }
 
   function openMatchHome() {
-    window.scrollTo(0, 0);
     show("matchHomeScreen");
     renderMatchList();
   }
@@ -2333,7 +2379,6 @@
   }
 
   function openRecaps() {
-    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("recapsScreen");
@@ -2569,7 +2614,6 @@ ${closer}`;
 
 
   function openTripFeed() {
-    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("tripFeedScreen");
@@ -2608,7 +2652,6 @@ ${closer}`;
 
 
   function openItinerary() {
-    window.scrollTo(0, 0);
     show("itineraryScreen");
     renderItinerary();
   }
@@ -2618,7 +2661,6 @@ ${closer}`;
   }
 
   function openSettings() {
-    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("settingsScreen");
@@ -3361,7 +3403,6 @@ ${closer}`;
   }
 
   function openTags() {
-    window.scrollTo(0, 0);
     document.getElementById("tripMenu").classList.add("hidden");
     show("tagsScreen");
     renderTaggedMessages();
