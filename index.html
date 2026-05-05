@@ -757,6 +757,43 @@
       padding-top: 10px;
     }
 
+  
+
+    .pulse-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .pulse-item {
+      background: #13294d;
+      border: 1px solid #375984;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .pulse-label {
+      font-size: 12px;
+      color: #bfdbfe;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pulse-text {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.35;
+      color: #ffffff;
+    }
+
+    .pulse-empty {
+      color: #dbeafe;
+      font-size: 13px;
+      line-height: 1.35;
+      margin-top: 6px;
+    }
   </style>
 </head>
 
@@ -791,8 +828,10 @@
         <div class="trip-menu-wrap">
           <button class="trip-menu-btn" onclick="toggleTripMenu()">☰</button>
           <div id="tripMenu" class="trip-menu hidden">
-            <div class="home-menu-item" onclick="openSettings()">Settings</div>
+            <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
+            <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
+            <div class="home-menu-item" onclick="openSettings()">Settings</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
             </div>
@@ -800,6 +839,7 @@
               <div class="home-menu-item" onclick="editTrip()">Edit Trip</div>
               <div class="home-menu-item" onclick="deleteTrip()" style="color:#fecaca;">Delete Trip</div>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -827,22 +867,33 @@
           </div>
         </div>
       </div>
-
-      <div class="card feed-card">
-        <div>
-          <div class="feed-title">Trip Feed</div>
-          <div class="feed-subtitle">Trash talk, updates, and Swami wisdom</div>
-        </div>
-
-        <div id="feedList" class="feed-list"></div>
-
-        <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..." oninput="handleFeedInput()"></textarea>
-        <div id="mentionPicker" class="mention-picker hidden">
-          <div class="small-note">Tag player(s):</div>
-          <div id="mentionOptions" class="mention-options"></div>
-        </div>
-        <button onclick="postUserComment()">Post Comment</button>
+      <div class="card">
+        <div class="feed-title">Swami Pulse</div>
+        <div class="feed-subtitle">Latest signals from the trip</div>
+        <div id="swamiPulse" class="pulse-grid"></div>
       </div>
+    </div>
+  </div>
+
+
+  <div id="tripFeedScreen" class="hidden">
+    <button onclick="goTripHome()" class="secondary">Back</button>
+    <h2>Trip Feed</h2>
+
+    <div class="card feed-card">
+      <div>
+        <div class="feed-title">Trip Feed</div>
+        <div class="feed-subtitle">Group chat, tags, trash talk, and Swami wisdom</div>
+      </div>
+
+      <div id="feedList" class="feed-list"></div>
+
+      <textarea id="feedCommentInput" placeholder="Post a comment to the trip feed..." oninput="handleFeedInput()"></textarea>
+      <div id="mentionPicker" class="mention-picker hidden">
+        <div class="small-note">Tag player(s):</div>
+        <div id="mentionOptions" class="mention-options"></div>
+      </div>
+      <button onclick="postUserComment()">Post Comment</button>
     </div>
   </div>
 
@@ -1706,6 +1757,7 @@
         }));
         maybeNotifyNewFeedPost(previousCount);
         renderFeed();
+        renderSwamiPulse();
         updateTagBadge();
         renderTaggedMessages();
       })
@@ -1718,6 +1770,7 @@
           ...docSnap.data()
         }));
         renderMatchList();
+        renderSwamiPulse();
         renderRecapControls();
       })
     );
@@ -1729,6 +1782,7 @@
           ...docSnap.data()
         }));
         renderRecapList();
+        renderSwamiPulse();
       })
     );
   }
@@ -1737,6 +1791,7 @@
     [
       "appHome",
       "tripHome",
+      "tripFeedScreen",
       "itineraryScreen",
       "itineraryEditorScreen",
       "tagsScreen",
@@ -2432,6 +2487,7 @@ ${closer}`;
       await initializeTripIfNeeded(activeTripId);
       subscribeToTrip(activeTripId);
       show("tripHome");
+      renderSwamiPulse();
     } catch (error) {
       console.error("Unable to open trip:", error);
       document.getElementById("syncStatus").innerText = "Could not open trip. Check Firebase rules / connection.";
@@ -2444,6 +2500,45 @@ ${closer}`;
       activeTripData.name || trips[activeTripId].name;
   }
 
+
+  function openTripFeed() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    show("tripFeedScreen");
+    renderFeed();
+  }
+
+  function renderSwamiPulse() {
+    const pulse = document.getElementById("swamiPulse");
+    if (!pulse) return;
+
+    const sortedFeed = [...feedPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const latestSwami = sortedFeed.find(post => post.author === "Swami Says");
+    const assignedId = typeof getAssignedPlayerId === "function" ? getAssignedPlayerId() : "";
+    const latestTagged = assignedId
+      ? sortedFeed.find(post => Array.isArray(post.taggedPlayerIds) && post.taggedPlayerIds.includes(assignedId))
+      : sortedFeed.find(post => Array.isArray(post.taggedPlayerIds) && post.taggedPlayerIds.length > 0);
+    const latestMatch = [...matches].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))[0];
+    const latestRecap = [...recaps].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
+
+    pulse.innerHTML = `
+      ${renderPulseItem("Latest Swami Reaction", latestSwami ? renderPostText(latestSwami) : "", "Swami is quiet. This is either peace or he is gathering evidence.")}
+      ${renderPulseItem("Latest Tagged Chat", latestTagged ? `${escapeHtml(latestTagged.author)}: ${renderPostText(latestTagged)}` : "", assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here.")}
+      ${renderPulseItem("Latest Match Update", latestMatch ? `${escapeHtml(latestMatch.format || "Match")} at ${escapeHtml(latestMatch.course || "Course TBD")} • Round ${escapeHtml(latestMatch.round || "1")}` : "", "No match updates yet. The scoreboard is waiting for drama.")}
+      ${renderPulseItem("Latest Recap", latestRecap ? `${escapeHtml(latestRecap.title || "Swami Recap")}` : "", "No recaps generated yet. Swami needs a little more material.")}
+    `;
+  }
+
+  function renderPulseItem(label, htmlText, emptyText) {
+    return `
+      <div class="pulse-item">
+        <div class="pulse-label">${escapeHtml(label)}</div>
+        ${htmlText ? `<div class="pulse-text">${htmlText}</div>` : `<div class="pulse-empty">${escapeHtml(emptyText)}</div>`}
+      </div>
+    `;
+  }
+
+
   function openItinerary() {
     show("itineraryScreen");
     renderItinerary();
@@ -2454,6 +2549,8 @@ ${closer}`;
   }
 
   function openSettings() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
     show("settingsScreen");
   }
 
@@ -3652,6 +3749,7 @@ ${closer}`;
   window.toggleRoundGroup = toggleRoundGroup;
   window.insertMentionPlayer = insertMentionPlayer;
   window.renderMentionOptions = renderMentionOptions;
+  window.openTripFeed = openTripFeed;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
