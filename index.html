@@ -796,7 +796,7 @@
     }
 
 
-    /* Secondary pages: independent full-screen scroll panels */
+    /* Secondary pages: independent scroll panels with full-bleed sticky headers */
     .secondary-screen {
       position: fixed;
       inset: 0;
@@ -804,7 +804,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
-      padding: 8px max(18px, calc((100vw - 650px) / 2 + 18px)) 18px;
+      padding: 0 max(18px, calc((100vw - 650px) / 2 + 18px)) 18px;
       background: radial-gradient(circle at top, #21436f 0%, #0d1b35 72%);
     }
 
@@ -816,14 +816,22 @@
       position: sticky;
       top: 0;
       z-index: 1000;
-      width: 100%;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
       box-sizing: border-box;
       background: rgba(13, 27, 53, 0.98);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid rgba(55, 89, 132, 0.9);
-      padding: 8px 0 10px;
-      margin: 0 0 10px;
+      padding: 14px max(18px, calc((100vw - 650px) / 2 + 18px)) 16px;
+      margin-bottom: 10px;
+      transition: box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .secondary-screen.scrolled .sticky-page-header {
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+      background: rgba(13, 27, 53, 0.995);
     }
 
     .secondary-screen .sticky-page-header button {
@@ -1876,6 +1884,22 @@
     }, 50);
   }
 
+  function attachSecondaryScrollEffects() {
+    document.querySelectorAll(".secondary-screen").forEach(screen => {
+      if (screen.dataset.scrollEffectAttached === "true") return;
+
+      screen.dataset.scrollEffectAttached = "true";
+
+      screen.addEventListener("scroll", () => {
+        if (screen.scrollTop > 4) {
+          screen.classList.add("scrolled");
+        } else {
+          screen.classList.remove("scrolled");
+        }
+      });
+    });
+  }
+
   function show(id) {
     if (document.activeElement && typeof document.activeElement.blur === "function") {
       document.activeElement.blur();
@@ -1901,6 +1925,7 @@
       const el = document.getElementById(x);
       if (el) {
         el.classList.add("hidden");
+        el.classList.remove("scrolled");
         el.scrollTop = 0;
       }
     });
@@ -1908,8 +1933,11 @@
     const target = document.getElementById(id);
     if (target) {
       target.classList.remove("hidden");
+      target.classList.remove("scrolled");
       target.scrollTop = 0;
     }
+
+    attachSecondaryScrollEffects();
 
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
