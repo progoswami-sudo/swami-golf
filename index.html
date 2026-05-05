@@ -1190,24 +1190,12 @@
         <div>
           <label class="form-label" for="matchStartingHole">Starting Hole</label>
           <select id="matchStartingHole">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+            <option value="16">16</option><option value="17">17</option><option value="18">18</option>
           </select>
         </div>
       </div>
@@ -1403,6 +1391,20 @@
     }, 4000);
   };
 
+  window.addEventListener("error", function(event) {
+    var status = document.getElementById("syncStatus");
+    if (!window.__swamiAppReady && status) {
+      status.innerText = "Startup error: " + (event.message || "unknown error");
+    }
+  });
+
+  window.addEventListener("unhandledrejection", function(event) {
+    var status = document.getElementById("syncStatus");
+    if (!window.__swamiAppReady && status) {
+      status.innerText = "Startup error: " + ((event.reason && event.reason.message) || event.reason || "unknown error");
+    }
+  });
+
   document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll(".trip-tile").forEach(function(tile) {
       tile.addEventListener("click", function() {
@@ -1484,17 +1486,14 @@
 
 
   const courseLibrary = {
-    // Course scorecards can be added here for now.
-    // Key format recommendation: normalized course name, then normalized tees.
-    // Example:
+    // Add scorecards here. Example:
     // "pinehurst-no-2": {
     //   name: "Pinehurst No. 2",
     //   tees: {
     //     "white": {
     //       teeName: "White",
     //       holes: [
-    //         { hole: 1, par: 4, hcp: 9 },
-    //         ...
+    //         { hole: 1, par: 4, hcp: 9 }
     //       ]
     //     }
     //   }
@@ -1706,7 +1705,7 @@
   }
 
   function escapeSvg(text) {
-    return String(text ?? "")
+    return String(text == null ? "" : text)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
@@ -1819,9 +1818,9 @@
       const tripId = docSnap.id;
       trips[tripId] = {
         id: tripId,
-        name: data.name || trips[tripId]?.name || "Golf Trip",
-        defaultTeamA: data.teamA || trips[tripId]?.defaultTeamA || "Team A",
-        defaultTeamB: data.teamB || trips[tripId]?.defaultTeamB || "Team B",
+        name: data.name || (trips[tripId] && trips[tripId].name) || "Golf Trip",
+        defaultTeamA: data.teamA || (trips[tripId] && trips[tripId].defaultTeamA) || "Team A",
+        defaultTeamB: data.teamB || (trips[tripId] && trips[tripId].defaultTeamB) || "Team B",
         custom: !defaultTripIds.includes(tripId)
       };
     });
@@ -2088,6 +2087,25 @@
   }
 
 
+
+  function closeOpenMenusOnOutsideClick(event) {
+    const homeMenu = document.getElementById("homeMenu");
+    const tripMenu = document.getElementById("tripMenu");
+    const clickedInsideHomeMenu = event.target.closest && (event.target.closest("#homeMenu") || event.target.closest(".hamburger-btn"));
+    const clickedInsideTripMenu = event.target.closest && (event.target.closest("#tripMenu") || event.target.closest(".trip-menu-btn"));
+
+    if (homeMenu && !homeMenu.classList.contains("hidden") && !clickedInsideHomeMenu) {
+      homeMenu.classList.add("hidden");
+    }
+
+    if (tripMenu && !tripMenu.classList.contains("hidden") && !clickedInsideTripMenu) {
+      tripMenu.classList.add("hidden");
+    }
+  }
+
+  document.addEventListener("click", closeOpenMenusOnOutsideClick);
+  document.addEventListener("touchstart", closeOpenMenusOnOutsideClick);
+
   function toggleHomeMenu() {
     document.getElementById("homeMenu").classList.toggle("hidden");
   }
@@ -2342,9 +2360,9 @@
     const matchDate = document.getElementById("matchDate").value;
     const course = document.getElementById("matchCourse").value.trim();
     const tees = document.getElementById("matchTees").value.trim();
-    const numberOfHoles = String(document.getElementById("matchNumberOfHoles")?.value || "18");
-    const startingHole = String(document.getElementById("matchStartingHole")?.value || "1");
-    const round = String(document.getElementById("matchRound")?.value || "1");
+    const numberOfHoles = String(document.getElementById("matchNumberOfHoles").value || "18");
+    const startingHole = String(document.getElementById("matchStartingHole").value || "1");
+    const round = String(document.getElementById("matchRound").value || "1");
     const format = document.getElementById("matchFormat").value;
     const scoringType = document.getElementById("matchScoringType").value;
     const valueType = document.getElementById("matchValueType").value;
@@ -2403,7 +2421,7 @@
     const rounds = Object.keys(grouped).sort((a, b) => Number(a) - Number(b));
 
     list.innerHTML = rounds.map(round => {
-      const isOpen = expandedRounds[activeTripId]?.[round] !== false;
+      const isOpen = (!expandedRounds[activeTripId] || expandedRounds[activeTripId][round] !== false);
       const body = grouped[round]
         .sort((a, b) => `${a.matchDate || ""} ${a.createdAt || ""}`.localeCompare(`${b.matchDate || ""} ${b.createdAt || ""}`))
         .map(renderMatchCard)
@@ -2494,16 +2512,16 @@
 
 
   function renderScoreEntry() {
-    const match = matches.find(item => item.id === activeScoreMatchId);
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     const info = document.getElementById("scoreEntryMatchInfo");
     const wrap = document.getElementById("scoreEntryTableWrap");
 
-    if (!match || !info || !wrap) {
-      return;
-    }
+    if (!match || !info || !wrap) return;
 
     const playersForMatch = getPlayersForMatch(match);
     const scorecard = getScorecardForMatch(match);
+    const holes = scorecard.holes;
+    const existingScores = match.holeScores || {};
 
     info.innerHTML = `
       <strong>${escapeHtml(match.format || "Match")}</strong><br>
@@ -2511,16 +2529,14 @@
       ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")} • ${escapeHtml(match.numberOfHoles || "18")} holes
     `;
 
-    const existingScores = match.holeScores || {};
-    const holes = scorecard.holes;
+    const headerCells = holes.map(function(h) { return `<th>${escapeHtml(h.hole)}</th>`; }).join("");
+    const parCells = holes.map(function(h) { return `<td>${escapeHtml(h.par)}</td>`; }).join("");
+    const hcpCells = holes.map(function(h) { return `<td>${escapeHtml(h.hcp)}</td>`; }).join("");
 
-    const headerCells = holes.map(h => `<th>${escapeHtml(h.hole)}</th>`).join("");
-    const parCells = holes.map(h => `<td>${escapeHtml(h.par)}</td>`).join("");
-    const hcpCells = holes.map(h => `<td>${escapeHtml(h.hcp)}</td>`).join("");
-
-    const playerRows = playersForMatch.map(player => {
-      const cells = holes.map(hole => {
-        const value = existingScores[player.id]?.[hole.hole] || "";
+    const playerRows = playersForMatch.map(function(player) {
+      const cells = holes.map(function(hole) {
+        const playerScores = existingScores[player.id] || {};
+        const value = playerScores[hole.hole] || "";
         return `<td><input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(value)}"></td>`;
       }).join("");
 
@@ -2537,28 +2553,27 @@
         </table>
       </div>
       <div class="course-library-note">
-        Scorecard data currently uses stored course info when available. If no match is found in the course library, the app uses blank/default par and HCP values.
+        Scorecard data uses stored course info when available. If no course match is found, the app uses blank/default PAR and HCP values.
       </div>
     `;
   }
 
   function getPlayersForMatch(match) {
-    const ids = [...(match.teamAPlayerIds || []), ...(match.teamBPlayerIds || [])];
-    return ids
-      .map(id => players.find(player => player.id === id))
-      .filter(Boolean);
+    const ids = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
+    return ids.map(function(id) {
+      return players.find(function(player) { return player.id === id; });
+    }).filter(Boolean);
   }
 
   function getScorecardForMatch(match) {
     const courseKey = normalizeCourseKey(match.course || "");
     const teeKey = normalizeCourseKey(match.tees || "");
     const course = courseLibrary[courseKey];
-    const tee = course?.tees?.[teeKey];
+    const tee = course && course.tees ? course.tees[teeKey] : null;
+    let holes = tee && tee.holes ? tee.holes : createDefaultHoles();
 
-    let holes = tee?.holes || createDefaultHoles();
     holes = getSelectedHoles(holes, Number(match.startingHole || 1), Number(match.numberOfHoles || 18));
-
-    return { holes };
+    return { holes: holes };
   }
 
   function normalizeCourseKey(value) {
@@ -2571,16 +2586,14 @@
   }
 
   function createDefaultHoles() {
-    return Array.from({ length: 18 }, (_, index) => ({
-      hole: index + 1,
-      par: "",
-      hcp: ""
-    }));
+    return Array.from({ length: 18 }, function(_, index) {
+      return { hole: index + 1, par: "", hcp: "" };
+    });
   }
 
   function getSelectedHoles(holes, startingHole, numberOfHoles) {
     const holeMap = {};
-    holes.forEach(hole => {
+    holes.forEach(function(hole) {
       holeMap[Number(hole.hole)] = hole;
     });
 
@@ -2597,7 +2610,7 @@
   }
 
   async function saveScoreEntry() {
-    const match = matches.find(item => item.id === activeScoreMatchId);
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
 
     if (!match) {
       alert("Match not found.");
@@ -2608,16 +2621,16 @@
     const scorecard = getScorecardForMatch(match);
     const holeScores = {};
 
-    playersForMatch.forEach(player => {
+    playersForMatch.forEach(function(player) {
       holeScores[player.id] = {};
-      scorecard.holes.forEach(hole => {
+      scorecard.holes.forEach(function(hole) {
         const input = document.getElementById(`score-${player.id}-${hole.hole}`);
         holeScores[player.id][hole.hole] = input ? input.value.trim() : "";
       });
     });
 
     await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
-      holeScores,
+      holeScores: holeScores,
       updatedAt: new Date().toISOString()
     });
 
@@ -2656,6 +2669,13 @@
     activeScoreMatchId = matchId;
     show("scoreEntryScreen");
     renderScoreEntry();
+  }
+
+  function toggleTripMenu() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) {
+      menu.classList.toggle("hidden");
+    }
   }
 
   async function editTrip() {
@@ -2770,15 +2790,15 @@
     let relevantMatches = [];
 
     if (type === "day") {
-      const date = document.getElementById("recapDayDate")?.value || getTodayDateString();
+      const date = (document.getElementById("recapDayDate") ? document.getElementById("recapDayDate").value : "") || getTodayDateString();
       scopeLabel = formatDisplayDate(date);
       relevantMatches = matches.filter(match => match.matchDate === date);
     } else if (type === "round") {
-      const round = document.getElementById("recapRoundNumber")?.value || "1";
+      const round = (document.getElementById("recapRoundNumber") ? document.getElementById("recapRoundNumber").value : "") || "1";
       scopeLabel = `Round ${round}`;
       relevantMatches = matches.filter(match => String(match.round || "1") === String(round));
     } else if (type === "match") {
-      const matchId = document.getElementById("recapMatchId")?.value;
+      const matchId = (document.getElementById("recapMatchId") ? document.getElementById("recapMatchId").value : "");
       const match = matches.find(item => item.id === matchId);
       scopeLabel = match ? getMatchLabel(match) : "Selected Match";
       relevantMatches = match ? [match] : [];
@@ -4155,12 +4175,12 @@ ${closer}`;
 
   function escapeHtml(text) {
     const div = document.createElement("div");
-    div.innerText = String(text ?? "");
+    div.innerText = String(text == null ? "" : text);
     return div.innerHTML;
   }
 
   function escapeAttr(text) {
-    return String(text ?? "").replace(/"/g, "&quot;");
+    return String(text == null ? "" : text).replace(/"/g, "&quot;");
   }
 
   window.toggleHomeMenu = toggleHomeMenu;
