@@ -794,49 +794,45 @@
       line-height: 1.35;
       margin-top: 6px;
     }
+
   
 
-    /* Quick layout fix: keep secondary page content near the top */
-    #tripFeedScreen,
-    #itineraryScreen,
-    #itineraryEditorScreen,
-    #teamRosterScreen,
-    #settingsScreen,
-    #importScreen,
-    #teamScreen,
-    #playerListScreen,
-    #playerScreen,
-    #matchHomeScreen,
-    #matchSetupScreen,
-    #recapsScreen,
-    #tagsScreen {
-      padding-top: 0;
+    /* Consistent secondary page layout */
+    .sticky-page-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(13, 27, 53, 0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(55, 89, 132, 0.9);
+      padding: 8px 0 10px;
+      margin: 0 0 12px;
+    }
+
+    .sticky-page-header button {
       margin-top: 0;
     }
 
-    #tripFeedScreen h2,
-    #itineraryScreen h2,
-    #itineraryEditorScreen h2,
-    #teamRosterScreen h2,
-    #settingsScreen h2,
-    #importScreen h2,
-    #teamScreen h2,
-    #playerListScreen h2,
-    #playerScreen h2,
-    #matchHomeScreen h2,
-    #matchSetupScreen h2,
-    #recapsScreen h2,
-    #tagsScreen h2 {
-      margin-top: 8px;
-      margin-bottom: 10px;
+    .sticky-page-header h2 {
+      margin: 8px 0 0;
     }
 
-    #tripFeedScreen > button.secondary,
-    #itineraryScreen > button.secondary,
-    #matchHomeScreen > button.secondary,
-    #recapsScreen > button.secondary,
-    #tagsScreen > button.secondary {
-      margin-top: 0;
+    .secondary-screen {
+      padding-top: 0 !important;
+      margin-top: 0 !important;
+    }
+
+    .secondary-screen > .card:first-of-type {
+      margin-top: 10px;
+    }
+
+    .container {
+      padding-top: 8px;
+    }
+
+    #tripHome .page-header {
+      margin-top: 12px;
     }
 
     /* Dedicated Trip Feed gets a taller content area */
@@ -930,9 +926,11 @@
   </div>
 
 
-  <div id="tripFeedScreen" class="hidden">
-    <button onclick="goTripHome()" class="secondary">Back</button>
-    <h2>Trip Feed</h2>
+  <div id="tripFeedScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Trip Feed</h2>
+    </div>
 
     <div class="card feed-card">
       <div>
@@ -951,9 +949,11 @@
     </div>
   </div>
 
-  <div id="itineraryScreen" class="hidden">
-    <button onclick="goTripHome()" class="secondary">Back</button>
-    <h2>Trip Itinerary</h2>
+  <div id="itineraryScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Trip Itinerary</h2>
+    </div>
 
     <div class="card">
       <div class="itinerary-section-header">
@@ -986,11 +986,10 @@
       </div>
       <div id="otherItineraryList"></div>
 
-      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
-  <div id="itineraryEditorScreen" class="hidden">
+  <div id="itineraryEditorScreen" class="hidden secondary-screen">
     <h2 id="itineraryEditorTitle">Edit Event</h2>
 
     <div class="card">
@@ -1030,9 +1029,11 @@
 
 
 
-  <div id="tagsScreen" class="hidden">
-    <button onclick="goTripHome()" class="secondary">Back</button>
-    <h2>Tagged Messages</h2>
+  <div id="tagsScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Tagged Messages</h2>
+    </div>
 
     <div class="card">
       <div id="taggedMessagesList"></div>
@@ -1040,9 +1041,11 @@
     </div>
   </div>
 
-  <div id="recapsScreen" class="hidden">
-    <button onclick="goTripHome()" class="secondary">Back</button>
-    <h2>Swami Recaps</h2>
+  <div id="recapsScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Swami Recaps</h2>
+    </div>
 
     <div class="card">
       <label class="form-label" for="recapType">Recap Type</label>
@@ -1065,9 +1068,11 @@
     </div>
   </div>
 
-  <div id="matchHomeScreen" class="hidden">
-    <button onclick="goTripHome()" class="secondary">Back</button>
-    <h2>Matches</h2>
+  <div id="matchHomeScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Matches</h2>
+    </div>
 
     <div class="card">
       <div class="mini-tile" onclick="openMatchSetup()">
@@ -1078,7 +1083,7 @@
     </div>
   </div>
 
-  <div id="matchSetupScreen" class="hidden">
+  <div id="matchSetupScreen" class="hidden secondary-screen">
     <h2 id="matchSetupTitle">Set Up Match</h2>
 
     <div class="card">
@@ -1142,28 +1147,32 @@
     </div>
   </div>
 
-  <div id="teamRosterScreen" class="hidden">
-    <h2 id="teamRosterTitle">Team Roster</h2>
+  <div id="teamRosterScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2 id="teamRosterTitle">Team Roster</h2>
+    </div>
 
     <div class="card">
       <div id="teamRosterList"></div>
-      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
-  <div id="settingsScreen" class="hidden">
-    <h2>Settings</h2>
+  <div id="settingsScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Settings</h2>
+    </div>
 
     <div class="card">
       <button onclick="openTeamEdit()">Edit Team Names</button>
       <button onclick="openPlayerList()">Add / Edit Players</button>
       <button onclick="exportData()" class="backup">Export Data</button>
       <button onclick="openImportScreen()" class="import">Import Data</button>
-      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
-  <div id="importScreen" class="hidden">
+  <div id="importScreen" class="hidden secondary-screen">
     <h2>Import Data</h2>
 
     <div class="card">
@@ -1179,7 +1188,7 @@
     </div>
   </div>
 
-  <div id="teamScreen" class="hidden">
+  <div id="teamScreen" class="hidden secondary-screen">
     <h2>Team Names</h2>
 
     <div class="card">
@@ -1191,7 +1200,7 @@
     </div>
   </div>
 
-  <div id="playerListScreen" class="hidden">
+  <div id="playerListScreen" class="hidden secondary-screen">
     <h2>Players</h2>
 
     <div class="card">
@@ -1201,7 +1210,7 @@
     </div>
   </div>
 
-  <div id="playerScreen" class="hidden">
+  <div id="playerScreen" class="hidden secondary-screen">
     <h2 id="playerScreenTitle">Player Profile</h2>
 
     <div class="card">
