@@ -794,6 +794,60 @@
       line-height: 1.35;
       margin-top: 6px;
     }
+  
+
+    /* Quick layout fix: keep secondary page content near the top */
+    #tripFeedScreen,
+    #itineraryScreen,
+    #itineraryEditorScreen,
+    #teamRosterScreen,
+    #settingsScreen,
+    #importScreen,
+    #teamScreen,
+    #playerListScreen,
+    #playerScreen,
+    #matchHomeScreen,
+    #matchSetupScreen,
+    #recapsScreen,
+    #tagsScreen {
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    #tripFeedScreen h2,
+    #itineraryScreen h2,
+    #itineraryEditorScreen h2,
+    #teamRosterScreen h2,
+    #settingsScreen h2,
+    #importScreen h2,
+    #teamScreen h2,
+    #playerListScreen h2,
+    #playerScreen h2,
+    #matchHomeScreen h2,
+    #matchSetupScreen h2,
+    #recapsScreen h2,
+    #tagsScreen h2 {
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+
+    #tripFeedScreen > button.secondary,
+    #itineraryScreen > button.secondary,
+    #matchHomeScreen > button.secondary,
+    #recapsScreen > button.secondary,
+    #tagsScreen > button.secondary {
+      margin-top: 0;
+    }
+
+    /* Dedicated Trip Feed gets a taller content area */
+    #tripFeedScreen .feed-card {
+      max-height: 640px;
+    }
+
+    #tripFeedScreen .feed-list {
+      max-height: 420px;
+    }
+
   </style>
 </head>
 
