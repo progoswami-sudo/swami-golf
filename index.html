@@ -795,47 +795,41 @@
       margin-top: 6px;
     }
 
-  
 
-    /* Consistent secondary page layout */
-    .sticky-page-header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(13, 27, 53, 0.96);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(55, 89, 132, 0.9);
-      padding: 8px 0 10px;
-      margin: 0 0 12px;
-    }
-
-    .sticky-page-header button {
-      margin-top: 0;
-    }
-
-    .sticky-page-header h2 {
-      margin: 8px 0 0;
-    }
-
+    /* Strong secondary-page fix: remove retained-scroll gaps and pin headers */
     .secondary-screen {
       padding-top: 0 !important;
       margin-top: 0 !important;
     }
 
-    .secondary-screen > .card:first-of-type {
-      margin-top: 10px;
+    .secondary-screen .sticky-page-header {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(650px, calc(100% - 36px));
+      z-index: 1000;
+      background: rgba(13, 27, 53, 0.98);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(55, 89, 132, 0.9);
+      padding: 8px 0 10px;
+      margin: 0;
     }
 
-    .container {
-      padding-top: 8px;
+    .secondary-screen .sticky-page-header button {
+      margin-top: 0;
     }
 
-    #tripHome .page-header {
-      margin-top: 12px;
+    .secondary-screen .sticky-page-header h2 {
+      margin: 8px 0 0;
     }
 
-    /* Dedicated Trip Feed gets a taller content area */
+    .secondary-screen .sticky-page-header + .card,
+    .secondary-screen .sticky-page-header + .card.feed-card {
+      margin-top: 100px;
+    }
+
     #tripFeedScreen .feed-card {
       max-height: 640px;
     }
@@ -1867,9 +1861,17 @@
       "teamScreen",
       "playerListScreen",
       "playerScreen"
-    ].forEach(x => document.getElementById(x).classList.add("hidden"));
+    ].forEach(x => {
+      const el = document.getElementById(x);
+      if (el) el.classList.add("hidden");
+    });
 
-    document.getElementById(id).classList.remove("hidden");
+    const target = document.getElementById(id);
+    if (target) target.classList.remove("hidden");
+
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }
 
 
@@ -1933,6 +1935,7 @@
   }
 
   function openMatchHome() {
+    window.scrollTo(0, 0);
     show("matchHomeScreen");
     renderMatchList();
   }
@@ -2330,6 +2333,7 @@
   }
 
   function openRecaps() {
+    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("recapsScreen");
@@ -2565,6 +2569,7 @@ ${closer}`;
 
 
   function openTripFeed() {
+    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("tripFeedScreen");
@@ -2603,6 +2608,7 @@ ${closer}`;
 
 
   function openItinerary() {
+    window.scrollTo(0, 0);
     show("itineraryScreen");
     renderItinerary();
   }
@@ -2612,6 +2618,7 @@ ${closer}`;
   }
 
   function openSettings() {
+    window.scrollTo(0, 0);
     const menu = document.getElementById("tripMenu");
     if (menu) menu.classList.add("hidden");
     show("settingsScreen");
@@ -3354,6 +3361,7 @@ ${closer}`;
   }
 
   function openTags() {
+    window.scrollTo(0, 0);
     document.getElementById("tripMenu").classList.add("hidden");
     show("tagsScreen");
     renderTaggedMessages();
