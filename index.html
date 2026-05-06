@@ -1673,9 +1673,8 @@
   };
 
   async function getAiSwamiMedia(action, subject, swamiText) {
-    const tones = { schedule: "scheduling/logistics", player: "golf player personalities", team: "sports rivalries", chat: "group chat banter" };
     const toneList = ["schedule","player","team","chat"];
-    const tone = toneList.find(t => ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action)) ? "schedule"
+    const tone = ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action) ? "schedule"
       : ["playerAdd","playerEdit"].includes(action) ? "player"
       : ["teams"].includes(action) ? "team" : "chat";
 
@@ -1693,7 +1692,8 @@
       imageCaption: caption || ""
     };
   }
-    const list = swamiMediaLibrary[action] || swamiMediaLibrary.userComment;
+
+  function getSwamiMedia(action) {
     const recentKey = `swamiGolf.${activeTripId}.recentSwamiMedia`;
     const recent = JSON.parse(localStorage.getItem(recentKey) || "[]");
 
