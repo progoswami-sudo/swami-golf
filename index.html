@@ -13,6 +13,8 @@
       font-family: Arial, sans-serif;
       color: white;
       background: #0d1b35;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     body::before {
@@ -53,7 +55,13 @@
       font-size: 18px;
       cursor: pointer;
       font-weight: bold;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .tile:active { opacity: 0.7; }
 
     .mini-tile {
       margin-top: 15px;
@@ -65,7 +73,13 @@
       font-size: 17px;
       font-weight: bold;
       cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .mini-tile:active { opacity: 0.7; }
 
     .card {
       background: rgba(24, 52, 92, 0.88);
@@ -111,6 +125,10 @@
       text-decoration: underline;
       text-underline-offset: 4px;
       font-size: 17px;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      padding: 4px;
     }
 
     .score {
@@ -214,6 +232,15 @@
       font-size: 16px;
       margin-top: 12px;
       cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease, transform 0.1s ease;
+    }
+
+    button:active {
+      opacity: 0.75;
+      transform: scale(0.98);
     }
 
     button.secondary { background: #334155; }
@@ -318,7 +345,13 @@
       border: 1px solid #375984;
       margin-top: 10px;
       cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .itinerary-item:active { opacity: 0.7; }
 
     .itinerary-date {
       font-weight: bold;
@@ -365,7 +398,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .trait-card:active { opacity: 0.7; }
 
     .trait-card.selected {
       background: #2563eb;
@@ -379,7 +418,13 @@
       border: 1px solid #375984;
       margin-top: 10px;
       cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .player-row:active { opacity: 0.7; }
 
     .player-name {
       font-size: 17px;
@@ -431,6 +476,9 @@
       border: 1px solid #375984;
       font-size: 22px;
       line-height: 1;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .home-menu {
@@ -452,21 +500,25 @@
       cursor: pointer;
       font-size: 14px;
       color: white;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.1s ease;
     }
 
-    .home-menu-item:hover {
-      background: #1f4f7a;
-    }
+    .home-menu-item:hover { background: #1f4f7a; }
+    .home-menu-item:active { background: #2a5f8a; }
 
     .score-click-zone {
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 8px;
       border-radius: 12px;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .score-click-zone:hover {
-      background: rgba(255,255,255,0.06);
-    }
+    .score-click-zone:active { background: rgba(255,255,255,0.1); }
 
     .match-row {
       padding: 15px;
@@ -703,7 +755,11 @@
       text-align: center;
       touch-action: manipulation;
       user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .mention-chip:active { opacity: 0.7; }
 
     .mention-chip.selected {
       background: #2563eb;
@@ -737,7 +793,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.1s ease;
     }
+
+    .round-header:active { opacity: 0.7; }
 
     .round-body {
       padding: 10px;
@@ -948,7 +1010,7 @@
 
   <div id="appHome">
     <div class="hamburger-wrap">
-      <button class="hamburger-btn" onclick="toggleHomeMenu()">☰</button>
+      <button class="hamburger-btn" onclick="toggleHomeMenu(event)">☰</button>
       <div id="homeMenu" class="home-menu hidden">
         <div class="home-menu-item" onclick="createTrip()">Create Trip</div>
         <div class="home-menu-item" onclick="requestNotifications()">Notifications On</div>
@@ -971,7 +1033,7 @@
         <div class="homeBtn" onclick="goHome()">🏠</div>
         <h2 id="tripTitle">Golf Trip</h2>
         <div class="trip-menu-wrap">
-          <button class="trip-menu-btn" onclick="toggleTripMenu()">☰</button>
+          <button class="trip-menu-btn" onclick="toggleTripMenu(event)">☰</button>
           <div id="tripMenu" class="trip-menu hidden">
             <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
@@ -2376,22 +2438,20 @@
   function closeOpenMenusOnOutsideClick(event) {
     const homeMenu = document.getElementById("homeMenu");
     const tripMenu = document.getElementById("tripMenu");
-    const clickedInsideHomeMenu = event.target.closest && (event.target.closest("#homeMenu") || event.target.closest(".hamburger-btn"));
-    const clickedInsideTripMenu = event.target.closest && (event.target.closest("#tripMenu") || event.target.closest(".trip-menu-btn"));
 
-    if (homeMenu && !homeMenu.classList.contains("hidden") && !clickedInsideHomeMenu) {
+    if (homeMenu && !homeMenu.classList.contains("hidden") && !event.target.closest("#homeMenu")) {
       homeMenu.classList.add("hidden");
     }
 
-    if (tripMenu && !tripMenu.classList.contains("hidden") && !clickedInsideTripMenu) {
+    if (tripMenu && !tripMenu.classList.contains("hidden") && !event.target.closest("#tripMenu")) {
       tripMenu.classList.add("hidden");
     }
   }
 
   document.addEventListener("click", closeOpenMenusOnOutsideClick);
-  document.addEventListener("touchstart", closeOpenMenusOnOutsideClick);
 
-  function toggleHomeMenu() {
+  function toggleHomeMenu(event) {
+    if (event) event.stopPropagation();
     document.getElementById("homeMenu").classList.toggle("hidden");
   }
 
@@ -3042,25 +3102,25 @@ Max 80 words total.`;
       return vals.length ? Math.min.apply(null, vals) : "";
     }
 
-    function teamCells(teamIds, oppIds, includeOutCell) {
+    function teamCells(teamIds, oppIds, prefix) {
       let out = "";
       holes.forEach(function(hole) {
         const val = teamScore(teamIds, hole);
         const opp = teamScore(oppIds, hole);
         const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
-        out += `<td class="${cls}">${val}</td>`;
-        if (includeOutCell && Number(hole.hole) === 9) {
+        out += `<td id="tscore-${prefix}-${hole.hole}" class="${cls}">${val}</td>`;
+        if (Number(hole.hole) === 9) {
           const outTotal = outHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
           const oppOut = outHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
-          out += `<td class="${outTotal && oppOut && outTotal < oppOut ? "team-score-win" : ""}">${outTotal || ""}</td>`;
+          out += `<td id="tscore-${prefix}-out" class="${outTotal && oppOut && outTotal < oppOut ? "team-score-win" : ""}">${outTotal || ""}</td>`;
         }
       });
       const inTotal = inHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
       const oppIn = inHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
       const total = holes.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
       const oppTotal = holes.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
-      out += `<td class="${inTotal && oppIn && inTotal < oppIn ? "team-score-win" : ""}">${inTotal || ""}</td>`;
-      out += `<td class="${total && oppTotal && total < oppTotal ? "team-score-win" : ""}">${total || ""}</td>`;
+      out += `<td id="tscore-${prefix}-in" class="${inTotal && oppIn && inTotal < oppIn ? "team-score-win" : ""}">${inTotal || ""}</td>`;
+      out += `<td id="tscore-${prefix}-tot" class="${total && oppTotal && total < oppTotal ? "team-score-win" : ""}">${total || ""}</td>`;
       return out;
     }
 
@@ -3106,9 +3166,9 @@ Max 80 words total.`;
           else inTotal += Number(displayed);
         }
         row += `<td><div class="score-cell-wrap">${isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : ""}<input type="text" inputmode="numeric" pattern="[0-9]*" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
-        if (Number(hole.hole) === 9) row += `<td>${outTotal || ""}</td>`;
+        if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
       });
-      row += `<td>${inTotal || ""}</td><td>${total || ""}</td></tr>`;
+      row += `<td id="ptotal-in-${player.id}">${inTotal || ""}</td><td id="ptotal-tot-${player.id}">${total || ""}</td></tr>`;
       playerRows += row;
     });
 
@@ -3125,15 +3185,105 @@ Max 80 words total.`;
           ${statRow("HCP", "hcp")}
           ${statRow("YDS", "yardage")}
           ${playerRows}
-          <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, true)}</tr>
-          <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, true)}</tr>
+          <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
+          <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
         </table>
       </div>
     `;
   }
 
   function handleScoreInput() {
-    renderScoreEntry();
+    // Update only the running totals without rebuilding the whole table
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
+    if (!match) return;
+
+    const tee = getTeeForMatch(match);
+    const holes = getScorecardForMatch(match).holes;
+    const playersForMatch = getPlayersForMatch(match);
+    const scoringType = match.scoringType || "Gross";
+    const isNet = scoringType === "Net";
+
+    const courseHandicaps = {};
+    playersForMatch.forEach(function(player) {
+      courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee);
+    });
+    const validCh = playersForMatch.map(function(player) { return courseHandicaps[player.id]; }).filter(function(v) { return v !== null; });
+    const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
+
+    const strokeData = {};
+    playersForMatch.forEach(function(player) {
+      const ch = courseHandicaps[player.id];
+      const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+      strokeData[player.id] = { ch: ch, strokes: strokes, strokeMap: calculateStrokeMap(strokes, holes) };
+    });
+
+    const outHoles = holes.filter(function(h) { return Number(h.hole) <= 9; });
+    const inHoles  = holes.filter(function(h) { return Number(h.hole) >= 10; });
+
+    function liveScore(playerId, hole) {
+      const input = document.getElementById(`score-${playerId}-${hole.hole}`);
+      const gross = input ? Number(input.value) || 0 : 0;
+      if (!gross) return "";
+      return gross - (isNet ? (strokeData[playerId].strokeMap[hole.hole] || 0) : 0);
+    }
+
+    function teamScore(teamIds, hole) {
+      const vals = teamIds.map(function(id) { return liveScore(id, hole); }).filter(function(v) { return v !== ""; });
+      return vals.length ? Math.min.apply(null, vals) : "";
+    }
+
+    // Update player row totals
+    playersForMatch.forEach(function(player) {
+      let out = 0, inT = 0, total = 0;
+      holes.forEach(function(hole) {
+        const v = liveScore(player.id, hole);
+        if (v !== "") {
+          total += Number(v);
+          if (Number(hole.hole) <= 9) out += Number(v);
+          else inT += Number(v);
+        }
+      });
+      const outCell  = document.getElementById(`ptotal-out-${player.id}`);
+      const inCell   = document.getElementById(`ptotal-in-${player.id}`);
+      const totCell  = document.getElementById(`ptotal-tot-${player.id}`);
+      if (outCell)  outCell.textContent  = outHoles.length && out  ? out  : "";
+      if (inCell)   inCell.textContent   = inHoles.length  && inT  ? inT  : "";
+      if (totCell)  totCell.textContent  = total ? total : "";
+    });
+
+    // Update team score rows
+    const teamAIds = match.teamAPlayerIds || [];
+    const teamBIds = match.teamBPlayerIds || [];
+
+    [
+      { ids: teamAIds, opp: teamBIds, prefix: "ta" },
+      { ids: teamBIds, opp: teamAIds, prefix: "tb" }
+    ].forEach(function(team) {
+      let out = 0, inT = 0, total = 0;
+      holes.forEach(function(hole) {
+        const v = teamScore(team.ids, hole);
+        const oppV = teamScore(team.opp, hole);
+        const cell = document.getElementById(`tscore-${team.prefix}-${hole.hole}`);
+        if (cell) {
+          cell.textContent = v !== "" ? v : "";
+          cell.className = v !== "" && oppV !== "" && Number(v) < Number(oppV) ? "team-score-win" : "";
+        }
+        if (v !== "") {
+          total += Number(v);
+          if (Number(hole.hole) <= 9) out += Number(v);
+          else inT += Number(v);
+        }
+      });
+      const outCell = document.getElementById(`tscore-${team.prefix}-out`);
+      const inCell  = document.getElementById(`tscore-${team.prefix}-in`);
+      const totCell = document.getElementById(`tscore-${team.prefix}-tot`);
+      const oppOut  = outHoles.reduce(function(s, h) { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
+      const oppIn   = inHoles.reduce(function(s, h)  { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
+      const oppTot  = holes.reduce(function(s, h)    { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
+      if (outCell) { outCell.textContent = out  || ""; outCell.className = out  && oppOut  && out  < oppOut  ? "team-score-win" : ""; }
+      if (inCell)  { inCell.textContent  = inT  || ""; inCell.className  = inT  && oppIn   && inT  < oppIn   ? "team-score-win" : ""; }
+      if (totCell) { totCell.textContent = total || ""; totCell.className = total && oppTot && total < oppTot ? "team-score-win" : ""; }
+    });
   }
 
   async function saveScoreEntry() {
@@ -3234,7 +3384,8 @@ Max 80 words total.`;
 
 
 
-  function toggleTripMenu() {
+  function toggleTripMenu(event) {
+    if (event) event.stopPropagation();
     const menu = document.getElementById("tripMenu");
     if (menu) {
       menu.classList.toggle("hidden");
