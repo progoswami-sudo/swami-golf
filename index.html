@@ -1387,7 +1387,7 @@
 
     <div class="card">
       <div id="scoreEntryMatchInfo" class="match-detail"></div>
-      <div id="scoreEntryTableWrap"></div>
+      <div id="scoreEntryTableWrap" style="min-height:40px;"></div>
       <button onclick="saveScoreEntry()" class="backup">Save Scores</button>
       <button onclick="openMoments()" class="secondary">Moments</button>
     </div>
@@ -3767,13 +3767,15 @@ Max 80 words total.`;
     const teamBName = activeTripData.teamB || "Team B";
 
     const diagLines = [
-      `match: ${match ? match.id : "NOT FOUND"}`,
-      `players in match: ${playersForMatch.length} — ${playersForMatch.map(p=>p.name).join(", ")||"none"}`,
+      `match: ${match.id}`,
+      `players: ${playersForMatch.length} — ${playersForMatch.map(p=>p.name).join(", ")||"none"}`,
       `holes: ${holes.length}`,
-      `tee: ${tee ? tee.name || "found" : "NOT FOUND"}`,
-      `playerRows length: ${playerRows.length}`,
+      `tee: ${tee ? "found" : "NOT FOUND"}`,
+      `rows: ${playerRows.length} chars`,
     ];
     console.log("renderScoreEntry diag:", diagLines);
+    // Append diag to info so we can confirm wrap is functional
+    info.innerHTML += `<div style="margin-top:6px;font-size:11px;color:#60a5fa;">${diagLines.join(" | ")}</div>`;
 
     try {
       wrap.innerHTML = `
