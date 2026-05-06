@@ -1840,9 +1840,14 @@
 
   async function fetchMemeAsDataUrl(imgUrl) {
     try {
+      console.log("Fetching meme via proxy:", imgUrl);
       const res = await fetch(`/api/meme-proxy?url=${encodeURIComponent(imgUrl)}`);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.warn("Meme proxy returned", res.status);
+        return null;
+      }
       const data = await res.json();
+      console.log("Proxy returned dataUrl length:", (data.dataUrl || "").length, "starts:", (data.dataUrl || "").slice(0, 30));
       return data.dataUrl || null;
     } catch (e) {
       console.warn("Meme proxy fetch failed:", e);
@@ -1852,14 +1857,15 @@
 
   async function buildMemeCanvas(templateKey, lines) {
     const tmpl = MEME_TEMPLATES[templateKey];
-    if (!tmpl) return null;
+    if (!tmpl) { console.warn("No template for key:", templateKey); return null; }
 
     const dataUrl = await fetchMemeAsDataUrl(tmpl.url);
-    if (!dataUrl) return null;
+    if (!dataUrl) { console.warn("fetchMemeAsDataUrl returned null for", templateKey); return null; }
 
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
+        console.log("Image loaded:", img.naturalWidth, "x", img.naturalHeight);
         const W = img.naturalWidth  || 600;
         const H = img.naturalHeight || 600;
         const canvas = document.createElement("canvas");
@@ -1875,7 +1881,6 @@
           const bx = box.x * W,  by = box.y * H;
           const bw = box.w * W,  bh = box.h * H;
 
-          // Auto-size font to fit width
           let fSize = Math.max(16, Math.floor(W / 12));
           ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
           while (ctx.measureText(text).width > bw - 8 && fSize > 12) {
@@ -1883,29 +1888,33 @@
             ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
           }
 
-          // Vertical position within box
           const ty = box.valign === "top"    ? by + fSize :
                      box.valign === "bottom" ? by + bh - 6 :
                                                by + bh / 2 + fSize * 0.35;
-
           const tx = box.align === "center" ? bx + bw / 2 : bx + 6;
           ctx.textAlign    = box.align === "center" ? "center" : "left";
           ctx.textBaseline = "alphabetic";
-
-          // Black outline
           ctx.strokeStyle = "black";
           ctx.lineWidth   = Math.max(4, fSize / 6);
           ctx.lineJoin    = "round";
           ctx.strokeText(text, tx, ty);
-
-          // White fill
           ctx.fillStyle = "white";
           ctx.fillText(text, tx, ty);
         });
 
-        resolve(canvas.toDataURL("image/jpeg", 0.92));
+        try {
+          const result = canvas.toDataURL("image/jpeg", 0.92);
+          console.log("Canvas toDataURL success, length:", result.length);
+          resolve(result);
+        } catch (e) {
+          console.error("Canvas toDataURL failed:", e);
+          resolve(null);
+        }
       };
-      img.onerror = () => resolve(null);
+      img.onerror = (e) => {
+        console.error("Image load failed for", templateKey, e);
+        resolve(null);
+      };
       img.src = dataUrl;
     });
   }
@@ -1934,19 +1943,24 @@ Respond ONLY with valid JSON, nothing else:
     let memeData = null;
     try {
       const raw = await callSwami(memePrompt, 100);
+      console.log("Meme raw response:", raw);
       if (raw) {
         const cleaned = raw.replace(/```json[\s\S]*?```|```/g, "").trim();
-        // Find JSON object in response even if there's extra text
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        console.log("Meme JSON match:", jsonMatch ? jsonMatch[0] : "NO MATCH");
         if (jsonMatch) memeData = JSON.parse(jsonMatch[0]);
       }
     } catch (e) {
       console.warn("Meme JSON parse failed:", e);
     }
 
+    console.log("Meme data:", JSON.stringify(memeData));
+
     if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
       try {
+        console.log("Building canvas for template:", memeData.template, "lines:", memeData.lines);
         const imageUrl = await buildMemeCanvas(memeData.template, memeData.lines);
+        console.log("Canvas result:", imageUrl ? `${imageUrl.length} chars` : "NULL");
         if (imageUrl) {
           return {
             mediaType: "image",
@@ -5275,7 +5289,7 @@ ${closer}`;
     if (!resultEl) return;
     resultEl.style.display = "block";
     resultEl.style.color = "#bfdbfe";
-    resultEl.textContent = "⏳ Testing Swami AI connection...";
+    resultEl.textContent = "⏳ Testing Swami AI + Meme...";
 
     // Test 1: Claude API
     let apiOk = false;
@@ -5286,12 +5300,11 @@ ${closer}`;
         body: JSON.stringify({ prompt: "Say exactly this and nothing else: SWAMI ONLINE", maxTokens: 20 })
       });
       const raw = await res.text();
-      console.log("Swami test raw response:", raw);
       if (res.ok) {
-        const data = JSON.parse(raw);
         apiOk = true;
+        const data = JSON.parse(raw);
         resultEl.style.color = "#4ade80";
-        resultEl.textContent = `✅ Claude API connected — "${data.text}"`;
+        resultEl.textContent = `✅ Claude API — "${data.text}"`;
       } else {
         resultEl.style.color = "#f87171";
         resultEl.textContent = `❌ Claude API error ${res.status}: ${raw}`;
@@ -5299,32 +5312,36 @@ ${closer}`;
       }
     } catch (err) {
       resultEl.style.color = "#f87171";
-      resultEl.textContent = `❌ Claude API fetch failed: ${err.message}`;
+      resultEl.textContent = `❌ Claude API failed: ${err.message}`;
       return;
     }
 
     // Test 2: Meme proxy
-    resultEl.textContent += " | ⏳ Testing meme proxy...";
+    resultEl.textContent += " | ⏳ proxy...";
     try {
       const proxyRes = await fetch(`/api/meme-proxy?url=${encodeURIComponent("https://i.imgflip.com/30b1gx.jpg")}`);
-      const proxyRaw = await proxyRes.text();
-      console.log("Meme proxy status:", proxyRes.status, proxyRaw.slice(0, 120));
-      if (proxyRes.ok) {
-        const proxyData = JSON.parse(proxyRaw);
-        if (proxyData.dataUrl && proxyData.dataUrl.startsWith("data:image")) {
-          resultEl.textContent += " | ✅ Meme proxy working";
+      const proxyData = await proxyRes.json();
+      if (proxyRes.ok && proxyData.dataUrl) {
+        resultEl.textContent += " ✅ proxy ok";
+
+        // Test 3: Actually draw the meme canvas end-to-end
+        resultEl.textContent += " | ⏳ canvas...";
+        const canvasResult = await buildMemeCanvas("drake", ["Checking handicap", "Claiming 12 plays like 22"]);
+        if (canvasResult) {
+          resultEl.textContent += " ✅ canvas ok";
+          // Show the meme inline
+          resultEl.innerHTML += `<br><img src="${canvasResult}" style="width:100%;border-radius:8px;margin-top:8px;">`;
         } else {
           resultEl.style.color = "#fbbf24";
-          resultEl.textContent += ` | ⚠️ Proxy responded but no dataUrl: ${proxyRaw.slice(0, 80)}`;
+          resultEl.textContent += " ❌ canvas returned null — check console";
         }
       } else {
         resultEl.style.color = "#fbbf24";
-        resultEl.textContent += ` | ⚠️ Meme proxy error ${proxyRes.status}: ${proxyRaw.slice(0, 80)}`;
-        resultEl.textContent += " — is api/meme-proxy.js deployed to GitHub?";
+        resultEl.textContent += ` ❌ proxy error: ${JSON.stringify(proxyData).slice(0,80)}`;
       }
     } catch (err) {
       resultEl.style.color = "#fbbf24";
-      resultEl.textContent += ` | ⚠️ Meme proxy fetch failed: ${err.message}`;
+      resultEl.textContent += ` ❌ proxy/canvas failed: ${err.message}`;
     }
   }
 
