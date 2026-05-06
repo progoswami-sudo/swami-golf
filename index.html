@@ -1833,6 +1833,14 @@
     renderTripTiles();
   });
 
+  function normalizeCourseKey(name) {
+    return String(name || "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
   function tripDocRef(tripId = activeTripId) {
     return doc(db, "trips", tripId);
   }
