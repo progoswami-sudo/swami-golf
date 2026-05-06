@@ -5274,8 +5274,11 @@ ${closer}`;
     const resultEl = document.getElementById("swamiTestResult");
     if (!resultEl) return;
     resultEl.style.display = "block";
+    resultEl.style.color = "#bfdbfe";
     resultEl.textContent = "⏳ Testing Swami AI connection...";
 
+    // Test 1: Claude API
+    let apiOk = false;
     try {
       const res = await fetch("/api/swami", {
         method: "POST",
@@ -5286,20 +5289,42 @@ ${closer}`;
       console.log("Swami test raw response:", raw);
       if (res.ok) {
         const data = JSON.parse(raw);
+        apiOk = true;
         resultEl.style.color = "#4ade80";
-        resultEl.textContent = `✅ API connected. Response: "${data.text}"`;
-        // Also test a meme
-        const memeResult = await getAiSwamiMedia("matchAdd", "test", "Testing the meme system right now");
-        if (memeResult && memeResult.imageUrl && memeResult.imageUrl.startsWith("data:image/svg+xml")) {
-          resultEl.textContent += ` | Meme: ✅ SVG meme generated (template: ${memeResult.imageCaption})`;
-        }
+        resultEl.textContent = `✅ Claude API connected — "${data.text}"`;
       } else {
         resultEl.style.color = "#f87171";
-        resultEl.textContent = `❌ API error ${res.status}: ${raw}`;
+        resultEl.textContent = `❌ Claude API error ${res.status}: ${raw}`;
+        return;
       }
     } catch (err) {
       resultEl.style.color = "#f87171";
-      resultEl.textContent = `❌ Fetch failed: ${err.message}`;
+      resultEl.textContent = `❌ Claude API fetch failed: ${err.message}`;
+      return;
+    }
+
+    // Test 2: Meme proxy
+    resultEl.textContent += " | ⏳ Testing meme proxy...";
+    try {
+      const proxyRes = await fetch(`/api/meme-proxy?url=${encodeURIComponent("https://i.imgflip.com/30b1gx.jpg")}`);
+      const proxyRaw = await proxyRes.text();
+      console.log("Meme proxy status:", proxyRes.status, proxyRaw.slice(0, 120));
+      if (proxyRes.ok) {
+        const proxyData = JSON.parse(proxyRaw);
+        if (proxyData.dataUrl && proxyData.dataUrl.startsWith("data:image")) {
+          resultEl.textContent += " | ✅ Meme proxy working";
+        } else {
+          resultEl.style.color = "#fbbf24";
+          resultEl.textContent += ` | ⚠️ Proxy responded but no dataUrl: ${proxyRaw.slice(0, 80)}`;
+        }
+      } else {
+        resultEl.style.color = "#fbbf24";
+        resultEl.textContent += ` | ⚠️ Meme proxy error ${proxyRes.status}: ${proxyRaw.slice(0, 80)}`;
+        resultEl.textContent += " — is api/meme-proxy.js deployed to GitHub?";
+      }
+    } catch (err) {
+      resultEl.style.color = "#fbbf24";
+      resultEl.textContent += ` | ⚠️ Meme proxy fetch failed: ${err.message}`;
     }
   }
 
