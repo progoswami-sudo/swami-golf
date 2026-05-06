@@ -1173,10 +1173,12 @@
       <input id="matchDate" type="date"/>
 
       <label class="form-label" for="matchCourse">Golf Course</label>
-      <input id="matchCourse" placeholder="e.g., Pinehurst No. 2"/>
+      <select id="matchCourse" onchange="handleCourseChange()"></select>
+      <input id="matchCourseOther" class="hidden" placeholder="Type golf course name"/>
 
       <label class="form-label" for="matchTees">Tees</label>
-      <input id="matchTees" placeholder="e.g., White, Blue, No. 2 White"/>
+      <select id="matchTees" onchange="handleTeeChange()"></select>
+      <input id="matchTeesOther" class="hidden" placeholder="Type tee name"/>
 
       <div class="compact-row">
         <div>
@@ -1485,7 +1487,10 @@
   const defaultTripIds = ["pinehurst2026", "testGolfTrip"];
 
 
-  const courseLibrary = {
+  let courseLibraryLoaded = false;
+  const COURSE_LIBRARY_URL = "./pinehurst-course-library.json";
+
+  let courseLibrary = {
     // Add scorecards here. Example:
     // "pinehurst-no-2": {
     //   name: "Pinehurst No. 2",
@@ -1766,6 +1771,7 @@
 
     await initializeTripIfNeeded("pinehurst2026");
     await initializeTripIfNeeded("testGolfTrip");
+    await loadCourseLibrary();
     await loadTrips();
     renderTripTiles();
   });
@@ -1793,6 +1799,187 @@
   function recapsCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "recaps");
   }
+
+  async function loadCourseLibrary() {
+    try {
+      const response = await fetch(COURSE_LIBRARY_URL, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`Course library request failed: ${response.status}`);
+      }
+
+      const library = await response.json();
+
+      if (library && library.courses) {
+        courseLibrary = library.courses;
+      } else {
+        courseLibrary = library || {};
+      }
+
+      courseLibraryLoaded = true;
+      populateCourseDropdown();
+
+      return courseLibrary;
+    } catch (error) {
+      console.warn("Course library could not be loaded.", error);
+      courseLibraryLoaded = false;
+      populateCourseDropdown();
+      return courseLibrary;
+    }
+  }
+
+  function getCourseOptions() {
+    return Object.keys(courseLibrary || {})
+      .map(function(courseId) {
+        const course = courseLibrary[courseId];
+        return {
+          id: courseId,
+          name: course && course.name ? course.name : courseId
+        };
+      })
+      .sort(function(a, b) {
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  function populateCourseDropdown(selectedCourseName) {
+    const courseSelect = document.getElementById("matchCourse");
+    if (!courseSelect) return;
+
+    const currentValue = selectedCourseName || courseSelect.value || "";
+    const courseOptions = getCourseOptions();
+
+    courseSelect.innerHTML = "";
+
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = courseOptions.length ? "Select Golf Course" : "Course library unavailable";
+    courseSelect.appendChild(blank);
+
+    courseOptions.forEach(function(course) {
+      const option = document.createElement("option");
+      option.value = course.name;
+      option.setAttribute("data-course-id", course.id);
+      option.textContent = course.name;
+      courseSelect.appendChild(option);
+    });
+
+    const other = document.createElement("option");
+    other.value = "__other__";
+    other.textContent = "Other / Free Text";
+    courseSelect.appendChild(other);
+
+    if (currentValue) {
+      const found = Array.from(courseSelect.options).some(function(option) {
+        return option.value === currentValue;
+      });
+
+      courseSelect.value = found ? currentValue : "__other__";
+      setOtherCourseVisibility(!found);
+      if (!found) {
+        document.getElementById("matchCourseOther").value = currentValue;
+      }
+    }
+
+    populateTeeDropdown();
+  }
+
+  function getSelectedCourseName() {
+    const select = document.getElementById("matchCourse");
+    const other = document.getElementById("matchCourseOther");
+
+    if (!select) return "";
+
+    if (select.value === "__other__") {
+      return other ? other.value.trim() : "";
+    }
+
+    return select.value.trim();
+  }
+
+  function getSelectedCourseId() {
+    const courseName = getSelectedCourseName();
+    return normalizeCourseKey(courseName);
+  }
+
+  function setOtherCourseVisibility(showOther) {
+    const other = document.getElementById("matchCourseOther");
+    if (!other) return;
+    other.classList.toggle("hidden", !showOther);
+  }
+
+  function handleCourseChange() {
+    const select = document.getElementById("matchCourse");
+    setOtherCourseVisibility(select && select.value === "__other__");
+    populateTeeDropdown();
+  }
+
+  function populateTeeDropdown(selectedTeeName) {
+    const teeSelect = document.getElementById("matchTees");
+    if (!teeSelect) return;
+
+    const currentValue = selectedTeeName || teeSelect.value || "";
+    const course = courseLibrary[getSelectedCourseId()];
+    const tees = course && course.tees ? course.tees : {};
+
+    teeSelect.innerHTML = "";
+
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = Object.keys(tees).length ? "Select Tees" : "Tees unavailable / free text";
+    teeSelect.appendChild(blank);
+
+    Object.keys(tees).forEach(function(teeId) {
+      const tee = tees[teeId];
+      const option = document.createElement("option");
+      option.value = tee && tee.teeName ? tee.teeName : teeId;
+      option.setAttribute("data-tee-id", teeId);
+      option.textContent = tee && tee.teeName ? tee.teeName : teeId;
+      teeSelect.appendChild(option);
+    });
+
+    const other = document.createElement("option");
+    other.value = "__other__";
+    other.textContent = "Other / Free Text";
+    teeSelect.appendChild(other);
+
+    if (currentValue) {
+      const found = Array.from(teeSelect.options).some(function(option) {
+        return option.value === currentValue;
+      });
+
+      teeSelect.value = found ? currentValue : "__other__";
+      setOtherTeeVisibility(!found);
+      if (!found) {
+        document.getElementById("matchTeesOther").value = currentValue;
+      }
+    }
+  }
+
+  function getSelectedTeeName() {
+    const select = document.getElementById("matchTees");
+    const other = document.getElementById("matchTeesOther");
+
+    if (!select) return "";
+
+    if (select.value === "__other__") {
+      return other ? other.value.trim() : "";
+    }
+
+    return select.value.trim();
+  }
+
+  function setOtherTeeVisibility(showOther) {
+    const other = document.getElementById("matchTeesOther");
+    if (!other) return;
+    other.classList.toggle("hidden", !showOther);
+  }
+
+  function handleTeeChange() {
+    const select = document.getElementById("matchTees");
+    setOtherTeeVisibility(select && select.value === "__other__");
+  }
+
 
   function assignedPlayerKey(tripId = activeTripId) {
     return `swamiGolf.${tripId}.assignedPlayerId`;
@@ -2176,8 +2363,10 @@
     loadMatchPlayerSelectors();
 
     document.getElementById("matchDate").value = getTodayDateString();
-    document.getElementById("matchCourse").value = "";
-    document.getElementById("matchTees").value = "";
+    populateCourseDropdown("");
+    document.getElementById("matchCourseOther").value = "";
+    populateTeeDropdown("");
+    document.getElementById("matchTeesOther").value = "";
     document.getElementById("matchNumberOfHoles").value = "18";
     document.getElementById("matchStartingHole").value = "1";
     setMatchRoundValue("1");
@@ -2197,8 +2386,10 @@
 
     if (sourceMatch) {
       document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
-      document.getElementById("matchCourse").value = sourceMatch.course || "";
-      document.getElementById("matchTees").value = sourceMatch.tees || "";
+      populateCourseDropdown(sourceMatch.course || "");
+      document.getElementById("matchCourseOther").value = sourceMatch.course || "";
+      populateTeeDropdown(sourceMatch.tees || "");
+      document.getElementById("matchTeesOther").value = sourceMatch.tees || "";
       document.getElementById("matchNumberOfHoles").value = String(sourceMatch.numberOfHoles || "18");
       document.getElementById("matchStartingHole").value = String(sourceMatch.startingHole || "1");
       setMatchRoundValue(sourceMatch.round || "1");
@@ -2358,8 +2549,8 @@
 
   async function saveMatch() {
     const matchDate = document.getElementById("matchDate").value;
-    const course = document.getElementById("matchCourse").value.trim();
-    const tees = document.getElementById("matchTees").value.trim();
+    const course = getSelectedCourseName();
+    const tees = getSelectedTeeName();
     const numberOfHoles = String(document.getElementById("matchNumberOfHoles").value || "18");
     const startingHole = String(document.getElementById("matchStartingHole").value || "1");
     const round = String(document.getElementById("matchRound").value || "1");
@@ -4211,6 +4402,8 @@ ${closer}`;
   window.renderMentionOptions = renderMentionOptions;
   window.openTripFeed = openTripFeed;
   window.saveScoreEntry = saveScoreEntry;
+  window.handleCourseChange = handleCourseChange;
+  window.handleTeeChange = handleTeeChange;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
