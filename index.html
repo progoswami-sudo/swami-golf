@@ -3325,7 +3325,8 @@ Max 80 words total.`;
     const score = scorecardViewMode === "net" ? gross - strokes : gross;
     const diff = score - par;
     const display = gross;
-    if (diff <= -2) return `<span class="sc-eagle">${display}</span>`;
+    if (diff <= -3) return `<span class="sc-eagle" style="border-color:#a78bfa;color:#a78bfa;">${display}</span>`;
+    if (diff === -2) return `<span class="sc-eagle">${display}</span>`;
     if (diff === -1) return `<span class="sc-birdie">${display}</span>`;
     if (diff === 0)  return `<span class="sc-par">${display}</span>`;
     if (diff === 1)  return `<span class="sc-bogey">${display}</span>`;
@@ -3339,6 +3340,24 @@ Max 80 words total.`;
   let holeDetailHoleNum = null;
   let holeDetailData = {}; // { playerId: { score, fairway, approach, putts, hazards, ballsLost, moment } }
 
+  function applyHoleDefaults(match, playerId, holeNum) {
+    const holes = getScorecardForMatch(match).holes;
+    const hole = holes.find(h => Number(h.hole) === holeNum);
+    const par = hole ? Number(hole.par) || 4 : 4;
+    const existingScore = ((match.holeScores || {})[playerId] || {})[holeNum];
+    if (!holeDetailData[playerId]) holeDetailData[playerId] = {};
+    if (!holeDetailData[playerId][holeNum]) {
+      holeDetailData[playerId][holeNum] = {
+        score: existingScore ? Number(existingScore) : par,
+        putts: 2
+      };
+    } else {
+      const pd = holeDetailData[playerId][holeNum];
+      if (!pd.score) pd.score = existingScore ? Number(existingScore) : par;
+      if (pd.putts === undefined || pd.putts === null || pd.putts === "") pd.putts = 2;
+    }
+  }
+
   function openHoleDetail(matchId, playerId, holeNum) {
     holeDetailMatchId = matchId;
     holeDetailPlayerId = playerId;
@@ -3346,28 +3365,18 @@ Max 80 words total.`;
     const match = matches.find(m => m.id === matchId);
     if (match) {
       holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
-
-      // Pre-populate defaults for holes that haven't been entered yet
-      const holes = getScorecardForMatch(match).holes;
-      const hole = holes.find(h => Number(h.hole) === holeDetailHoleNum);
-      const par = hole ? Number(hole.par) || 4 : 4;
-      const existingScore = ((match.holeScores || {})[playerId] || {})[holeDetailHoleNum];
-
-      if (!holeDetailData[playerId]) holeDetailData[playerId] = {};
-      if (!holeDetailData[playerId][holeDetailHoleNum]) {
-        holeDetailData[playerId][holeDetailHoleNum] = {
-          score: existingScore ? Number(existingScore) : par,
-          putts: 2
-        };
-      } else {
-        // Fill in any missing defaults on existing data
-        const pd = holeDetailData[playerId][holeDetailHoleNum];
-        if (!pd.score) pd.score = existingScore ? Number(existingScore) : par;
-        if (pd.putts === undefined || pd.putts === null || pd.putts === "") pd.putts = 2;
-      }
+      // Apply defaults for ALL players on this hole upfront
+      getPlayersForMatch(match).forEach(p => applyHoleDefaults(match, p.id, holeDetailHoleNum));
     }
     renderHoleDetail();
     show("holeDetailScreen");
+  }
+
+  function switchHoleDetailPlayer(playerId) {
+    holeDetailPlayerId = playerId;
+    const match = matches.find(m => m.id === holeDetailMatchId);
+    if (match) applyHoleDefaults(match, playerId, holeDetailHoleNum);
+    renderHoleDetail();
   }
 
   function renderHoleDetail() {
@@ -3411,9 +3420,9 @@ Max 80 words total.`;
     const strokeMap = calculateStrokeMap(strokes, holes);
     const strokesOnHole = strokeMap[holeDetailHoleNum] || 0;
 
-    const diff = currentScore && par ? (currentScore - strokesOnHole) - par : null;
+    const diff = currentScore && par ? currentScore - par : null;        // always gross vs par
     const vsParLabel = currentScore ? vsParText(diff) : "–";
-    const badgeHtml = currentScore ? scoreBadge(currentScore, par, strokesOnHole) : "–";
+    const badgeHtml = currentScore ? scoreBadgeGross(currentScore, par) : "–";
 
     // Fairway buttons (only for par 4/5)
     const showFairway = par >= 4;
@@ -3508,7 +3517,8 @@ Max 80 words total.`;
 
   function vsParText(diff) {
     if (diff === null || diff === undefined) return "–";
-    if (diff <= -2) return "Eagle 🦅";
+    if (diff <= -3) return "Albatross 🦅🦅";
+    if (diff === -2) return "Eagle 🦅";
     if (diff === -1) return "Birdie 🐦";
     if (diff === 0)  return "Par";
     if (diff === 1)  return "Bogey";
@@ -3517,9 +3527,17 @@ Max 80 words total.`;
     return `+${diff}`;
   }
 
-  function switchHoleDetailPlayer(playerId) {
-    holeDetailPlayerId = playerId;
-    renderHoleDetail();
+  // Always gross score vs par (used in hole detail screen)
+  function scoreBadgeGross(gross, par) {
+    if (!gross || !par) return `<span style="color:#475569;font-size:11px;">–</span>`;
+    const diff = gross - par;
+    if (diff <= -3) return `<span class="sc-eagle" style="border-color:#a78bfa;color:#a78bfa;">${gross}</span>`;
+    if (diff === -2) return `<span class="sc-eagle">${gross}</span>`;
+    if (diff === -1) return `<span class="sc-birdie">${gross}</span>`;
+    if (diff === 0)  return `<span class="sc-par">${gross}</span>`;
+    if (diff === 1)  return `<span class="sc-bogey">${gross}</span>`;
+    if (diff === 2)  return `<span class="sc-double">${gross}</span>`;
+    return `<span class="sc-worse">${gross}</span>`;
   }
 
   function setHoleDetailField(field, value) {
