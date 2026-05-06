@@ -3230,8 +3230,8 @@ Max 80 words total.`;
 
         <div class="match-scorecard-body">
           <div class="match-detail">
-            <strong>${escapeHtml(teamAName)}:</strong> ${escapeHtml(teamAPlayers)}<br>
-            <strong>${escapeHtml(teamBName)}:</strong> ${escapeHtml(teamBPlayers)}
+            <strong>${escapeHtml(teamAName)}:</strong> <span style="color:#93c5fd;font-weight:600;">${escapeHtml(teamAPlayers)}</span><br>
+            <strong>${escapeHtml(teamBName)}:</strong> <span style="color:#86efac;font-weight:600;">${escapeHtml(teamBPlayers)}</span>
           </div>
 
           ${renderMatchValueSummary(match)}
@@ -3738,8 +3738,9 @@ Max 80 words total.`;
         const par = Number(hole.par) || 0;
         const badgeHtml = raw ? scoreBadge(Number(raw), par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
         const dotHtml = isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
-        row += `<td onclick="openHoleDetail('${activeScoreMatchId}','${player.id}',${hole.hole})" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;">
-          <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${player.id}-${hole.hole}">${badgeHtml}</div></div>
+        const cellId = `hcell-${player.id}-${hole.hole}`;
+        row += `<td id="${cellId}" onclick="openHoleDetail(activeScoreMatchId,'${escapeAttr(player.id)}',${Number(hole.hole)})" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">
+          <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${escapeAttr(player.id)}-${hole.hole}">${badgeHtml}</div></div>
         </td>`;
         if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
       });
@@ -3752,19 +3753,24 @@ Max 80 words total.`;
     const teamAName = activeTripData.teamA || "Team A";
     const teamBName = activeTripData.teamB || "Team B";
 
-    wrap.innerHTML = `
-      <div class="score-entry-wrap">
-        <table class="score-entry-table">
-          ${header}
-          ${statRow("PAR", "par")}
-          ${statRow("HCP", "hcp")}
-          ${statRow("YDS", "yardage")}
-          ${playerRows}
-          <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
-          <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
-        </table>
-      </div>
-    `;
+    try {
+      wrap.innerHTML = `
+        <div class="score-entry-wrap">
+          <table class="score-entry-table">
+            ${header}
+            ${statRow("PAR", "par")}
+            ${statRow("HCP", "hcp")}
+            ${statRow("YDS", "yardage")}
+            ${playerRows}
+            <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
+            <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
+          </table>
+        </div>
+      `;
+    } catch(e) {
+      console.error("renderScoreEntry failed:", e);
+      wrap.innerHTML = `<div class="empty-state" style="color:#f87171;">Scorecard render error: ${e.message}</div>`;
+    }
   }
 
   function handleScoreInput() {
