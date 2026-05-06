@@ -1084,6 +1084,8 @@
         <div class="feed-title">Swami Pulse</div>
         <div class="feed-subtitle">Latest signals from the trip</div>
         <div id="swamiPulse" class="pulse-grid"></div>
+        <button onclick="testSwamiApi()" class="secondary" style="margin-top:12px;font-size:13px;padding:10px;">🧪 Test Swami AI Connection</button>
+        <div id="swamiTestResult" style="margin-top:8px;font-size:13px;color:#bfdbfe;display:none;"></div>
       </div>
     </div>
   </div>
@@ -4562,11 +4564,15 @@ ${closer}`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, maxTokens })
       });
-      if (!res.ok) throw new Error("API error " + res.status);
       const data = await res.json();
+      if (!res.ok) {
+        console.error("Swami API error", res.status, JSON.stringify(data));
+        return null;
+      }
+      console.log("Swami API ok, text length:", (data.text || "").length);
       return data.text || null;
     } catch (err) {
-      console.warn("Swami AI unavailable, using fallback:", err);
+      console.error("Swami fetch failed:", err.message, err);
       return null;
     }
   }
@@ -5311,7 +5317,40 @@ ${closer}`;
     return String(text == null ? "" : text).replace(/"/g, "&quot;");
   }
 
-  window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
+  async function testSwamiApi() {
+    const resultEl = document.getElementById("swamiTestResult");
+    if (!resultEl) return;
+    resultEl.style.display = "block";
+    resultEl.textContent = "⏳ Testing Swami AI connection...";
+
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: "Say exactly this and nothing else: SWAMI ONLINE", maxTokens: 20 })
+      });
+      const raw = await res.text();
+      console.log("Swami test raw response:", raw);
+      if (res.ok) {
+        const data = JSON.parse(raw);
+        resultEl.style.color = "#4ade80";
+        resultEl.textContent = `✅ API connected. Response: "${data.text}"`;
+        // Also test a meme
+        const memeResult = await getAiSwamiMedia("matchAdd", "test", "Testing the meme system right now");
+        if (memeResult && memeResult.imageUrl && memeResult.imageUrl.startsWith("data:image/svg+xml")) {
+          resultEl.textContent += ` | Meme: ✅ SVG meme generated (template: ${memeResult.imageCaption})`;
+        }
+      } else {
+        resultEl.style.color = "#f87171";
+        resultEl.textContent = `❌ API error ${res.status}: ${raw}`;
+      }
+    } catch (err) {
+      resultEl.style.color = "#f87171";
+      resultEl.textContent = `❌ Fetch failed: ${err.message}`;
+    }
+  }
+
+  window.testSwamiApi = testSwamiApi;
   window.runConfidenceMeter = runConfidenceMeter;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
