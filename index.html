@@ -1741,23 +1741,64 @@
   };
 
   async function getAiSwamiMedia(action, subject, swamiText) {
-    const toneList = ["schedule","player","team","chat"];
+    // Ask Claude to pick a real meme template + write the text
+    const memePrompt = `You are picking a meme for a golf trip app moment. The context is: "${swamiText}"
+
+Choose ONE meme template from this list that fits best, and write top/bottom text for it:
+- drake (Drake approving/disapproving)
+- doge (Shibe doge with floating text)
+- distracted-boyfriend (guy looking at other woman)
+- this-is-fine (dog in burning room)
+- galaxy-brain (expanding brain panels)
+- gru-plan (Gru's plan with 4 panels — top text for steps 1-3, bottom for step 4)
+- success (success kid fist pump)
+- change-my-mind (Steven Crowder at table with sign)
+- two-buttons (sweating over two buttons)
+- oprah-you-get (Oprah pointing — "you get X")
+- batman-slapping-robin (Batman slapping Robin mid-sentence)
+- panik-kalm (two panel panik/kalm reaction)
+- buff-doge-vs-cheems (buff doge vs small doge comparison)
+- left-exit-12 (car taking exit ramp)
+- uno-reverse (uno reverse card)
+
+Respond ONLY with valid JSON in this exact format, nothing else:
+{"template":"template-id","top":"top text here","bottom":"bottom text here"}
+
+Rules:
+- Keep each text under 6 words
+- Make it feel like the meme was made BY someone on the golf trip, not about golf generically
+- Be specific to the context if possible
+- "top" and "bottom" are both required (can be empty string "" if the meme only needs one line)`;
+
+    let memeData = null;
+    try {
+      const raw = await callSwami(memePrompt, 120);
+      if (raw) {
+        const cleaned = raw.replace(/```json|```/g, "").trim();
+        memeData = JSON.parse(cleaned);
+      }
+    } catch (e) {
+      console.warn("Meme JSON parse failed:", e);
+    }
+
+    if (memeData && memeData.template && (memeData.top || memeData.bottom)) {
+      // Build memegen.link URL — spaces become _ and special chars are encoded
+      const encode = (t) => encodeURIComponent((t || "_").trim().replace(/\s+/g, "_").replace(/\?/g, "~q") || "_");
+      const top = encode(memeData.top);
+      const bottom = encode(memeData.bottom);
+      const imageUrl = `https://api.memegen.link/images/${memeData.template}/${top}/${bottom}.png?width=600`;
+      const caption = [memeData.top, memeData.bottom].filter(Boolean).join(" / ");
+      return { mediaType: "image", imageUrl, imageCaption: caption };
+    }
+
+    // Fallback: SVG card if meme generation fails
     const tone = ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action) ? "schedule"
       : ["playerAdd","playerEdit"].includes(action) ? "player"
       : ["teams"].includes(action) ? "team" : "chat";
-
-    const captionPrompt = `Write a single punchy meme caption (under 12 words) for a golf trip moment. Context: ${swamiText} Action: ${action}. Subject: ${subject}. Make it feel like a real internet meme — reference pop culture, movies, sports, or viral moments if they fit. No quotes, no hashtags, just the caption text.`;
-    const titlePrompt = `Write a 2-3 word meme title (like a classic meme format name) for this golf trip moment: ${swamiText}. Think: "Distracted Boyfriend", "This Is Fine", "Drake Pointing", "Galaxy Brain". Just the title, no punctuation.`;
-
-    const [caption, title] = await Promise.all([
-      callSwami(captionPrompt, 60),
-      callSwami(titlePrompt, 30)
-    ]);
-
     return {
       mediaType: "image",
-      imageUrl: buildSwamiMemeSvg(title || "Swami Says", caption || swamiText.slice(0, 80), tone),
-      imageCaption: caption || ""
+      imageUrl: buildSwamiMemeSvg("Swami Says", swamiText.slice(0, 80), tone),
+      imageCaption: swamiText.slice(0, 80)
     };
   }
 
@@ -4288,27 +4329,29 @@ ${closer}`;
 
   async function addSwamiPost(action, subject) {
     const ctx = buildTripContext();
+    const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
+
     const actionPrompts = {
-      playerAdd: `A new player just joined the golf trip: ${subject}. ${ctx} Write a short, funny, sharp Swami reaction. Reference their handicap or team if available. Use pop culture or sports references if they fit naturally. Max 2 sentences.`,
-      playerEdit: `A player's profile was just updated: ${subject}. ${ctx} Write a brief Swami reaction implying mild suspicion about why someone would edit their profile right before a trip. Max 2 sentences.`,
-      itineraryAdd: `A new event was added to the trip itinerary: "${subject}". ${ctx} Write a short Swami reaction about scheduling, adult logistics, or the chaos of group travel. Max 2 sentences.`,
-      itineraryEdit: `The itinerary event "${subject}" was just edited. ${ctx} Write a brief Swami reaction about plans changing. Max 2 sentences.`,
-      itineraryDelete: `The itinerary event "${subject}" was just deleted. ${ctx} Write a brief Swami reaction about something being removed from the schedule. Dry humor about free time or chaos. Max 2 sentences.`,
-      matchAdd: `A new match was just created: ${subject}. ${ctx} Write a short Swami pre-match comment. Reference the format, teams, or players involved if known. Max 2 sentences.`,
-      matchEdit: `A match was just edited: ${subject}. ${ctx} Write a brief Swami reaction implying negotiation or rule-lawyering happened. Max 2 sentences.`,
-      matchDelete: `A match was deleted: ${subject}. ${ctx} Write a brief Swami reaction about erasing evidence or cutting losses. Max 2 sentences.`,
-      scoreUpdate: `Scores were just updated for: ${subject}. ${ctx} Write a short Swami reaction commenting on the score update. Reference any momentum shift or team implications. Max 2 sentences.`,
-      userComment: `A trip member named ${subject} just posted in the group feed. ${ctx} Write a Swami reaction to someone posting in the group chat. Be witty about group dynamics. Max 2 sentences.`,
-      recapAdd: `A recap was just generated: "${subject}". ${ctx} Write a brief Swami teaser for the recap. Max 1-2 sentences.`,
-      momentAdd: `A match moment was just logged: "${subject}". ${ctx} Write a brief Swami reaction. Max 1 sentence.`,
-      teams: `Team names were just updated: ${subject}. ${ctx} Write a Swami reaction about the rivalry forming. Max 2 sentences.`
+      playerAdd: `New player just joined the golf trip: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Be specific — use their handicap, team, or nickname if available. ${variationSeed} 1-2 sentences max. No emojis.`,
+      playerEdit: `A player just edited their own profile: ${subject}. ${ctx}\n\nWrite ONE Swami reaction implying this is suspicious pre-trip gamesmanship. ${variationSeed} 1-2 sentences max.`,
+      itineraryAdd: `New trip event added: "${subject}". ${ctx}\n\nWrite ONE Swami reaction about this addition to the schedule. ${variationSeed} 1-2 sentences. Golf trip chaos energy.`,
+      itineraryEdit: `Trip event was edited: "${subject}". ${ctx}\n\nWrite ONE Swami reaction. Plans changed — why? Who's responsible? ${variationSeed} 1-2 sentences.`,
+      itineraryDelete: `Trip event deleted: "${subject}". ${ctx}\n\nWrite ONE Swami reaction. Something got cut. Free time or disaster? ${variationSeed} 1-2 sentences.`,
+      matchAdd: `New match created: ${subject}. ${ctx}\n\nWrite ONE Swami pre-match comment. Reference format, course, or players if available. ${variationSeed} 1-2 sentences.`,
+      matchEdit: `Match was just edited: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Somebody negotiated something. ${variationSeed} 1-2 sentences.`,
+      matchDelete: `Match was deleted: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Evidence gone. ${variationSeed} 1 sentence.`,
+      scoreUpdate: `Scores updated for: ${subject}. ${ctx}\n\nWrite ONE Swami reaction to the score update. Call out momentum, lead changes, or who's struggling. ${variationSeed} 1-2 sentences.`,
+      userComment: `${subject} just posted in the trip feed. ${ctx}\n\nWrite ONE Swami reaction to someone posting in the group chat. Be specific to who posted. ${variationSeed} 1-2 sentences.`,
+      recapAdd: `Recap generated: "${subject}". ${ctx}\n\nWrite ONE Swami one-liner teasing the recap. ${variationSeed} 1 sentence.`,
+      momentAdd: `Match moment logged: "${subject}". ${ctx}\n\nWrite ONE Swami reaction to this moment being captured for posterity. 1 sentence.`,
+      teams: `Teams set: ${subject}. ${ctx}\n\nWrite ONE Swami reaction to the rivalry being established. ${variationSeed} 1-2 sentences.`
     };
 
     const aiPrompt = actionPrompts[action] || `Something happened on the golf trip: ${subject}. ${ctx} Write a brief Swami reaction. Max 2 sentences.`;
     let text = await callSwami(aiPrompt, 150);
     if (!text) text = getSwamiComment(action, subject); // fallback to templates
 
-    const useMedia = Math.random() < 0.45;
+    const useMedia = Math.random() < 0.65;  // 65% chance of meme
     let media = null;
     if (useMedia) {
       media = await getAiSwamiMedia(action, subject, text);
