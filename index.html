@@ -911,12 +911,16 @@
     }
 
     .score-entry-table input {
-      width: 42px;
-      min-width: 42px;
-      padding: 8px 4px;
+      width: 40px;
+      min-width: 40px;
+      padding: 6px 2px;
       margin-top: 0;
       text-align: center;
-      font-size: 14px;
+      font-size: 15px;
+      border-radius: 6px;
+      display: block;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .course-library-note {
@@ -928,9 +932,9 @@
 
   
 
-    .score-cell-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; }
+    .score-cell-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 3px 0; }
     .stroke-dots { display: flex; gap: 3px; justify-content: center; }
-    .stroke-dot { width: 6px; height: 6px; border-radius: 50%; background: #facc15; display: inline-block; }
+    .stroke-dot { width: 6px; height: 6px; border-radius: 50%; background: #facc15; display: inline-block; flex-shrink: 0; }
     .team-score-row td { font-weight: 800; background: rgba(19, 41, 77, 0.9); }
     .team-score-win { background: #16a34a !important; color: #ffffff; }
     .moments-list { margin-top: 12px; }
@@ -1890,7 +1894,7 @@
       });
   }
 
-  function populateCourseDropdown(selectedCourseName) {
+  function populateCourseDropdown(selectedCourseName, selectedTeeName) {
     const courseSelect = document.getElementById("matchCourse");
     if (!courseSelect) return;
 
@@ -1937,7 +1941,7 @@
       setOtherCourseVisibility(false);
     }
 
-    populateTeeDropdown();
+    populateTeeDropdown(selectedTeeName);
   }
 
 
@@ -2478,13 +2482,10 @@
       // Date
       document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
 
-      // Course — populate dropdown first, THEN set tees (order matters)
-      populateCourseDropdown(sourceMatch.course || "");
+      // Course + Tees — pass tee into course so the chain fires correctly once
+      populateCourseDropdown(sourceMatch.course || "", sourceMatch.tees || "");
       const courseOther = document.getElementById("matchCourseOther");
       if (courseOther) courseOther.value = sourceMatch.course || "";
-
-      // Tees — must come after course dropdown is populated
-      populateTeeDropdown(sourceMatch.tees || "");
       const teeOther = document.getElementById("matchTeesOther");
       if (teeOther) teeOther.value = sourceMatch.tees || "";
 
@@ -2522,12 +2523,7 @@
     } else {
       // ── Brand new match — set all defaults ────────────────────────────────
       document.getElementById("matchDate").value = getTodayDateString();
-      populateCourseDropdown("");
-      const courseOther = document.getElementById("matchCourseOther");
-      if (courseOther) courseOther.value = "";
-      populateTeeDropdown("");
-      const teeOther = document.getElementById("matchTeesOther");
-      if (teeOther) teeOther.value = "";
+      populateCourseDropdown("", "");
       const holesEl = document.getElementById("matchNumberOfHoles");
       const startEl = document.getElementById("matchStartingHole");
       if (holesEl) holesEl.value = "18";
@@ -3101,7 +3097,7 @@ Max 80 words total.`;
           if (Number(hole.hole) <= 9) outTotal += Number(displayed);
           else inTotal += Number(displayed);
         }
-        row += `<td><div class="score-cell-wrap">${isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : ""}<input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
+        row += `<td><div class="score-cell-wrap">${isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : ""}<input type="text" inputmode="numeric" pattern="[0-9]*" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
         if (Number(hole.hole) === 9) row += `<td>${outTotal || ""}</td>`;
       });
       row += `<td>${inTotal || ""}</td><td>${total || ""}</td></tr>`;
