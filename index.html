@@ -857,6 +857,12 @@
       margin-top: 6px;
     }
 
+    .pulse-meta {
+      font-size: 11px;
+      color: #bfdbfe;
+      margin-top: 4px;
+    }
+
 
     /* Secondary pages: independent scroll panels with full-bleed sticky headers */
     .secondary-screen {
@@ -1740,39 +1746,145 @@
     ]
   };
 
+  // Meme templates with stable public image URLs
+  const MEME_TEMPLATES = {
+    drake: {
+      url: "https://i.imgur.com/eHNkhCL.png",
+      zones: [
+        { x: 260, y: 20,  w: 220, h: 200, align: "left" },
+        { x: 260, y: 240, w: 220, h: 200, align: "left" }
+      ]
+    },
+    "distracted-boyfriend": {
+      url: "https://i.imgur.com/bXhGa1D.png",
+      zones: [
+        { x: 10,  y: 240, w: 180, h: 80,  align: "center" },
+        { x: 200, y: 10,  w: 150, h: 80,  align: "center" },
+        { x: 360, y: 200, w: 130, h: 80,  align: "center" }
+      ]
+    },
+    "this-is-fine": {
+      url: "https://i.imgur.com/c4jt321.png",
+      zones: [
+        { x: 10, y: 10,  w: 500, h: 60, align: "left" },
+        { x: 10, y: 230, w: 500, h: 60, align: "left" }
+      ]
+    },
+    "two-buttons": {
+      url: "https://i.imgur.com/zBkdNHn.png",
+      zones: [
+        { x: 10,  y: 10,  w: 160, h: 70, align: "center" },
+        { x: 185, y: 10,  w: 160, h: 70, align: "center" }
+      ]
+    },
+    "success-kid": {
+      url: "https://i.imgur.com/Y0G3Gbg.png",
+      zones: [
+        { x: 10, y: 10,  w: 500, h: 70, align: "center" },
+        { x: 10, y: 290, w: 500, h: 70, align: "center" }
+      ]
+    },
+    "change-my-mind": {
+      url: "https://i.imgur.com/e7fqfRn.png",
+      zones: [
+        { x: 130, y: 200, w: 240, h: 80, align: "center" }
+      ]
+    },
+    "panik-kalm": {
+      url: "https://i.imgur.com/yMbUCQH.png",
+      zones: [
+        { x: 10,  y: 10,  w: 220, h: 60, align: "center" },
+        { x: 250, y: 10,  w: 220, h: 60, align: "center" }
+      ]
+    },
+    "uno-reverse": {
+      url: "https://i.imgur.com/1g32Atk.png",
+      zones: [
+        { x: 10, y: 10,  w: 480, h: 70, align: "center" },
+        { x: 10, y: 290, w: 480, h: 70, align: "center" }
+      ]
+    }
+  };
+
+  async function buildMemeCanvas(templateKey, lines) {
+    return new Promise((resolve) => {
+      const tmpl = MEME_TEMPLATES[templateKey];
+      if (!tmpl) { resolve(null); return; }
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || 500;
+        canvas.height = img.naturalHeight || 500;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        // Impact-style meme text
+        const fontSize = Math.max(24, Math.floor(canvas.width / 14));
+        ctx.font = `900 ${fontSize}px Impact, Arial Black, sans-serif`;
+        ctx.textBaseline = "top";
+
+        tmpl.zones.forEach((zone, i) => {
+          const text = (lines[i] || "").toUpperCase();
+          if (!text) return;
+
+          // Measure and shrink if needed
+          let fSize = fontSize;
+          ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
+          while (ctx.measureText(text).width > zone.w - 8 && fSize > 12) {
+            fSize -= 2;
+            ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
+          }
+
+          const x = zone.align === "center" ? zone.x + zone.w / 2 : zone.x + 4;
+          const y = zone.y + 4;
+
+          // Stroke (outline)
+          ctx.strokeStyle = "black";
+          ctx.lineWidth = Math.max(3, fSize / 8);
+          ctx.lineJoin = "round";
+          ctx.textAlign = zone.align === "center" ? "center" : "left";
+          ctx.strokeText(text, x, y);
+
+          // Fill (white)
+          ctx.fillStyle = "white";
+          ctx.fillText(text, x, y);
+        });
+
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve(null);
+      img.src = tmpl.url;
+    });
+  }
+
   async function getAiSwamiMedia(action, subject, swamiText) {
-    // Ask Claude to pick a real meme template + write the text
-    const memePrompt = `You are picking a meme for a golf trip app moment. The context is: "${swamiText}"
+    const templateKeys = Object.keys(MEME_TEMPLATES).join(", ");
+    const memePrompt = `Pick a meme template and write text for this golf trip moment: "${swamiText}"
 
-Choose ONE meme template from this list that fits best, and write top/bottom text for it:
-- drake (Drake approving/disapproving)
-- doge (Shibe doge with floating text)
-- distracted-boyfriend (guy looking at other woman)
-- this-is-fine (dog in burning room)
-- galaxy-brain (expanding brain panels)
-- gru-plan (Gru's plan with 4 panels — top text for steps 1-3, bottom for step 4)
-- success (success kid fist pump)
-- change-my-mind (Steven Crowder at table with sign)
-- two-buttons (sweating over two buttons)
-- oprah-you-get (Oprah pointing — "you get X")
-- batman-slapping-robin (Batman slapping Robin mid-sentence)
-- panik-kalm (two panel panik/kalm reaction)
-- buff-doge-vs-cheems (buff doge vs small doge comparison)
-- left-exit-12 (car taking exit ramp)
-- uno-reverse (uno reverse card)
-
-Respond ONLY with valid JSON in this exact format, nothing else:
-{"template":"template-id","top":"top text here","bottom":"bottom text here"}
+Available templates: ${templateKeys}
 
 Rules:
-- Keep each text under 6 words
-- Make it feel like the meme was made BY someone on the golf trip, not about golf generically
-- Be specific to the context if possible
-- "top" and "bottom" are both required (can be empty string "" if the meme only needs one line)`;
+- Pick the template that fits the humor of the moment best
+- drake = approving something dumb, rejecting something sensible
+- distracted-boyfriend = ignoring one thing for another (3 labels needed)  
+- this-is-fine = denial/chaos
+- two-buttons = impossible choice
+- success-kid = small victory, huge satisfaction
+- change-my-mind = bold unprovable statement
+- panik-kalm = panic then calm (or reverse)
+- uno-reverse = turning something back on someone
+
+Text rules: max 5 words per line, golf trip specific, use player names if relevant
+Lines needed: drake=2, distracted-boyfriend=3, this-is-fine=2, two-buttons=2, success-kid=2, change-my-mind=1, panik-kalm=2, uno-reverse=2
+
+Respond ONLY with valid JSON, nothing else:
+{"template":"template-key","lines":["line1","line2"]}`;
 
     let memeData = null;
     try {
-      const raw = await callSwami(memePrompt, 120);
+      const raw = await callSwami(memePrompt, 100);
       if (raw) {
         const cleaned = raw.replace(/```json|```/g, "").trim();
         memeData = JSON.parse(cleaned);
@@ -1781,17 +1893,22 @@ Rules:
       console.warn("Meme JSON parse failed:", e);
     }
 
-    if (memeData && memeData.template && (memeData.top || memeData.bottom)) {
-      // Build memegen.link URL — spaces become _ and special chars are encoded
-      const encode = (t) => encodeURIComponent((t || "_").trim().replace(/\s+/g, "_").replace(/\?/g, "~q") || "_");
-      const top = encode(memeData.top);
-      const bottom = encode(memeData.bottom);
-      const imageUrl = `https://api.memegen.link/images/${memeData.template}/${top}/${bottom}.png?width=600`;
-      const caption = [memeData.top, memeData.bottom].filter(Boolean).join(" / ");
-      return { mediaType: "image", imageUrl, imageCaption: caption };
+    if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
+      try {
+        const dataUrl = await buildMemeCanvas(memeData.template, memeData.lines);
+        if (dataUrl) {
+          return {
+            mediaType: "image",
+            imageUrl: dataUrl,
+            imageCaption: memeData.lines.filter(Boolean).join(" / ")
+          };
+        }
+      } catch (e) {
+        console.warn("Canvas meme build failed:", e);
+      }
     }
 
-    // Fallback: SVG card if meme generation fails
+    // Fallback: SVG card
     const tone = ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action) ? "schedule"
       : ["playerAdd","playerEdit"].includes(action) ? "player"
       : ["teams"].includes(action) ? "team" : "chat";
@@ -3776,19 +3893,42 @@ ${closer}`;
     const latestMatch = [...matches].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))[0];
     const latestRecap = [...recaps].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
 
+    // Latest Swami Reaction — full post with image
+    const swamiHtml = latestSwami ? `
+      <div class="pulse-text">${renderPostText(latestSwami)}</div>
+      <div class="pulse-meta">${formatFeedTime(latestSwami.createdAt)}</div>
+      ${latestSwami.imageUrl ? `
+        <div class="feed-media" style="margin-top:10px;">
+          <img src="${escapeAttr(latestSwami.imageUrl)}" alt="Swami meme" style="width:100%;border-radius:10px;display:block;">
+          ${latestSwami.imageCaption ? `<div class="feed-media-caption">${escapeHtml(latestSwami.imageCaption)}</div>` : ""}
+        </div>` : ""}
+    ` : "";
+
+    const taggedHtml = latestTagged
+      ? `<div class="pulse-text">${escapeHtml(latestTagged.author)}: ${renderPostText(latestTagged)}</div><div class="pulse-meta">${formatFeedTime(latestTagged.createdAt)}</div>`
+      : "";
+
+    const matchHtml = latestMatch
+      ? `<div class="pulse-text">${escapeHtml(latestMatch.format || "Match")} at ${escapeHtml(latestMatch.course || "Course TBD")} • Round ${escapeHtml(latestMatch.round || "1")}</div>`
+      : "";
+
+    const recapHtml = latestRecap
+      ? `<div class="pulse-text">${escapeHtml(latestRecap.title || "Swami Recap")}</div><div class="pulse-meta">${formatFeedTime(latestRecap.createdAt)}</div>`
+      : "";
+
     pulse.innerHTML = `
-      ${renderPulseItem("Latest Swami Reaction", latestSwami ? renderPostText(latestSwami) : "", "Swami is quiet. This is either peace or he is gathering evidence.")}
-      ${renderPulseItem("Latest Tagged Chat", latestTagged ? `${escapeHtml(latestTagged.author)}: ${renderPostText(latestTagged)}` : "", assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here.")}
-      ${renderPulseItem("Latest Match Update", latestMatch ? `${escapeHtml(latestMatch.format || "Match")} at ${escapeHtml(latestMatch.course || "Course TBD")} • Round ${escapeHtml(latestMatch.round || "1")}` : "", "No match updates yet. The scoreboard is waiting for drama.")}
-      ${renderPulseItem("Latest Recap", latestRecap ? `${escapeHtml(latestRecap.title || "Swami Recap")}` : "", "No recaps generated yet. Swami needs a little more material.")}
+      ${renderPulseItem("Latest Swami Reaction", swamiHtml, "Swami is quiet. This is either peace or he is gathering evidence.")}
+      ${renderPulseItem("Latest Tagged Chat", taggedHtml, assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here.")}
+      ${renderPulseItem("Latest Match Update", matchHtml, "No match updates yet. The scoreboard is waiting for drama.")}
+      ${renderPulseItem("Latest Recap", recapHtml, "No recaps generated yet. Swami needs a little more material.")}
     `;
   }
 
-  function renderPulseItem(label, htmlText, emptyText) {
+  function renderPulseItem(label, htmlContent, emptyText) {
     return `
       <div class="pulse-item">
         <div class="pulse-label">${escapeHtml(label)}</div>
-        ${htmlText ? `<div class="pulse-text">${htmlText}</div>` : `<div class="pulse-empty">${escapeHtml(emptyText)}</div>`}
+        ${htmlContent ? htmlContent : `<div class="pulse-empty">${escapeHtml(emptyText)}</div>`}
       </div>
     `;
   }
@@ -4324,7 +4464,11 @@ ${closer}`;
       .slice(0, 5)
       .map(p => `${p.author}: "${p.text}"`)
       .join(" | ");
-    return `Trip: ${tripName}. Teams: ${teamA} (${teamAScore} pts) vs ${teamB} (${teamBScore} pts). Players: ${playerList || "none yet"}. Recent feed: ${recentFeed || "none"}.`;
+    // Collect all match moments across all matches
+    const allMoments = matches.flatMap(m =>
+      (m.moments || []).map(moment => `[${m.course || "match"} R${m.round || "1"}] ${moment.text}`)
+    ).slice(0, 8).join(" | ");
+    return `Trip: ${tripName}. Teams: ${teamA} (${teamAScore} pts) vs ${teamB} (${teamBScore} pts). Players: ${playerList || "none yet"}. Recent feed: ${recentFeed || "none"}.${allMoments ? " Match moments: " + allMoments : ""}`;
   }
 
   async function addSwamiPost(action, subject) {
