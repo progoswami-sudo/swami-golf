@@ -928,9 +928,9 @@
 
   
 
-    .score-cell-wrap { position: relative; min-height: 34px; display: flex; align-items: center; justify-content: center; }
-    .stroke-dots { position: absolute; top: 2px; right: 3px; display: flex; gap: 2px; }
-    .stroke-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; display: inline-block; }
+    .score-cell-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; }
+    .stroke-dots { display: flex; gap: 3px; justify-content: center; }
+    .stroke-dot { width: 6px; height: 6px; border-radius: 50%; background: #facc15; display: inline-block; }
     .team-score-row td { font-weight: 800; background: rgba(19, 41, 77, 0.9); }
     .team-score-win { background: #16a34a !important; color: #ffffff; }
     .moments-list { margin-top: 12px; }
@@ -1288,7 +1288,7 @@
 
   <div id="momentsScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="openEnterScore(activeScoreMatchId)" class="secondary">Back</button>
+      <button onclick="goBackToScoreEntry()" class="secondary">Back</button>
       <h2>Match Moments</h2>
     </div>
     <div class="card">
@@ -2496,7 +2496,8 @@
     handleMatchFormatChange();
 
     if (sourceMatch && sourceMatch.valueSettings) {
-      populateMatchValueFields(sourceMatch.valueSettings);
+      // Must run after handleMatchFormatChange which renders the fields
+      setTimeout(() => populateMatchValueFields(sourceMatch.valueSettings), 0);
     }
   }
 
@@ -3045,7 +3046,7 @@ Max 80 words total.`;
     playersForMatch.forEach(function(player) {
       const data = strokeData[player.id];
       const label = isNet
-        ? `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"} ${data.strokes ? "(" + data.strokes + ")" : "(-)"}`
+        ? `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"} ${data.strokes ? "(" + data.strokes + ")" : "(0)"}`
         : `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"}`;
 
       let row = `<tr><td>${label}</td>`;
@@ -3059,7 +3060,7 @@ Max 80 words total.`;
           if (Number(hole.hole) <= 9) outTotal += Number(displayed);
           else inTotal += Number(displayed);
         }
-        row += `<td><div class="score-cell-wrap">${renderStrokeDots(isNet ? data.strokeMap[hole.hole] : 0)}<input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
+        row += `<td><div class="score-cell-wrap">${isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : ""}<input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
         if (Number(hole.hole) === 9) row += `<td>${outTotal || ""}</td>`;
       });
       row += `<td>${inTotal || ""}</td><td>${total || ""}</td></tr>`;
@@ -4805,6 +4806,7 @@ ${closer}`;
     return String(text == null ? "" : text).replace(/"/g, "&quot;");
   }
 
+  window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
   window.runConfidenceMeter = runConfidenceMeter;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
