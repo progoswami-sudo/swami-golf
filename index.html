@@ -1324,7 +1324,7 @@
   </div>
 
   <div id="playerListScreen" class="hidden secondary-screen">
-    <h2>Players</h2>
+    <div class="sticky-page-header"><button onclick="openSettings()" class="secondary">Back</button><h2>Players</h2></div>
 
     <div class="card">
       <button onclick="openPlayer()">Add New Player</button>
@@ -1934,7 +1934,7 @@
       const option = document.createElement("option");
       option.value = tee && tee.teeName ? tee.teeName : teeId;
       option.setAttribute("data-tee-id", teeId);
-      option.textContent = tee && tee.teeName ? tee.teeName : teeId;
+      option.textContent = tee && tee.displayName ? tee.displayName : (tee && tee.teeName ? tee.teeName : teeId);
       teeSelect.appendChild(option);
     });
 
@@ -2367,6 +2367,8 @@
     document.getElementById("matchCourseOther").value = "";
     populateTeeDropdown("");
     document.getElementById("matchTeesOther").value = "";
+    if (document.getElementById("matchNumberOfHoles")) document.getElementById("matchNumberOfHoles").value = "18";
+    if (document.getElementById("matchStartingHole")) document.getElementById("matchStartingHole").value = "1";
     document.getElementById("matchNumberOfHoles").value = "18";
     document.getElementById("matchStartingHole").value = "1";
     setMatchRoundValue("1");
@@ -2390,6 +2392,8 @@
       document.getElementById("matchCourseOther").value = sourceMatch.course || "";
       populateTeeDropdown(sourceMatch.tees || "");
       document.getElementById("matchTeesOther").value = sourceMatch.tees || "";
+      if (document.getElementById("matchNumberOfHoles")) document.getElementById("matchNumberOfHoles").value = String(sourceMatch.numberOfHoles || "18");
+      if (document.getElementById("matchStartingHole")) document.getElementById("matchStartingHole").value = String(sourceMatch.startingHole || "1");
       document.getElementById("matchNumberOfHoles").value = String(sourceMatch.numberOfHoles || "18");
       document.getElementById("matchStartingHole").value = String(sourceMatch.startingHole || "1");
       setMatchRoundValue(sourceMatch.round || "1");
@@ -2551,8 +2555,8 @@
     const matchDate = document.getElementById("matchDate").value;
     const course = getSelectedCourseName();
     const tees = getSelectedTeeName();
-    const numberOfHoles = String(document.getElementById("matchNumberOfHoles").value || "18");
-    const startingHole = String(document.getElementById("matchStartingHole").value || "1");
+    const numberOfHoles = String(document.getElementById("matchNumberOfHoles") ? document.getElementById("matchNumberOfHoles").value : "18");
+    const startingHole = String(document.getElementById("matchStartingHole") ? document.getElementById("matchStartingHole").value : "1");
     const round = String(document.getElementById("matchRound").value || "1");
     const format = document.getElementById("matchFormat").value;
     const scoringType = document.getElementById("matchScoringType").value;
@@ -2702,131 +2706,114 @@
   }
 
 
+  function getTeeForMatch(match) {
+    const course = courseLibrary[normalizeCourseKey(match.course || "")];
+    if (!course || !course.tees) return null;
+    return course.tees[normalizeCourseKey(match.tees || "")] || null;
+  }
+
+  function calculateCourseHandicap(handicapIndex, tee) {
+    const index = Number(handicapIndex);
+    if (!tee || tee.slope == null || tee.rating == null || isNaN(index)) return null;
+    const par = Number(tee.totalPar || 72);
+    return Math.round(index * (Number(tee.slope) / 113) + (Number(tee.rating) - par));
+  }
+
+
+
   function renderScoreEntry() {
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     const info = document.getElementById("scoreEntryMatchInfo");
     const wrap = document.getElementById("scoreEntryTableWrap");
-
     if (!match || !info || !wrap) return;
 
+    const tee = getTeeForMatch(match);
+    const holes = getScorecardForMatch(match).holes;
     const playersForMatch = getPlayersForMatch(match);
-    const scorecard = getScorecardForMatch(match);
-    const holes = scorecard.holes;
     const existingScores = match.holeScores || {};
+    const courseHandicaps = {};
+    playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee); });
+    const validCh = playersForMatch.map(function(p){ return courseHandicaps[p.id]; }).filter(function(v){ return v !== null; });
+    const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
 
-    info.innerHTML = `
-      <strong>${escapeHtml(match.format || "Match")}</strong><br>
-      ${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>
-      ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")} • ${escapeHtml(match.numberOfHoles || "18")} holes
-    `;
+    const outHoles = holes.filter(function(h){ return Number(h.hole) <= 9; });
+    const inHoles = holes.filter(function(h){ return Number(h.hole) >= 10; });
+    const sum = function(arr, field) { return arr.reduce(function(total, h) { return total + (Number(h[field]) || 0); }, 0); };
 
-    const headerCells = holes.map(function(h) { return `<th>${escapeHtml(h.hole)}</th>`; }).join("");
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}`;
+
+    const holeHeaders = holes.map(function(h) { return `<th>${escapeHtml(h.hole)}</th>`; }).join("");
     const parCells = holes.map(function(h) { return `<td>${escapeHtml(h.par)}</td>`; }).join("");
     const hcpCells = holes.map(function(h) { return `<td>${escapeHtml(h.hcp)}</td>`; }).join("");
+    const yardCells = holes.map(function(h) { return `<td>${escapeHtml(h.yardage)}</td>`; }).join("");
+
+    const totals = function(type, player) {
+      if (type === "par") return `<td>${sum(outHoles,"par") || ""}</td><td>${sum(inHoles,"par") || ""}</td><td>${sum(holes,"par") || ""}</td>`;
+      if (type === "yardage") return `<td>${sum(outHoles,"yardage") || ""}</td><td>${sum(inHoles,"yardage") || ""}</td><td>${sum(holes,"yardage") || ""}</td>`;
+      const ps = existingScores[player.id] || {};
+      const ssum = function(arr) { return arr.reduce(function(t,h){ return t + (Number(ps[h.hole]) || 0); }, 0); };
+      return `<td>${ssum(outHoles) || ""}</td><td>${ssum(inHoles) || ""}</td><td>${ssum(holes) || ""}</td>`;
+    };
 
     const playerRows = playersForMatch.map(function(player) {
+      const ch = courseHandicaps[player.id];
+      const strokes = ch === null || lowCh === null ? "" : (ch - lowCh);
+      const strokeDisplay = strokes === 0 ? "-" : strokes;
+      const label = `${escapeHtml(player.name)} ${ch === null ? "(CH N/A)" : "(CH " + ch + ")"} ${strokeDisplay === "" ? "" : "(Strokes " + strokeDisplay + ")"}`;
+      const ps = existingScores[player.id] || {};
       const cells = holes.map(function(hole) {
-        const playerScores = existingScores[player.id] || {};
-        const value = playerScores[hole.hole] || "";
+        const value = ps[hole.hole] || "";
         return `<td><input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(value)}"></td>`;
       }).join("");
-
-      return `<tr><td>${escapeHtml(player.name)}</td>${cells}</tr>`;
+      return `<tr><td>${label}</td>${cells}${totals("score", player)}</tr>`;
     }).join("");
 
-    wrap.innerHTML = `
-      <div class="score-entry-wrap">
-        <table class="score-entry-table">
-          <tr><th>HOLE</th>${headerCells}</tr>
-          <tr><td>PAR</td>${parCells}</tr>
-          <tr><td>HCP</td>${hcpCells}</tr>
-          ${playerRows}
-        </table>
-      </div>
-      <div class="course-library-note">
-        Scorecard data uses stored course info when available. If no course match is found, the app uses blank/default PAR and HCP values.
-      </div>
-    `;
+    wrap.innerHTML = `<div class="score-entry-wrap"><table class="score-entry-table"><tr><th>HOLE</th>${holeHeaders}<th>OUT</th><th>IN</th><th>TOTAL</th></tr><tr><td>PAR</td>${parCells}${totals("par")}</tr><tr><td>HCP</td>${hcpCells}<td></td><td></td><td></td></tr><tr><td>YDS</td>${yardCells}${totals("yardage")}</tr>${playerRows}</table></div>`;
   }
 
   function getPlayersForMatch(match) {
     const ids = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
-    return ids.map(function(id) {
-      return players.find(function(player) { return player.id === id; });
-    }).filter(Boolean);
+    return ids.map(function(id) { return players.find(function(player) { return player.id === id; }); }).filter(Boolean);
   }
 
   function getScorecardForMatch(match) {
-    const courseKey = normalizeCourseKey(match.course || "");
-    const teeKey = normalizeCourseKey(match.tees || "");
-    const course = courseLibrary[courseKey];
-    const tee = course && course.tees ? course.tees[teeKey] : null;
+    const tee = getTeeForMatch(match);
     let holes = tee && tee.holes ? tee.holes : createDefaultHoles();
-
-    holes = getSelectedHoles(holes, Number(match.startingHole || 1), Number(match.numberOfHoles || 18));
-    return { holes: holes };
-  }
-
-  function normalizeCourseKey(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+    return { holes: getSelectedHoles(holes, Number(match.startingHole || 1), Number(match.numberOfHoles || 18)) };
   }
 
   function createDefaultHoles() {
-    return Array.from({ length: 18 }, function(_, index) {
-      return { hole: index + 1, par: "", hcp: "" };
-    });
+    return Array.from({ length: 18 }, function(_, index) { return { hole: index + 1, par: "", hcp: "", yardage: "" }; });
   }
 
   function getSelectedHoles(holes, startingHole, numberOfHoles) {
     const holeMap = {};
-    holes.forEach(function(hole) {
-      holeMap[Number(hole.hole)] = hole;
-    });
-
+    holes.forEach(function(hole) { holeMap[Number(hole.hole)] = hole; });
     const selected = [];
     let current = startingHole || 1;
-
     for (let i = 0; i < numberOfHoles; i++) {
-      selected.push(holeMap[current] || { hole: current, par: "", hcp: "" });
+      selected.push(holeMap[current] || { hole: current, par: "", hcp: "", yardage: "" });
       current++;
       if (current > 18) current = 1;
     }
-
     return selected;
   }
 
   async function saveScoreEntry() {
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
-
-    if (!match) {
-      alert("Match not found.");
-      return;
-    }
-
+    if (!match) return alert("Match not found.");
     const playersForMatch = getPlayersForMatch(match);
-    const scorecard = getScorecardForMatch(match);
+    const holes = getScorecardForMatch(match).holes;
     const holeScores = {};
-
     playersForMatch.forEach(function(player) {
       holeScores[player.id] = {};
-      scorecard.holes.forEach(function(hole) {
+      holes.forEach(function(hole) {
         const input = document.getElementById(`score-${player.id}-${hole.hole}`);
         holeScores[player.id][hole.hole] = input ? input.value.trim() : "";
       });
     });
-
-    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
-      holeScores: holeScores,
-      updatedAt: new Date().toISOString()
-    });
-
+    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), { holeScores: holeScores, updatedAt: new Date().toISOString() });
     await addSwamiPost("scoreUpdate", `${match.format || "Match"} at ${match.course || "the course"}`);
-    alert("Scores saved.");
     openMatchHome();
   }
 
