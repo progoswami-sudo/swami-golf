@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "libraryName": "Swami Golf Pinehurst Course Library",
   "createdFor": "Swami Golf",
   "createdAt": "2026-05-05",
@@ -7,7 +7,8 @@
   "dataNotes": [
     "Most hole-by-hole yardage/par/HCP data was transcribed from official Pinehurst course pages.",
     "The Cradle hole-by-hole yardage is from 18Birdies; Pinehurst official page confirms total yardage/par/opening year.",
-    "No. 11 is included as a future-course placeholder."
+    "No. 11 is included as a future-course placeholder.",
+    "Version 1.1 adds tee-level rating, slope, displayName, and confirms hole yardages for scorecard use."
   ],
   "courses": {
     "pinehurst-no-1": {
@@ -135,7 +136,11 @@
               "par": 5,
               "hcp": 18
             }
-          ]
+          ],
+          "rating": 68.4,
+          "slope": 118,
+          "yardage": 6089,
+          "displayName": "Blue (Rating 68.4 / Slope 118 / 6089 yds)"
         },
         "white": {
           "teeName": "White",
@@ -251,7 +256,11 @@
               "par": 5,
               "hcp": 18
             }
-          ]
+          ],
+          "rating": 67.4,
+          "slope": 113,
+          "yardage": 5806,
+          "displayName": "White (Rating 67.4 / Slope 113 / 5806 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -367,7 +376,11 @@
               "par": 5,
               "hcp": 18
             }
-          ]
+          ],
+          "rating": 65.5,
+          "slope": 109,
+          "yardage": 5466,
+          "displayName": "Green (Rating 65.5 / Slope 109 / 5466 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -483,7 +496,11 @@
               "par": 5,
               "hcp": 13
             }
-          ]
+          ],
+          "rating": 64.1,
+          "slope": 107,
+          "yardage": 5167,
+          "displayName": "Red (Rating 64.1 / Slope 107 / 5167 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -599,7 +616,11 @@
               "par": 5,
               "hcp": 13
             }
-          ]
+          ],
+          "rating": 61.0,
+          "slope": 95,
+          "yardage": 4197,
+          "displayName": "Yellow (Rating 61.0 / Slope 95 / 4197 yds)"
         }
       }
     },
@@ -728,7 +749,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 76.5,
+          "slope": 138,
+          "yardage": 7588,
+          "displayName": "US Open (Rating 76.5 / Slope 138 / 7588 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -844,7 +869,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 73.7,
+          "slope": 133,
+          "yardage": 6961,
+          "displayName": "Blue (Rating 73.7 / Slope 133 / 6961 yds)"
         },
         "ross": {
           "teeName": "Ross",
@@ -960,7 +989,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 73.6,
+          "slope": 141,
+          "yardage": 6618,
+          "displayName": "Ross (Rating 73.6 / Slope 141 / 6627 yds)"
         },
         "white": {
           "teeName": "White",
@@ -1076,7 +1109,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 72.0,
+          "slope": 139,
+          "yardage": 6307,
+          "displayName": "White (Rating 72.0 / Slope 139 / 6307 yds)"
         },
         "tufts": {
           "teeName": "Tufts",
@@ -1192,7 +1229,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 70.3,
+          "slope": 136,
+          "yardage": 5979,
+          "displayName": "Tufts (Rating 70.3 / Slope 136 / 5949 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -1308,7 +1349,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 68.2,
+          "slope": 123,
+          "yardage": 5801,
+          "displayName": "Green (Rating 68.2 / Slope 123 / 5771 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -1424,7 +1469,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 65.2,
+          "slope": 117,
+          "yardage": 5257,
+          "displayName": "Red (Rating 65.2 / Slope 117 / 5302 yds)"
         }
       }
     },
@@ -1553,7 +1602,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 64.9,
+          "slope": 112,
+          "yardage": 5155,
+          "displayName": "White (Rating 64.9 / Slope 112 / 5155 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -1669,7 +1722,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 63.7,
+          "slope": 105,
+          "yardage": 4823,
+          "displayName": "Green (Rating 63.7 / Slope 105 / 4823 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -1785,7 +1842,11 @@
               "par": 4,
               "hcp": 16
             }
-          ]
+          ],
+          "rating": 62.0,
+          "slope": 100,
+          "yardage": 4347,
+          "displayName": "Red (Rating 62.0 / Slope 100 / 4347 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -1901,7 +1962,11 @@
               "par": 4,
               "hcp": 16
             }
-          ]
+          ],
+          "rating": 59.9,
+          "slope": 93,
+          "yardage": 3642,
+          "displayName": "Yellow (Rating 59.9 / Slope 93 / 3642 yds)"
         }
       }
     },
@@ -2030,7 +2095,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 74.9,
+          "slope": 138,
+          "yardage": 7227,
+          "displayName": "Orange (Rating 74.9 / Slope 138 / 7227 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -2146,7 +2215,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 73.7,
+          "slope": 135,
+          "yardage": 6961,
+          "displayName": "Blue (Rating 73.7 / Slope 135 / 6961 yds)"
         },
         "putter-boy": {
           "teeName": "Putter Boy",
@@ -2262,7 +2335,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 72.0,
+          "slope": 133,
+          "yardage": 6658,
+          "displayName": "Putter Boy (Rating 72.0 / Slope 133 / 6658 yds)"
         },
         "white": {
           "teeName": "White",
@@ -2378,7 +2455,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 70.8,
+          "slope": 131,
+          "yardage": 6428,
+          "displayName": "White (Rating 70.8 / Slope 131 / 6428 yds)"
         },
         "lad": {
           "teeName": "Lad",
@@ -2494,7 +2575,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 69.5,
+          "slope": 126,
+          "yardage": 6129,
+          "displayName": "Lad (Rating 69.5 / Slope 126 / 6099 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -2610,7 +2695,11 @@
               "par": 4,
               "hcp": 6
             }
-          ]
+          ],
+          "rating": 68.5,
+          "slope": 123,
+          "yardage": 5864,
+          "displayName": "Green (Rating 68.5 / Slope 123 / 5864 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -2726,7 +2815,11 @@
               "par": 4,
               "hcp": 6
             }
-          ]
+          ],
+          "rating": 65.4,
+          "slope": 116,
+          "yardage": 5260,
+          "displayName": "Red (Rating 65.4 / Slope 116 / 5260 yds)"
         }
       }
     },
@@ -2855,7 +2948,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 73.1,
+          "slope": 135,
+          "yardage": 6828,
+          "displayName": "Gold (Rating 73.1 / Slope 135 / 6823 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -2971,7 +3068,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 72.0,
+          "slope": 132,
+          "yardage": 6617,
+          "displayName": "Blue (Rating 72.0 / Slope 132 / 6617 yds)"
         },
         "white": {
           "teeName": "White",
@@ -3087,7 +3188,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 69.8,
+          "slope": 126,
+          "yardage": 6174,
+          "displayName": "White (Rating 69.8 / Slope 126 / 6174 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -3203,7 +3308,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 67.4,
+          "slope": 119,
+          "yardage": 5685,
+          "displayName": "Green (Rating 67.4 / Slope 119 / 5685 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -3319,7 +3428,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 64.9,
+          "slope": 112,
+          "yardage": 5223,
+          "displayName": "Red (Rating 64.9 / Slope 112 / 5223 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -3435,7 +3548,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 61.9,
+          "slope": 105,
+          "yardage": 4357,
+          "displayName": "Yellow (Rating 61.9 / Slope 105 / 4357 yds)"
         }
       }
     },
@@ -3564,7 +3681,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 74.7,
+          "slope": 139,
+          "yardage": 7053,
+          "displayName": "Gold (Rating 74.7 / Slope 139 / 7053 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -3680,7 +3801,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 72.6,
+          "slope": 134,
+          "yardage": 6634,
+          "displayName": "Blue (Rating 72.6 / Slope 134 / 6609 yds)"
         },
         "white": {
           "teeName": "White",
@@ -3796,7 +3921,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 70.7,
+          "slope": 125,
+          "yardage": 6180,
+          "displayName": "White (Rating 70.7 / Slope 125 / 6180 yds)"
         },
         "fazio": {
           "teeName": "Fazio",
@@ -3912,7 +4041,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 68.3,
+          "slope": 120,
+          "yardage": 5683,
+          "displayName": "Fazio (Rating 68.3 / Slope 120 / 5907 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -4028,7 +4161,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 68.3,
+          "slope": 120,
+          "yardage": 5683,
+          "displayName": "Green (Rating 68.3 / Slope 120 / 5683 yds)"
         },
         "cardinal": {
           "teeName": "Cardinal",
@@ -4144,7 +4281,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 64.3,
+          "slope": 112,
+          "yardage": 4992,
+          "displayName": "Cardinal (Rating 64.3 / Slope 112 / 5355 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -4260,7 +4401,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 64.3,
+          "slope": 112,
+          "yardage": 4992,
+          "displayName": "Red (Rating 64.3 / Slope 112 / 4992 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -4376,7 +4521,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 62.2,
+          "slope": 105,
+          "yardage": 4200,
+          "displayName": "Yellow (Rating 62.2 / Slope 105 / 4200 yds)"
         }
       }
     },
@@ -4505,7 +4654,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 75.5,
+          "slope": 143,
+          "yardage": 7216,
+          "displayName": "Gold (Rating 75.5 / Slope 143 / 7216 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -4621,7 +4774,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 73.5,
+          "slope": 138,
+          "yardage": 6824,
+          "displayName": "Blue (Rating 73.5 / Slope 138 / 6824 yds)"
         },
         "jones": {
           "teeName": "Jones",
@@ -4737,7 +4894,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 71.6,
+          "slope": 130,
+          "yardage": 6347,
+          "displayName": "Jones (Rating 71.6 / Slope 130 / 6585 yds)"
         },
         "white": {
           "teeName": "White",
@@ -4853,7 +5014,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 71.6,
+          "slope": 130,
+          "yardage": 6347,
+          "displayName": "White (Rating 71.6 / Slope 130 / 6347 yds)"
         },
         "fairwoods": {
           "teeName": "Fairwoods",
@@ -4969,7 +5134,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 71.6,
+          "slope": 130,
+          "yardage": 6347,
+          "displayName": "Fairwoods (Rating 71.6 / Slope 130 / 6103 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -5085,7 +5254,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 68.7,
+          "slope": 121,
+          "yardage": 5709,
+          "displayName": "Green (Rating 68.7 / Slope 121 / 5709 yds)"
         },
         "green-red": {
           "teeName": "Green/Red",
@@ -5201,7 +5374,11 @@
               "par": 5,
               "hcp": 12
             }
-          ]
+          ],
+          "rating": 71.2,
+          "slope": 127,
+          "yardage": 5183,
+          "displayName": "Green/Red (Rating 71.2 / Slope 127 / 5373 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -5317,7 +5494,11 @@
               "par": 5,
               "hcp": 6
             }
-          ]
+          ],
+          "rating": 71.2,
+          "slope": 127,
+          "yardage": 5183,
+          "displayName": "Red (Rating 71.2 / Slope 127 / 5183 yds)"
         },
         "fairlady": {
           "teeName": "Fairlady",
@@ -5433,7 +5614,11 @@
               "par": 5,
               "hcp": 6
             }
-          ]
+          ],
+          "rating": 71.2,
+          "slope": 127,
+          "yardage": 5183,
+          "displayName": "Fairlady (Rating 71.2 / Slope 127 / 4453 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -5549,7 +5734,11 @@
               "par": 5,
               "hcp": 6
             }
-          ]
+          ],
+          "rating": 60.6,
+          "slope": 101,
+          "yardage": 3833,
+          "displayName": "Yellow (Rating 60.6 / Slope 101 / 3833 yds)"
         }
       }
     },
@@ -5678,7 +5867,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 74.1,
+          "slope": 138,
+          "yardage": 7099,
+          "displayName": "Gold (Rating 74.1 / Slope 138 / 7099 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -5794,7 +5987,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 72.3,
+          "slope": 133,
+          "yardage": 6694,
+          "displayName": "Blue (Rating 72.3 / Slope 133 / 6694 yds)"
         },
         "white": {
           "teeName": "White",
@@ -5910,7 +6107,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 70.0,
+          "slope": 131,
+          "yardage": 6311,
+          "displayName": "White (Rating 70.0 / Slope 131 / 6311 yds)"
         },
         "centennial": {
           "teeName": "Centennial",
@@ -6026,7 +6227,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 68.0,
+          "slope": 121,
+          "yardage": 5805,
+          "displayName": "Centennial (Rating 68.0 / Slope 121 / 6012 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -6142,7 +6347,11 @@
               "par": 4,
               "hcp": 2
             }
-          ]
+          ],
+          "rating": 68.0,
+          "slope": 121,
+          "yardage": 5805,
+          "displayName": "Green (Rating 68.0 / Slope 121 / 5805 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -6258,7 +6467,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 70.4,
+          "slope": 124,
+          "yardage": 5153,
+          "displayName": "Red (Rating 70.4 / Slope 124 / 5153 yds)"
         }
       }
     },
@@ -6387,7 +6600,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 74.2,
+          "slope": 135,
+          "yardage": 7106,
+          "displayName": "Gold (Rating 74.2 / Slope 135 / 7106 yds)"
         },
         "blue": {
           "teeName": "Blue",
@@ -6503,7 +6720,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 74.1,
+          "slope": 141,
+          "yardage": 7020,
+          "displayName": "Blue (Rating 74.1 / Slope 141 / 6607 yds)"
         },
         "white": {
           "teeName": "White",
@@ -6619,7 +6840,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 70.5,
+          "slope": 132,
+          "yardage": 6115,
+          "displayName": "White (Rating 70.5 / Slope 132 / 6147 yds)"
         },
         "national": {
           "teeName": "National",
@@ -6735,7 +6960,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 70.5,
+          "slope": 132,
+          "yardage": 6115,
+          "displayName": "National (Rating 70.5 / Slope 132 / 5831 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -6851,7 +7080,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 68.2,
+          "slope": 129,
+          "yardage": 5785,
+          "displayName": "Green (Rating 68.2 / Slope 129 / 5538 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -6967,7 +7200,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": 64.3,
+          "slope": 108,
+          "yardage": 4911,
+          "displayName": "Red (Rating 64.3 / Slope 108 / 4879 yds)"
         },
         "golden-bear": {
           "teeName": "Golden Bear",
@@ -7083,7 +7320,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": null,
+          "slope": null,
+          "yardage": 4302,
+          "displayName": "Golden Bear (Rating N/A / Slope N/A / 4302 yds)"
         },
         "yellow": {
           "teeName": "Yellow",
@@ -7199,7 +7440,11 @@
               "par": 4,
               "hcp": 14
             }
-          ]
+          ],
+          "rating": null,
+          "slope": null,
+          "yardage": 3767,
+          "displayName": "Yellow (Rating N/A / Slope N/A / 3767 yds)"
         }
       }
     },
@@ -7328,7 +7573,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 74.1,
+          "slope": 142,
+          "yardage": 7020,
+          "displayName": "Blue (Rating 74.1 / Slope 142 / 7020 yds)"
         },
         "blue-white": {
           "teeName": "Blue/White",
@@ -7444,7 +7693,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 72.7,
+          "slope": 139,
+          "yardage": 6709,
+          "displayName": "Blue/White (Rating 72.7 / Slope 139 / 6709 yds)"
         },
         "white": {
           "teeName": "White",
@@ -7560,7 +7813,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 71.5,
+          "slope": 137,
+          "yardage": 6439,
+          "displayName": "White (Rating 71.5 / Slope 137 / 6439 yds)"
         },
         "white-green": {
           "teeName": "White/Green",
@@ -7676,7 +7933,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 69.9,
+          "slope": 134,
+          "yardage": 6111,
+          "displayName": "White/Green (Rating 69.9 / Slope 134 / 6111 yds)"
         },
         "green": {
           "teeName": "Green",
@@ -7792,7 +8053,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 68.2,
+          "slope": 129,
+          "yardage": 5785,
+          "displayName": "Green (Rating 68.2 / Slope 129 / 5785 yds)"
         },
         "green-red": {
           "teeName": "Green/Red",
@@ -7908,7 +8173,11 @@
               "par": 4,
               "hcp": 8
             }
-          ]
+          ],
+          "rating": 65.6,
+          "slope": 122,
+          "yardage": 5233,
+          "displayName": "Green/Red (Rating 65.6 / Slope 122 / 5233 yds)"
         },
         "green-red-w": {
           "teeName": "Green/Red (W)",
@@ -8024,7 +8293,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": null,
+          "slope": null,
+          "yardage": 5233,
+          "displayName": "Green/Red (W) (Rating N/A / Slope N/A / 5233 yds)"
         },
         "red": {
           "teeName": "Red",
@@ -8140,7 +8413,11 @@
               "par": 4,
               "hcp": 4
             }
-          ]
+          ],
+          "rating": 64.3,
+          "slope": 117,
+          "yardage": 4985,
+          "displayName": "Red (Rating 64.3 / Slope 117 / 4985 yds)"
         }
       }
     },
@@ -8215,7 +8492,11 @@
               "par": 3,
               "hcp": 0
             }
-          ]
+          ],
+          "rating": null,
+          "slope": null,
+          "yardage": 789,
+          "displayName": "Tee (Rating N/A / Slope N/A / 789 yds)"
         }
       }
     },
@@ -8231,5 +8512,6 @@
       "notes": "Future course. Pinehurst listed opening year 2027 with par/yardage N/A at time of library creation.",
       "tees": {}
     }
-  }
+  },
+  "updatedAt": "2026-05-05"
 }
