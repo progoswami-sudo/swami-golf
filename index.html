@@ -4586,35 +4586,44 @@ ${closer}`;
     const ctx = buildTripContext();
     const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
 
+    const hasMeme = Math.random() < 0.65;
+    const maxWords = hasMeme ? "1 sentence max — punchy, no padding." : "1-2 sentences max.";
+
     const actionPrompts = {
-      playerAdd: `New player just joined the golf trip: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Be specific — use their handicap, team, or nickname if available. ${variationSeed} 1-2 sentences max. No emojis.`,
-      playerEdit: `A player just edited their own profile: ${subject}. ${ctx}\n\nWrite ONE Swami reaction implying this is suspicious pre-trip gamesmanship. ${variationSeed} 1-2 sentences max.`,
-      itineraryAdd: `New trip event added: "${subject}". ${ctx}\n\nWrite ONE Swami reaction about this addition to the schedule. ${variationSeed} 1-2 sentences. Golf trip chaos energy.`,
-      itineraryEdit: `Trip event was edited: "${subject}". ${ctx}\n\nWrite ONE Swami reaction. Plans changed — why? Who's responsible? ${variationSeed} 1-2 sentences.`,
-      itineraryDelete: `Trip event deleted: "${subject}". ${ctx}\n\nWrite ONE Swami reaction. Something got cut. Free time or disaster? ${variationSeed} 1-2 sentences.`,
-      matchAdd: `New match created: ${subject}. ${ctx}\n\nWrite ONE Swami pre-match comment. Reference format, course, or players if available. ${variationSeed} 1-2 sentences.`,
-      matchEdit: `Match was just edited: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Somebody negotiated something. ${variationSeed} 1-2 sentences.`,
-      matchDelete: `Match was deleted: ${subject}. ${ctx}\n\nWrite ONE Swami reaction. Evidence gone. ${variationSeed} 1 sentence.`,
-      scoreUpdate: `Scores updated for: ${subject}. ${ctx}\n\nWrite ONE Swami reaction to the score update. Call out momentum, lead changes, or who's struggling. ${variationSeed} 1-2 sentences.`,
-      userComment: `${subject} just posted in the trip feed. ${ctx}\n\nWrite ONE Swami reaction to someone posting in the group chat. Be specific to who posted. ${variationSeed} 1-2 sentences.`,
-      recapAdd: `Recap generated: "${subject}". ${ctx}\n\nWrite ONE Swami one-liner teasing the recap. ${variationSeed} 1 sentence.`,
-      momentAdd: `Match moment logged: "${subject}". ${ctx}\n\nWrite ONE Swami reaction to this moment being captured for posterity. 1 sentence.`,
-      teams: `Teams set: ${subject}. ${ctx}\n\nWrite ONE Swami reaction to the rivalry being established. ${variationSeed} 1-2 sentences.`
+      playerAdd:    `New player joined: ${subject}. ${ctx}\n\nSwami reaction. Use their handicap, nickname, or team if available. ${variationSeed} ${maxWords}`,
+      playerEdit:   `Player edited their profile: ${subject}. ${ctx}\n\nSwami reaction implying suspicious pre-trip gamesmanship. ${variationSeed} ${maxWords}`,
+      itineraryAdd: `New trip event: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      itineraryEdit:`Trip event edited: "${subject}". ${ctx}\n\nSwami reaction about plans changing. ${variationSeed} ${maxWords}`,
+      itineraryDelete:`Trip event deleted: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      matchAdd:     `New match created: ${subject}. ${ctx}\n\nSwami pre-match comment. Reference format, course, or players. ${variationSeed} ${maxWords}`,
+      matchEdit:    `Match edited: ${subject}. ${ctx}\n\nSwami reaction implying negotiation happened. ${variationSeed} ${maxWords}`,
+      matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      scoreUpdate:  `Scores updated: ${subject}. ${ctx}\n\nSwami reaction — momentum, lead changes, who's struggling. ${variationSeed} ${maxWords}`,
+      userComment:  `${subject} posted in the trip feed. ${ctx}\n\nSwami reaction to the post. ${variationSeed} ${maxWords}`,
+      recapAdd:     `Recap generated: "${subject}". ${ctx}\n\nSwami one-liner teasing the recap. 1 sentence only.`,
+      momentAdd:    `Match moment logged: "${subject}". ${ctx}\n\nSwami reaction. 1 sentence only.`,
+      teams:        `Teams set: ${subject}. ${ctx}\n\nSwami reaction to the rivalry. ${variationSeed} ${maxWords}`
     };
 
-    const aiPrompt = actionPrompts[action] || `Something happened on the golf trip: ${subject}. ${ctx} Write a brief Swami reaction. Max 2 sentences.`;
-    let text = await callSwami(aiPrompt, 150);
-    if (!text) text = getSwamiComment(action, subject); // fallback to templates
+    const aiPrompt = actionPrompts[action] || `Golf trip update: ${subject}. ${ctx} Swami reaction. ${maxWords}`;
+    let text = await callSwami(aiPrompt, hasMeme ? 80 : 150);
+    if (!text) text = getSwamiComment(action, subject);
 
-    const useMedia = true; // TESTING: force meme every time — change back to Math.random() < 0.65 after confirming
-    console.log("Swami post — useMedia:", useMedia, "text:", text.slice(0, 60));
+    // Determine which players to tag based on who is mentioned
+    const mentionedPlayerIds = players
+      .filter(p => {
+        const combined = (text + " " + subject).toLowerCase();
+        return (p.name && combined.includes(p.name.toLowerCase())) ||
+               (p.nickname && combined.includes(p.nickname.toLowerCase()));
+      })
+      .map(p => p.id);
+
     let media = null;
-    if (useMedia) {
+    if (hasMeme) {
       media = await getAiSwamiMedia(action, subject, text);
-      console.log("Swami media result:", media ? (media.imageUrl || "").slice(0, 50) : "null");
     }
 
-    await addFeedPost("Swami Says", text, "admin", media);
+    await addFeedPost("Swami Says", text, "admin", media, mentionedPlayerIds);
   }
 
   function getSwamiComment(action, subject) {
