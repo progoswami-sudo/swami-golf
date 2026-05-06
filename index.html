@@ -4598,10 +4598,12 @@ ${closer}`;
     let text = await callSwami(aiPrompt, 150);
     if (!text) text = getSwamiComment(action, subject); // fallback to templates
 
-    const useMedia = Math.random() < 0.65;  // 65% chance of meme
+    const useMedia = true; // TESTING: force meme every time — change back to Math.random() < 0.65 after confirming
+    console.log("Swami post — useMedia:", useMedia, "text:", text.slice(0, 60));
     let media = null;
     if (useMedia) {
       media = await getAiSwamiMedia(action, subject, text);
+      console.log("Swami media result:", media ? (media.imageUrl || "").slice(0, 50) : "null");
     }
 
     await addFeedPost("Swami Says", text, "admin", media);
