@@ -2677,6 +2677,7 @@ Respond ONLY with valid JSON, nothing else:
       "matchHomeScreen",
       "matchSetupScreen",
       "scoreEntryScreen",
+      "holeDetailScreen",
       "momentsScreen",
       "teamRosterScreen",
       "settingsScreen",
@@ -3279,7 +3280,8 @@ Max 80 words total.`;
   function openEnterScore(matchId) {
     activeScoreMatchId = matchId;
     show("scoreEntryScreen");
-    renderScoreEntry();
+    // Small delay to ensure Firebase data and DOM are both ready
+    setTimeout(renderScoreEntry, 50);
   }
 
   function calculateStrokeMap(strokes, holes) {
@@ -3633,10 +3635,21 @@ Max 80 words total.`;
   }
 
   function renderScoreEntry() {
-    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
-    const info = document.getElementById("scoreEntryMatchInfo");
     const wrap = document.getElementById("scoreEntryTableWrap");
-    if (!match || !info || !wrap) return;
+    const info = document.getElementById("scoreEntryMatchInfo");
+    if (!wrap || !info) return;
+
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
+    if (!match) {
+      wrap.innerHTML = `<div class="empty-state" style="color:#93c5fd;">⏳ Loading match data...</div>`;
+      // Retry after a short delay in case data is still syncing from Firebase
+      setTimeout(function() {
+        const m = matches.find(function(item) { return item.id === activeScoreMatchId; });
+        if (m) renderScoreEntry();
+        else wrap.innerHTML = `<div class="empty-state" style="color:#f87171;">Match not found. activeScoreMatchId: ${activeScoreMatchId || "null"}<br>Matches loaded: ${matches.length}</div>`;
+      }, 1500);
+      return;
+    }
 
     const tee = getTeeForMatch(match);
     const holes = getScorecardForMatch(match).holes;
