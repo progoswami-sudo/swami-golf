@@ -926,6 +926,15 @@
       margin-top: 10px;
     }
 
+  
+
+    .score-cell-wrap { position: relative; min-height: 34px; display: flex; align-items: center; justify-content: center; }
+    .stroke-dots { position: absolute; top: 2px; right: 3px; display: flex; gap: 2px; }
+    .stroke-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; display: inline-block; }
+    .team-score-row td { font-weight: 800; background: rgba(19, 41, 77, 0.9); }
+    .team-score-win { background: #16a34a !important; color: #ffffff; }
+    .moments-list { margin-top: 12px; }
+    .moment-item { border: 1px solid #375984; background: #13294d; border-radius: 12px; padding: 10px; margin-top: 8px; font-size: 14px; line-height: 1.35; }
   </style>
 </head>
 
@@ -1267,6 +1276,22 @@
       <div id="scoreEntryMatchInfo" class="match-detail"></div>
       <div id="scoreEntryTableWrap"></div>
       <button onclick="saveScoreEntry()" class="backup">Save Scores</button>
+      <button onclick="openMoments()" class="secondary">Moments</button>
+    </div>
+  </div>
+
+
+  <div id="momentsScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openEnterScore(activeScoreMatchId)" class="secondary">Back</button>
+      <h2>Match Moments</h2>
+    </div>
+    <div class="card">
+      <div id="momentsMatchInfo" class="match-detail"></div>
+      <label class="form-label" for="momentText">Add Moment</label>
+      <textarea id="momentText" placeholder="Example: Frank hit the clubhouse with a wedge. Again."></textarea>
+      <button onclick="saveMoment()" class="backup">Save Moment</button>
+      <div id="momentsList" class="moments-list"></div>
     </div>
   </div>
 
@@ -1868,7 +1893,7 @@
     if (currentValue) {
       let found = false;
       Array.from(courseSelect.options).forEach(function(option) {
-        if (option.value === currentValue || option.getAttribute("data-course-id") === normalizeCourseKey(currentValue)) {
+        if (option.value === currentValue || option.getAttribute("data-course-id") === normalizeCourseKey(currentValue) || option.getAttribute("data-course-id") === currentValue) {
           courseSelect.value = option.value;
           found = true;
         }
@@ -1958,7 +1983,7 @@
     if (currentValue) {
       let found = false;
       Array.from(teeSelect.options).forEach(function(option) {
-        if (option.value === currentValue || option.getAttribute("data-tee-id") === normalizeCourseKey(currentValue)) {
+        if (option.value === currentValue || option.getAttribute("data-tee-id") === normalizeCourseKey(currentValue) || option.getAttribute("data-tee-id") === currentValue) {
           teeSelect.value = option.value;
           found = true;
         }
@@ -2272,6 +2297,7 @@
       "matchHomeScreen",
       "matchSetupScreen",
       "scoreEntryScreen",
+      "momentsScreen",
       "teamRosterScreen",
       "settingsScreen",
       "importScreen",
@@ -2433,8 +2459,13 @@
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
-      setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
-      setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
+      if (copyFromId) {
+        setMultiSelectValues("matchTeamAPlayers", []);
+        setMultiSelectValues("matchTeamBPlayers", []);
+      } else {
+        setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
+        setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
+      }
     }
 
     handleMatchFormatChange();
@@ -2747,12 +2778,9 @@
     const courseKey = match.courseId || normalizeCourseKey(match.course || "");
     const teeKey = match.teeId || normalizeCourseKey(match.tees || "");
     const course = courseLibrary[courseKey];
-
     if (!course || !course.tees) return null;
-
     return course.tees[teeKey] || null;
   }
-
 
   function calculateCourseHandicap(handicapIndex, tee) {
     const index = Number(handicapIndex);
@@ -2761,61 +2789,46 @@
     return Math.round(index * (Number(tee.slope) / 113) + (Number(tee.rating) - par));
   }
 
+  function openEnterScore(matchId) {
+    activeScoreMatchId = matchId;
+    show("scoreEntryScreen");
+    renderScoreEntry();
+  }
 
+  function calculateStrokeMap(strokes, holes) {
+    const strokeMap = {};
+    const totalStrokes = Math.max(0, Number(strokes || 0));
+    holes.forEach(function(hole) { strokeMap[hole.hole] = 0; });
+    if (!totalStrokes || !holes.length) return strokeMap;
 
-  function renderScoreEntry() {
-    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
-    const info = document.getElementById("scoreEntryMatchInfo");
-    const wrap = document.getElementById("scoreEntryTableWrap");
-    if (!match || !info || !wrap) return;
+    const sorted = holes.slice().sort(function(a, b) {
+      return (Number(a.hcp) || 99) - (Number(b.hcp) || 99);
+    });
 
-    const tee = getTeeForMatch(match);
-    const holes = getScorecardForMatch(match).holes;
-    const playersForMatch = getPlayersForMatch(match);
-    const existingScores = match.holeScores || {};
-    const courseHandicaps = {};
-    playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee); });
-    const validCh = playersForMatch.map(function(p){ return courseHandicaps[p.id]; }).filter(function(v){ return v !== null; });
-    const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
+    const fullRounds = Math.floor(totalStrokes / holes.length);
+    const remainder = totalStrokes % holes.length;
 
-    const outHoles = holes.filter(function(h){ return Number(h.hole) <= 9; });
-    const inHoles = holes.filter(function(h){ return Number(h.hole) >= 10; });
-    const sum = function(arr, field) { return arr.reduce(function(total, h) { return total + (Number(h[field]) || 0); }, 0); };
+    holes.forEach(function(hole) { strokeMap[hole.hole] = fullRounds; });
+    for (let i = 0; i < remainder; i++) {
+      if (sorted[i]) strokeMap[sorted[i].hole] = (strokeMap[sorted[i].hole] || 0) + 1;
+    }
+    return strokeMap;
+  }
 
-    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${tee ? "" : "<br><span style=\"color:#fecaca\">No matching scorecard found. Check course/tee selection and confirm the JSON file is uploaded beside index.html.</span>"}`;
-
-    const holeHeaders = holes.map(function(h) { return `<th>${escapeHtml(h.hole)}</th>`; }).join("");
-    const parCells = holes.map(function(h) { return `<td>${escapeHtml(h.par)}</td>`; }).join("");
-    const hcpCells = holes.map(function(h) { return `<td>${escapeHtml(h.hcp)}</td>`; }).join("");
-    const yardCells = holes.map(function(h) { return `<td>${escapeHtml(h.yardage)}</td>`; }).join("");
-
-    const totals = function(type, player) {
-      if (type === "par") return `<td>${sum(outHoles,"par") || ""}</td><td>${sum(inHoles,"par") || ""}</td><td>${sum(holes,"par") || ""}</td>`;
-      if (type === "yardage") return `<td>${sum(outHoles,"yardage") || ""}</td><td>${sum(inHoles,"yardage") || ""}</td><td>${sum(holes,"yardage") || ""}</td>`;
-      const ps = existingScores[player.id] || {};
-      const ssum = function(arr) { return arr.reduce(function(t,h){ return t + (Number(ps[h.hole]) || 0); }, 0); };
-      return `<td>${ssum(outHoles) || ""}</td><td>${ssum(inHoles) || ""}</td><td>${ssum(holes) || ""}</td>`;
-    };
-
-    const playerRows = playersForMatch.map(function(player) {
-      const ch = courseHandicaps[player.id];
-      const strokes = ch === null || lowCh === null ? "" : (ch - lowCh);
-      const strokeDisplay = strokes === 0 ? "-" : strokes;
-      const label = `${escapeHtml(player.name)} ${ch === null ? "(CH N/A)" : "(CH " + ch + ")"} ${strokeDisplay === "" ? "" : "(Strokes " + strokeDisplay + ")"}`;
-      const ps = existingScores[player.id] || {};
-      const cells = holes.map(function(hole) {
-        const value = ps[hole.hole] || "";
-        return `<td><input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(value)}"></td>`;
-      }).join("");
-      return `<tr><td>${label}</td>${cells}${totals("score", player)}</tr>`;
+  function renderStrokeDots(count) {
+    const strokeCount = Number(count || 0);
+    if (!strokeCount) return "";
+    const dots = Array.from({ length: Math.min(strokeCount, 3) }, function() {
+      return `<span class="stroke-dot"></span>`;
     }).join("");
-
-    wrap.innerHTML = `<div class="score-entry-wrap"><table class="score-entry-table"><tr><th>HOLE</th>${holeHeaders}<th>OUT</th><th>IN</th><th>TOTAL</th></tr><tr><td>PAR</td>${parCells}${totals("par")}</tr><tr><td>HCP</td>${hcpCells}<td></td><td></td><td></td></tr><tr><td>YDS</td>${yardCells}${totals("yardage")}</tr>${playerRows}</table></div>`;
+    return `<span class="stroke-dots">${dots}</span>`;
   }
 
   function getPlayersForMatch(match) {
     const ids = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
-    return ids.map(function(id) { return players.find(function(player) { return player.id === id; }); }).filter(Boolean);
+    return ids.map(function(id) {
+      return players.find(function(player) { return player.id === id; });
+    }).filter(Boolean);
   }
 
   function getScorecardForMatch(match) {
@@ -2825,7 +2838,9 @@
   }
 
   function createDefaultHoles() {
-    return Array.from({ length: 18 }, function(_, index) { return { hole: index + 1, par: "", hcp: "", yardage: "" }; });
+    return Array.from({ length: 18 }, function(_, index) {
+      return { hole: index + 1, par: "", hcp: "", yardage: "" };
+    });
   }
 
   function getSelectedHoles(holes, startingHole, numberOfHoles) {
@@ -2841,12 +2856,152 @@
     return selected;
   }
 
+  function getScoreValue(match, playerId, hole) {
+    const raw = ((match.holeScores || {})[playerId] || {})[hole.hole];
+    return raw ? Number(raw) : 0;
+  }
+
+  function renderScoreEntry() {
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
+    const info = document.getElementById("scoreEntryMatchInfo");
+    const wrap = document.getElementById("scoreEntryTableWrap");
+    if (!match || !info || !wrap) return;
+
+    const tee = getTeeForMatch(match);
+    const holes = getScorecardForMatch(match).holes;
+    const playersForMatch = getPlayersForMatch(match);
+    const scoringType = match.scoringType || "Gross";
+    const isNet = scoringType === "Net";
+    const existingScores = match.holeScores || {};
+
+    const courseHandicaps = {};
+    playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee); });
+    const validCh = playersForMatch.map(function(player) { return courseHandicaps[player.id]; }).filter(function(value) { return value !== null; });
+    const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
+
+    const strokeData = {};
+    playersForMatch.forEach(function(player) {
+      const ch = courseHandicaps[player.id];
+      const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+      strokeData[player.id] = { ch: ch, strokes: strokes, strokeMap: calculateStrokeMap(strokes, holes) };
+    });
+
+    const outHoles = holes.filter(function(hole) { return Number(hole.hole) <= 9; });
+    const inHoles = holes.filter(function(hole) { return Number(hole.hole) >= 10; });
+    const sum = function(arr, field) { return arr.reduce(function(total, hole) { return total + (Number(hole[field]) || 0); }, 0); };
+
+    function netScore(playerId, hole) {
+      const gross = getScoreValue(match, playerId, hole);
+      if (!gross) return "";
+      return gross - (isNet ? (strokeData[playerId].strokeMap[hole.hole] || 0) : 0);
+    }
+
+    function teamScore(teamIds, hole) {
+      const vals = teamIds.map(function(id) { return netScore(id, hole); }).filter(function(v) { return v !== ""; });
+      return vals.length ? Math.min.apply(null, vals) : "";
+    }
+
+    function teamCells(teamIds, oppIds, includeOutCell) {
+      let out = "";
+      holes.forEach(function(hole) {
+        const val = teamScore(teamIds, hole);
+        const opp = teamScore(oppIds, hole);
+        const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
+        out += `<td class="${cls}">${val}</td>`;
+        if (includeOutCell && Number(hole.hole) === 9) {
+          const outTotal = outHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
+          const oppOut = outHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
+          out += `<td class="${outTotal && oppOut && outTotal < oppOut ? "team-score-win" : ""}">${outTotal || ""}</td>`;
+        }
+      });
+      const inTotal = inHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
+      const oppIn = inHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
+      const total = holes.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
+      const oppTotal = holes.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
+      out += `<td class="${inTotal && oppIn && inTotal < oppIn ? "team-score-win" : ""}">${inTotal || ""}</td>`;
+      out += `<td class="${total && oppTotal && total < oppTotal ? "team-score-win" : ""}">${total || ""}</td>`;
+      return out;
+    }
+
+    const scorecardWarning = tee ? "" : '<br><span style="color:#fecaca">No matching scorecard found. Check course/tee selection and confirm the JSON file is uploaded beside index.html.</span>';
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(scoringType)} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${scorecardWarning}`;
+
+    function statRow(label, field) {
+      let cells = "";
+      holes.forEach(function(hole) {
+        cells += `<td>${escapeHtml(hole[field])}</td>`;
+        if (Number(hole.hole) === 9) {
+          cells += `<td>${field === "hcp" ? "" : (field === "par" ? sum(outHoles, "par") : sum(outHoles, "yardage"))}</td>`;
+        }
+      });
+      cells += `<td>${field === "hcp" ? "" : (field === "par" ? sum(inHoles, "par") : sum(inHoles, "yardage"))}</td>`;
+      cells += `<td>${field === "hcp" ? "" : (field === "par" ? sum(holes, "par") : sum(holes, "yardage"))}</td>`;
+      return `<tr><td>${label}</td>${cells}</tr>`;
+    }
+
+    let header = "<tr><th>HOLE</th>";
+    holes.forEach(function(hole) {
+      header += `<th>${escapeHtml(hole.hole)}</th>`;
+      if (Number(hole.hole) === 9) header += "<th>OUT</th>";
+    });
+    header += "<th>IN</th><th>TOTAL</th></tr>";
+
+    let playerRows = "";
+    playersForMatch.forEach(function(player) {
+      const data = strokeData[player.id];
+      const label = isNet
+        ? `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"} ${data.strokes ? "(" + data.strokes + ")" : "(-)"}`
+        : `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"}`;
+
+      let row = `<tr><td>${label}</td>`;
+      let outTotal = 0, inTotal = 0, total = 0;
+
+      holes.forEach(function(hole) {
+        const raw = ((existingScores[player.id] || {})[hole.hole]) || "";
+        const displayed = raw ? (Number(raw) - (isNet ? (data.strokeMap[hole.hole] || 0) : 0)) : "";
+        if (displayed !== "") {
+          total += Number(displayed);
+          if (Number(hole.hole) <= 9) outTotal += Number(displayed);
+          else inTotal += Number(displayed);
+        }
+        row += `<td><div class="score-cell-wrap">${renderStrokeDots(isNet ? data.strokeMap[hole.hole] : 0)}<input inputmode="numeric" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
+        if (Number(hole.hole) === 9) row += `<td>${outTotal || ""}</td>`;
+      });
+      row += `<td>${inTotal || ""}</td><td>${total || ""}</td></tr>`;
+      playerRows += row;
+    });
+
+    const teamAIds = match.teamAPlayerIds || [];
+    const teamBIds = match.teamBPlayerIds || [];
+    const teamAName = activeTripData.teamA || "Team A";
+    const teamBName = activeTripData.teamB || "Team B";
+
+    wrap.innerHTML = `
+      <div class="score-entry-wrap">
+        <table class="score-entry-table">
+          ${header}
+          ${statRow("PAR", "par")}
+          ${statRow("HCP", "hcp")}
+          ${statRow("YDS", "yardage")}
+          ${playerRows}
+          <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, true)}</tr>
+          <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, true)}</tr>
+        </table>
+      </div>
+    `;
+  }
+
+  function handleScoreInput() {
+    renderScoreEntry();
+  }
+
   async function saveScoreEntry() {
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     if (!match) return alert("Match not found.");
     const playersForMatch = getPlayersForMatch(match);
     const holes = getScorecardForMatch(match).holes;
     const holeScores = {};
+
     playersForMatch.forEach(function(player) {
       holeScores[player.id] = {};
       holes.forEach(function(hole) {
@@ -2854,11 +3009,62 @@
         holeScores[player.id][hole.hole] = input ? input.value.trim() : "";
       });
     });
-    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), { holeScores: holeScores, updatedAt: new Date().toISOString() });
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
+      holeScores: holeScores,
+      updatedAt: new Date().toISOString()
+    });
+
     await addSwamiPost("scoreUpdate", `${match.format || "Match"} at ${match.course || "the course"}`);
     openMatchHome();
   }
 
+  function openMoments() {
+    show("momentsScreen");
+    renderMoments();
+  }
+
+  function renderMoments() {
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
+    const info = document.getElementById("momentsMatchInfo");
+    const list = document.getElementById("momentsList");
+    if (!match || !info || !list) return;
+
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • Round ${escapeHtml(match.round || "1")}`;
+    const moments = match.moments || [];
+
+    if (!moments.length) {
+      list.innerHTML = `<div class="empty-state">No moments captured yet. Swami is waiting for evidence.</div>`;
+      return;
+    }
+
+    list.innerHTML = moments.slice().sort(function(a, b) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }).map(function(moment) {
+      return `<div class="moment-item">${escapeHtml(moment.text)}<div class="feed-time">${formatFeedTime(moment.createdAt)}</div></div>`;
+    }).join("");
+  }
+
+  async function saveMoment() {
+    const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
+    const input = document.getElementById("momentText");
+    const text = input ? input.value.trim() : "";
+
+    if (!match) return alert("Match not found.");
+    if (!text) return alert("Please enter a moment.");
+
+    const moments = match.moments || [];
+    moments.push({ text: text, createdAt: new Date().toISOString() });
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
+      moments: moments,
+      updatedAt: new Date().toISOString()
+    });
+
+    input.value = "";
+    await addSwamiPost("momentAdd", text);
+    renderMoments();
+  }
 
   function renderMatchValueSummary(match) {
     const settings = match.valueSettings || {};
@@ -2885,11 +3091,7 @@
     await addSwamiPost("matchDelete", match ? `${match.format} at ${match.course}` : "match");
   }
 
-  function openEnterScore(matchId) {
-    activeScoreMatchId = matchId;
-    show("scoreEntryScreen");
-    renderScoreEntry();
-  }
+
 
   function toggleTripMenu() {
     const menu = document.getElementById("tripMenu");
@@ -3833,6 +4035,11 @@ ${closer}`;
         `The sides are set: ${subject}. May the trash talk be better than the wedge play.`,
         `${subject}. The group dynamic has officially entered match-play mode.`
       ],
+      momentAdd: [
+        `Moment captured: ${subject}. Swami has entered it into the permanent evidence file.`,
+        `New match moment saved. Future historians will call this avoidable.`,
+        `Swami has logged the moment. Nobody said it was flattering.`
+      ],
       recapAdd: [
         `New recap posted: ${subject}. The Swami has reviewed the evidence and judged accordingly.`,
         `${subject} is ready. Some reputations may not survive the paragraph format.`,
@@ -4433,6 +4640,9 @@ ${closer}`;
   window.saveScoreEntry = saveScoreEntry;
   window.handleCourseChange = handleCourseChange;
   window.handleTeeChange = handleTeeChange;
+  window.handleScoreInput = handleScoreInput;
+  window.openMoments = openMoments;
+  window.saveMoment = saveMoment;
   window.openTripHome = openTripHome;
   window.openItinerary = openItinerary;
   window.goHome = goHome;
