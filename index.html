@@ -1382,17 +1382,19 @@
   <div id="scoreEntryScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="openMatchHome()" class="secondary">Back</button>
-      <h2>Enter Score</h2>
+      <h2>Scorecard</h2>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;">
+        <span class="sc-birdie" style="width:18px;height:18px;font-size:10px;">B</span>
+        <span class="sc-bogey" style="width:18px;height:18px;font-size:10px;">B</span>
+        <button id="scorecardViewToggle" onclick="toggleScorecardView()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Gross</button>
+      </div>
     </div>
-
     <div class="card">
       <div id="scoreEntryMatchInfo" class="match-detail"></div>
       <div id="scoreEntryTableWrap" style="min-height:40px;"></div>
-      <button onclick="saveScoreEntry()" class="backup">Save Scores</button>
-      <button onclick="openMoments()" class="secondary">Moments</button>
+      <button onclick="openMoments()" class="secondary">Match Moments</button>
     </div>
   </div>
-
 
   <div id="holeDetailScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
@@ -1405,6 +1407,11 @@
     </div>
     <div id="holeDetailContent"></div>
   </div>
+
+  <div id="momentsScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goBackToScoreEntry()" class="secondary">Back</button>
+      <h2>Match Moments</h2>
     </div>
     <div class="card">
       <div id="momentsMatchInfo" class="match-detail"></div>
@@ -3255,7 +3262,7 @@ Max 80 words total.`;
               `
           }
 
-          <button class="enter-score-btn" onclick="openEnterScore('${match.id}')">Enter Score</button>
+          <button class="enter-score-btn" onclick="openEnterScore('${match.id}')">Scorecard</button>
         </div>
       </div>
     `;
@@ -3304,10 +3311,19 @@ Max 80 words total.`;
     return strokeMap;
   }
 
+  let scorecardViewMode = "gross"; // "gross" or "net"
+
+  function toggleScorecardView() {
+    scorecardViewMode = scorecardViewMode === "gross" ? "net" : "gross";
+    const btn = document.getElementById("scorecardViewToggle");
+    if (btn) btn.textContent = scorecardViewMode === "net" ? "Net" : "Gross";
+    renderScoreEntry();
+  }
+
   function scoreBadge(gross, par, strokes) {
     if (!gross || !par) return `<span style="color:#475569;font-size:11px;">–</span>`;
-    const net = gross - strokes;
-    const diff = net - par;
+    const score = scorecardViewMode === "net" ? gross - strokes : gross;
+    const diff = score - par;
     const display = gross;
     if (diff <= -2) return `<span class="sc-eagle">${display}</span>`;
     if (diff === -1) return `<span class="sc-birdie">${display}</span>`;
@@ -3752,8 +3768,7 @@ Max 80 words total.`;
         const par = Number(hole.par) || 0;
         const badgeHtml = raw ? scoreBadge(Number(raw), par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
         const dotHtml = isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
-        const cellId = `hcell-${player.id}-${hole.hole}`;
-        row += `<td id="${cellId}" onclick="openHoleDetail(activeScoreMatchId,'${escapeAttr(player.id)}',${Number(hole.hole)})" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">
+        row += `<td class="score-tap-cell" data-match-id="${escapeAttr(activeScoreMatchId)}" data-player-id="${escapeAttr(player.id)}" data-hole="${Number(hole.hole)}" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">
           <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${escapeAttr(player.id)}-${hole.hole}">${badgeHtml}</div></div>
         </td>`;
         if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
@@ -3786,6 +3801,15 @@ Max 80 words total.`;
           </table>
         </div>
       `;
+      // Delegated tap handler — avoids inline onclick escaping issues
+      wrap.addEventListener("click", function(e) {
+        const cell = e.target.closest(".score-tap-cell");
+        if (!cell) return;
+        const matchId = cell.dataset.matchId;
+        const playerId = cell.dataset.playerId;
+        const holeNum = Number(cell.dataset.hole);
+        openHoleDetail(matchId, playerId, holeNum);
+      }, { once: false });
     } catch(e) {
       console.error("renderScoreEntry failed:", e);
       wrap.innerHTML = `<div style="color:#f87171;padding:8px;">❌ Scorecard error: ${e.message}</div>`;
@@ -3889,24 +3913,7 @@ Max 80 words total.`;
   async function saveScoreEntry() {
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     if (!match) return alert("Match not found.");
-    const playersForMatch = getPlayersForMatch(match);
-    const holes = getScorecardForMatch(match).holes;
-    const holeScores = {};
-
-    playersForMatch.forEach(function(player) {
-      holeScores[player.id] = {};
-      holes.forEach(function(hole) {
-        const input = document.getElementById(`score-${player.id}-${hole.hole}`);
-        holeScores[player.id][hole.hole] = input ? input.value.trim() : "";
-      });
-    });
-
-    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
-      holeScores: holeScores,
-      updatedAt: new Date().toISOString()
-    });
-
-    await addSwamiPost("scoreUpdate", `${match.format || "Match"} at ${match.course || "the course"}`);
+    // Scores are now saved directly from hole detail screen — nothing to do here
     openMatchHome();
   }
 
@@ -5719,6 +5726,7 @@ ${closer}`;
 
   window.testSwamiApi = testSwamiApi;
   window.runConfidenceMeter = runConfidenceMeter;
+  window.toggleScorecardView = toggleScorecardView;
   window.openHoleDetail = openHoleDetail;
   window.closeHoleDetail = closeHoleDetail;
   window.navHoleDetail = navHoleDetail;
