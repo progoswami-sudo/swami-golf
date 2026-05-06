@@ -1442,22 +1442,29 @@
 
     <div class="card">
       <input id="playerName" placeholder="Name"/>
-      <input id="nickname" placeholder="Nickname"/>
-      <input id="handicapIndex" type="number" step="0.1" placeholder="Handicap Index"/>
+      <input id="nickname" placeholder="Nickname (optional)"/>
 
-      <select id="playerGender">
-        <option value="">Gender</option>
-        <option value="alphaMale">Alpha Male</option>
-        <option value="tacticalSuburbanite">Tactical Suburbanite</option>
-        <option value="artisanalLumberjack">Artisanal Lumberjack</option>
-        <option value="etherealFlowerBoy">Ethereal Flower Boy</option>
-        <option value="earthyMatriarch">Earthy Matriarch</option>
-        <option value="modernDayPrincess">Modern Day Princess</option>
-      </select>
+      <div class="compact-row">
+        <div>
+          <label class="form-label" for="handicapIndex">Hcp Index</label>
+          <input id="handicapIndex" type="number" step="0.1" placeholder="e.g. 14.2" style="margin-top:6px;"/>
+        </div>
+        <div>
+          <label class="form-label" for="playerGender">Gender</label>
+          <select id="playerGender" style="margin-top:6px;">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
 
       <select id="playerTeam">
         <option value="">Assign to Team</option>
       </select>
+
+      <label class="form-label" for="swamiIntel">Swami Intel</label>
+      <textarea id="swamiIntel" placeholder="Give Swami something to work with. Inside jokes, quirks, superstitions, rivalries, notable moments, anything. The more specific, the better the roasts."></textarea>
 
       <h4>Strengths</h4>
       <div id="strengths" class="traits-grid"></div>
@@ -2919,7 +2926,14 @@ Respond ONLY with valid JSON, nothing else:
 
     function describePlayer(p) {
       const ch = calculateCourseHandicap(p.handicapIndex, tee);
-      return `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI ${p.handicapIndex || "N/A"}${ch !== null ? ", CH " + ch : ""}${p.strengths && p.strengths.length ? ", " + p.strengths[0] : ""}${p.weaknesses && p.weaknesses.length ? ", weakness: " + p.weaknesses[0] : ""})`;
+      const parts = [
+        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        `HI ${p.handicapIndex || "N/A"}${ch !== null ? "/CH " + ch : ""}`,
+        p.strengths && p.strengths.length ? `strengths: ${p.strengths.join(", ")}` : null,
+        p.weaknesses && p.weaknesses.length ? `weaknesses: ${p.weaknesses.join(", ")}` : null,
+        p.swamiIntel ? `intel: ${p.swamiIntel}` : null
+      ].filter(Boolean);
+      return parts.join("; ");
     }
 
     const teamADesc = teamAPlayers.map(describePlayer).join(", ") || "unknown players";
@@ -3696,8 +3710,16 @@ Max 80 words total.`;
     }).join(". ");
 
     const playerSummaries = players.map(p => {
-      return `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI: ${p.handicapIndex || "N/A"}, Team: ${p.team || "unassigned"}${p.strengths && p.strengths.length ? ", Strengths: " + p.strengths.slice(0,2).join(" & ") : ""}${p.weaknesses && p.weaknesses.length ? ", Weakness: " + p.weaknesses[0] : ""})`;
-    }).join("; ");
+      const parts = [
+        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        `HI: ${p.handicapIndex || "N/A"}`,
+        `Team: ${p.team || "unassigned"}`,
+        p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
+        p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
+        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
+      ].filter(Boolean);
+      return parts.join("; ");
+    }).join(" | ");
 
     const recentFeedPosts = [...feedPosts]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -4141,13 +4163,14 @@ ${closer}`;
         <div class="player-name">${escapeHtml(player.name)}</div>
         <div class="player-detail">
           ${player.nickname ? `"${escapeHtml(player.nickname)}"<br>` : ""}
-          <strong>Handicap Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
+          <strong>Hcp Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
           <strong>Gender:</strong> ${formatGender(player.gender)}<br>
           <strong>Strengths:</strong>
           ${player.strengths && player.strengths.length ? player.strengths.map(escapeHtml).join(", ") : "None selected"}
           <br>
           <strong>Weaknesses:</strong>
           ${player.weaknesses && player.weaknesses.length ? player.weaknesses.map(escapeHtml).join(", ") : "None selected"}
+          ${player.swamiIntel ? `<br><strong>Swami Intel:</strong> ${escapeHtml(player.swamiIntel)}` : ""}
         </div>
       `;
 
@@ -4456,9 +4479,18 @@ ${closer}`;
     const teamB = activeTripData.teamB || "Team B";
     const teamAScore = activeTripData.teamAScore || "0";
     const teamBScore = activeTripData.teamBScore || "0";
-    const playerList = players.map(p =>
-      `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI: ${p.handicapIndex || "N/A"}, Team: ${p.team || "unassigned"}${p.strengths && p.strengths.length ? ", Strengths: " + p.strengths.slice(0,2).join("/") : ""}${p.weaknesses && p.weaknesses.length ? ", Weakness: " + p.weaknesses[0] : ""})`
-    ).join("; ");
+    const playerList = players.map(p => {
+      const parts = [
+        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        `HI: ${p.handicapIndex || "N/A"}`,
+        `Team: ${p.team || "unassigned"}`,
+        p.gender ? `Gender: ${formatGender(p.gender)}` : null,
+        p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
+        p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
+        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
+      ].filter(Boolean);
+      return parts.join("; ");
+    }).join(" | ");
     const recentFeed = [...feedPosts]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5)
@@ -4879,28 +4911,20 @@ ${closer}`;
 
 
   function isFemaleGender(gender) {
-    return gender === "earthyMatriarch" || gender === "modernDayPrincess";
+    return gender === "female";
   }
 
   function getPronouns(gender) {
     if (isFemaleGender(gender)) {
       return { subject: "she", object: "her", possessive: "her" };
     }
-
     return { subject: "he", object: "him", possessive: "his" };
   }
 
   function formatGender(gender) {
-    const labels = {
-      alphaMale: "Alpha Male",
-      tacticalSuburbanite: "Tactical Suburbanite",
-      artisanalLumberjack: "Artisanal Lumberjack",
-      etherealFlowerBoy: "Ethereal Flower Boy",
-      earthyMatriarch: "Earthy Matriarch",
-      modernDayPrincess: "Modern Day Princess"
-    };
-
-    return labels[gender] || "Not entered";
+    if (gender === "male") return "Male";
+    if (gender === "female") return "Female";
+    return "Not entered";
   }
 
   function renderTraits() {
@@ -4945,6 +4969,7 @@ ${closer}`;
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
+    document.getElementById("swamiIntel").value = "";
 
     selectedStrengths = [];
     selectedWeaknesses = [];
@@ -4963,20 +4988,17 @@ ${closer}`;
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
     document.getElementById("playerTeam").value = player.team || "";
+    document.getElementById("swamiIntel").value = player.swamiIntel || "";
 
     selectedStrengths = player.strengths || [];
     selectedWeaknesses = player.weaknesses || [];
 
     document.querySelectorAll("#strengths .trait-card").forEach(card => {
-      if (selectedStrengths.includes(card.innerText)) {
-        card.classList.add("selected");
-      }
+      if (selectedStrengths.includes(card.innerText)) card.classList.add("selected");
     });
 
     document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
-      if (selectedWeaknesses.includes(card.innerText)) {
-        card.classList.add("selected");
-      }
+      if (selectedWeaknesses.includes(card.innerText)) card.classList.add("selected");
     });
   }
 
@@ -4986,6 +5008,7 @@ ${closer}`;
     const handicapIndex = document.getElementById("handicapIndex").value;
     const gender = document.getElementById("playerGender").value;
     const team = document.getElementById("playerTeam").value;
+    const swamiIntel = document.getElementById("swamiIntel").value.trim();
 
     if (!name.trim()) {
       alert("Please enter a player name.");
@@ -4998,6 +5021,7 @@ ${closer}`;
       handicapIndex,
       gender,
       team,
+      swamiIntel,
       strengths: selectedStrengths,
       weaknesses: selectedWeaknesses,
       updatedAt: new Date().toISOString()
