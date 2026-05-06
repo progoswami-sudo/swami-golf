@@ -937,6 +937,38 @@
       align-items: end;
     }
 
+    /* ── Hole Detail Screen ─────────────────────────────────────────── */
+    .hole-detail-card { background:#13294d;border:1px solid #375984;border-radius:14px;padding:16px;margin:12px 14px; }
+    .hole-detail-section-title { font-size:12px;font-weight:bold;color:#93c5fd;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px; }
+    .score-stepper { display:flex;align-items:center;gap:16px;justify-content:center;padding:8px 0; }
+    .stepper-btn { width:48px;height:48px;border-radius:50%;font-size:26px;font-weight:bold;display:flex;align-items:center;justify-content:center;margin:0;padding:0;touch-action:manipulation;user-select:none; }
+    .stepper-val { font-size:42px;font-weight:bold;min-width:56px;text-align:center;line-height:1; }
+    .stepper-vs-par { font-size:12px;color:#94a3b8;text-align:center;margin-top:4px; }
+    .direction-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto; }
+    .dir-btn { padding:12px 4px;border-radius:10px;border:1.5px solid #375984;background:#0f2442;font-size:12px;text-align:center;cursor:pointer;touch-action:manipulation;user-select:none;transition:background 0.1s,border-color 0.1s;margin:0;width:100%; }
+    .dir-btn.selected { background:#1d4ed8;border-color:#60a5fa;color:white;font-weight:bold; }
+    .dir-btn.hit.selected { background:#16a34a;border-color:#4ade80; }
+    .dir-btn:active { opacity:0.7; }
+    .putt-stepper { display:flex;align-items:center;gap:14px;justify-content:center; }
+    .putt-btn { width:42px;height:42px;border-radius:50%;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0;padding:0;touch-action:manipulation; }
+    .putt-val { font-size:32px;font-weight:bold;min-width:40px;text-align:center; }
+    .hazard-grid { display:flex;flex-wrap:wrap;gap:8px; }
+    .hazard-chip { padding:9px 16px;border-radius:20px;border:1.5px solid #375984;background:#0f2442;font-size:13px;cursor:pointer;touch-action:manipulation;user-select:none;margin:0;width:auto;transition:background 0.1s,border-color 0.1s; }
+    .hazard-chip.selected { background:#7c3aed;border-color:#a78bfa;font-weight:bold; }
+    .hazard-chip:active { opacity:0.7; }
+    .hole-player-tabs { display:flex;gap:6px;overflow-x:auto;padding:12px 14px 0;-webkit-overflow-scrolling:touch; }
+    .hole-player-tab { padding:9px 16px;border-radius:20px;border:1.5px solid #375984;background:#13294d;font-size:13px;white-space:nowrap;cursor:pointer;touch-action:manipulation;user-select:none;flex-shrink:0;margin:0;width:auto;transition:background 0.1s; }
+    .hole-player-tab.active { background:#1d4ed8;border-color:#60a5fa;font-weight:bold; }
+    .hole-info-bar { display:flex;gap:16px;justify-content:center;font-size:13px;color:#93c5fd;padding:8px 14px 0; }
+    .hole-info-bar span { font-weight:bold;color:white; }
+    /* Scorecard score badges */
+    .sc-eagle  { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #facc15;color:#facc15;font-weight:bold;font-size:13px; }
+    .sc-birdie { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #4ade80;color:#4ade80;font-weight:bold;font-size:13px; }
+    .sc-par    { font-weight:bold;font-size:14px;color:#e2e8f0; }
+    .sc-bogey  { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid #f87171;color:#f87171;font-weight:bold;font-size:13px; }
+    .sc-double { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid #f87171;outline:2px solid #f87171;outline-offset:2px;color:#f87171;font-weight:bold;font-size:13px; }
+    .sc-worse  { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid #dc2626;color:#fca5a5;font-weight:bold;font-size:11px; }
+
     .score-entry-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -1362,10 +1394,17 @@
   </div>
 
 
-  <div id="momentsScreen" class="hidden secondary-screen">
+  <div id="holeDetailScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goBackToScoreEntry()" class="secondary">Back</button>
-      <h2>Match Moments</h2>
+      <button onclick="closeHoleDetail()" class="secondary">Back</button>
+      <h2 id="holeDetailTitle">Hole 1</h2>
+      <div id="holeDetailNav" style="display:flex;gap:6px;">
+        <button onclick="navHoleDetail(-1)" class="secondary" style="width:auto;padding:8px 12px;margin-top:0;">◀</button>
+        <button onclick="navHoleDetail(1)" class="secondary" style="width:auto;padding:8px 12px;margin-top:0;">▶</button>
+      </div>
+    </div>
+    <div id="holeDetailContent"></div>
+  </div>
     </div>
     <div class="card">
       <div id="momentsMatchInfo" class="match-detail"></div>
@@ -3263,8 +3302,292 @@ Max 80 words total.`;
     return strokeMap;
   }
 
+  function scoreBadge(gross, par, strokes) {
+    if (!gross || !par) return `<span style="color:#475569;font-size:11px;">–</span>`;
+    const net = gross - strokes;
+    const diff = net - par;
+    const display = gross;
+    if (diff <= -2) return `<span class="sc-eagle">${display}</span>`;
+    if (diff === -1) return `<span class="sc-birdie">${display}</span>`;
+    if (diff === 0)  return `<span class="sc-par">${display}</span>`;
+    if (diff === 1)  return `<span class="sc-bogey">${display}</span>`;
+    if (diff === 2)  return `<span class="sc-double">${display}</span>`;
+    return `<span class="sc-worse">${display}</span>`;
+  }
+
+  // ── Hole Detail State ────────────────────────────────────────────────────────
+  let holeDetailMatchId = null;
+  let holeDetailPlayerId = null;
+  let holeDetailHoleNum = null;
+  let holeDetailData = {}; // { playerId: { score, fairway, approach, putts, hazards, ballsLost, moment } }
+
+  function openHoleDetail(matchId, playerId, holeNum) {
+    holeDetailMatchId = matchId;
+    holeDetailPlayerId = playerId;
+    holeDetailHoleNum = Number(holeNum);
+    // Load any existing hole detail data from match
+    const match = matches.find(m => m.id === matchId);
+    if (match) {
+      holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
+    }
+    renderHoleDetail();
+    show("holeDetailScreen");
+  }
+
+  function renderHoleDetail() {
+    const match = matches.find(m => m.id === holeDetailMatchId);
+    if (!match) return;
+
+    const holes = getScorecardForMatch(match).holes;
+    const hole = holes.find(h => Number(h.hole) === holeDetailHoleNum) || { hole: holeDetailHoleNum, par: 4, hcp: "", yardage: "" };
+    const par = Number(hole.par) || 4;
+    const tee = getTeeForMatch(match);
+    const playersForMatch = getPlayersForMatch(match);
+    const isNet = (match.scoringType || "Gross") === "Net";
+
+    document.getElementById("holeDetailTitle").textContent = `Hole ${holeDetailHoleNum}`;
+
+    // Hole info bar
+    const infoBar = `<div class="hole-info-bar">
+      <div>Par <span>${par}</span></div>
+      ${hole.yardage ? `<div>Yds <span>${hole.yardage}</span></div>` : ""}
+      ${hole.hcp ? `<div>HCP <span>${hole.hcp}</span></div>` : ""}
+    </div>`;
+
+    // Player tabs
+    let tabs = `<div class="hole-player-tabs">`;
+    playersForMatch.forEach(p => {
+      const active = p.id === holeDetailPlayerId ? "active" : "";
+      tabs += `<button class="hole-player-tab ${active}" onclick="switchHoleDetailPlayer('${p.id}')">${escapeHtml(p.name.split(" ")[0])}</button>`;
+    });
+    tabs += `</div>`;
+
+    // Current player's data for this hole
+    const pd = (holeDetailData[holeDetailPlayerId] || {})[holeDetailHoleNum] || {};
+    const existingScore = ((match.holeScores || {})[holeDetailPlayerId] || {})[holeDetailHoleNum];
+    const currentScore = pd.score || Number(existingScore) || 0;
+    const courseHandicaps = {};
+    playersForMatch.forEach(p => { courseHandicaps[p.id] = calculateCourseHandicap(p.handicapIndex, tee); });
+    const validCh = playersForMatch.map(p => courseHandicaps[p.id]).filter(v => v !== null);
+    const lowCh = validCh.length ? Math.min(...validCh) : null;
+    const ch = courseHandicaps[holeDetailPlayerId];
+    const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+    const strokeMap = calculateStrokeMap(strokes, holes);
+    const strokesOnHole = strokeMap[holeDetailHoleNum] || 0;
+
+    const diff = currentScore && par ? (currentScore - strokesOnHole) - par : null;
+    const vsParLabel = currentScore ? vsParText(diff) : "–";
+    const badgeHtml = currentScore ? scoreBadge(currentScore, par, strokesOnHole) : "–";
+
+    // Fairway buttons (only for par 4/5)
+    const showFairway = par >= 4;
+    const fairwayOptions = ["Hit", "Left", "Right", "Short", "N/A"];
+    const fairwayCurrent = pd.fairway || "";
+    let fairwayHtml = "";
+    if (showFairway) {
+      fairwayHtml = `
+        <div class="hole-detail-section-title">Fairway</div>
+        <div class="direction-grid" style="grid-template-columns:repeat(5,1fr);max-width:100%;">
+          ${fairwayOptions.map(opt => `
+            <button class="dir-btn ${opt === "Hit" ? "hit" : ""} ${fairwayCurrent === opt ? "selected" : ""}"
+              onclick="setHoleDetailField('fairway','${opt}')">${opt}</button>
+          `).join("")}
+        </div>`;
+    }
+
+    // Approach/GIR buttons
+    const approachOptions = ["Hit", "Left", "Right", "Short", "Long"];
+    const approachCurrent = pd.approach || "";
+    const approachHtml = `
+      <div class="hole-detail-section-title">Green (GIR)</div>
+      <div class="direction-grid" style="grid-template-columns:repeat(5,1fr);max-width:100%;">
+        ${approachOptions.map(opt => `
+          <button class="dir-btn ${opt === "Hit" ? "hit" : ""} ${approachCurrent === opt ? "selected" : ""}"
+            onclick="setHoleDetailField('approach','${opt}')">${opt}</button>
+        `).join("")}
+      </div>`;
+
+    // Putts
+    const putts = pd.putts !== undefined ? pd.putts : "";
+    const puttsHtml = `
+      <div class="hole-detail-section-title">Putts</div>
+      <div class="putt-stepper">
+        <button class="putt-btn secondary" onclick="adjustHoleDetailPutts(-1)">−</button>
+        <div class="putt-val">${putts === "" ? "–" : putts}</div>
+        <button class="putt-btn" onclick="adjustHoleDetailPutts(1)">+</button>
+      </div>`;
+
+    // Hazards
+    const hazardOptions = ["Water 💧", "Sand ⛱", "OB 🚫", "Penalty 🔴"];
+    const hazardsCurrent = pd.hazards || [];
+    const hazardsHtml = `
+      <div class="hole-detail-section-title">Hazards</div>
+      <div class="hazard-grid">
+        ${hazardOptions.map(h => `
+          <button class="hazard-chip ${hazardsCurrent.includes(h) ? "selected" : ""}"
+            onclick="toggleHoleDetailHazard('${h}')">${h}</button>
+        `).join("")}
+      </div>`;
+
+    // Lost balls
+    const ballsLost = pd.ballsLost || 0;
+    const ballsHtml = `
+      <div class="hole-detail-section-title">Lost Balls</div>
+      <div class="putt-stepper">
+        <button class="putt-btn secondary" onclick="adjustHoleDetailBalls(-1)">−</button>
+        <div class="putt-val">${ballsLost || "–"}</div>
+        <button class="putt-btn" onclick="adjustHoleDetailBalls(1)">+</button>
+      </div>`;
+
+    // Moment
+    const momentText = pd.moment || "";
+    const momentHtml = `
+      <div class="hole-detail-section-title">Hole Moment (Swami Material)</div>
+      <textarea id="holeMomentText" placeholder="What happened on this hole? Swami is watching…" style="min-height:70px;"
+        oninput="setHoleDetailField('moment',this.value)">${escapeHtml(momentText)}</textarea>`;
+
+    document.getElementById("holeDetailContent").innerHTML = `
+      ${infoBar}
+      ${tabs}
+      <div class="hole-detail-card">
+        <div class="hole-detail-section-title">Score</div>
+        <div class="score-stepper">
+          <button class="stepper-btn danger" onclick="adjustHoleDetailScore(-1)">−</button>
+          <div>
+            <div class="stepper-val">${currentScore || "–"}</div>
+            <div class="stepper-vs-par">${vsParLabel} ${currentScore ? `· ${badgeHtml}` : ""}</div>
+          </div>
+          <button class="stepper-btn" onclick="adjustHoleDetailScore(1)">+</button>
+        </div>
+        ${showFairway ? fairwayHtml : ""}
+        ${approachHtml}
+        ${puttsHtml}
+        ${hazardsHtml}
+        ${ballsHtml}
+        ${momentHtml}
+        <button onclick="saveHoleDetail()" style="margin-top:16px;">Save Hole</button>
+      </div>
+    `;
+  }
+
+  function vsParText(diff) {
+    if (diff === null || diff === undefined) return "–";
+    if (diff <= -2) return "Eagle 🦅";
+    if (diff === -1) return "Birdie 🐦";
+    if (diff === 0)  return "Par";
+    if (diff === 1)  return "Bogey";
+    if (diff === 2)  return "Double Bogey";
+    if (diff === 3)  return "Triple Bogey";
+    return `+${diff}`;
+  }
+
+  function switchHoleDetailPlayer(playerId) {
+    holeDetailPlayerId = playerId;
+    renderHoleDetail();
+  }
+
+  function setHoleDetailField(field, value) {
+    if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+    if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+    holeDetailData[holeDetailPlayerId][holeDetailHoleNum][field] = value;
+    renderHoleDetail();
+  }
+
+  function adjustHoleDetailScore(delta) {
+    if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+    if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+    const pd = holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+    const match = matches.find(m => m.id === holeDetailMatchId);
+    const existing = Number(((match?.holeScores || {})[holeDetailPlayerId] || {})[holeDetailHoleNum]) || 0;
+    const current = pd.score || existing || 0;
+    pd.score = Math.max(1, current + delta);
+    renderHoleDetail();
+  }
+
+  function adjustHoleDetailPutts(delta) {
+    if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+    if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+    const pd = holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+    pd.putts = Math.max(0, (pd.putts || 0) + delta);
+    renderHoleDetail();
+  }
+
+  function adjustHoleDetailBalls(delta) {
+    if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+    if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+    const pd = holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+    pd.ballsLost = Math.max(0, (pd.ballsLost || 0) + delta);
+    renderHoleDetail();
+  }
+
+  function toggleHoleDetailHazard(hazard) {
+    if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+    if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+    const pd = holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+    pd.hazards = pd.hazards || [];
+    const idx = pd.hazards.indexOf(hazard);
+    if (idx === -1) pd.hazards.push(hazard);
+    else pd.hazards.splice(idx, 1);
+    renderHoleDetail();
+  }
+
+  async function saveHoleDetail() {
+    const match = matches.find(m => m.id === holeDetailMatchId);
+    if (!match) return;
+
+    // Capture the moment text from textarea (may have changed without oninput firing)
+    const momentEl = document.getElementById("holeMomentText");
+    if (momentEl) {
+      if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+      if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+      holeDetailData[holeDetailPlayerId][holeDetailHoleNum].moment = momentEl.value;
+    }
+
+    // Write scores back to holeScores
+    const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
+    Object.entries(holeDetailData).forEach(([pid, holes]) => {
+      if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
+      Object.entries(holes).forEach(([holeNum, pd]) => {
+        if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
+      });
+    });
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
+      holeScores: updatedHoleScores,
+      holeDetail: holeDetailData,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Trigger Swami if a moment was logged
+    const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
+    if (pd?.moment && pd.moment.trim()) {
+      const player = players.find(p => p.id === holeDetailPlayerId);
+      await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
+    }
+
+    // Refresh scorecard
+    renderScoreEntry();
+    closeHoleDetail();
+  }
+
+  function closeHoleDetail() {
+    show("scoreEntryScreen");
+  }
+
+  function navHoleDetail(delta) {
+    const match = matches.find(m => m.id === holeDetailMatchId);
+    if (!match) return;
+    const holes = getScorecardForMatch(match).holes;
+    const holeNums = holes.map(h => Number(h.hole));
+    const idx = holeNums.indexOf(holeDetailHoleNum);
+    const nextIdx = idx + delta;
+    if (nextIdx >= 0 && nextIdx < holeNums.length) {
+      holeDetailHoleNum = holeNums[nextIdx];
+      renderHoleDetail();
+    }
+  }
+
   function renderStrokeDots(count) {
-    const strokeCount = Number(count || 0);
     if (!strokeCount) return "";
     const dots = Array.from({ length: Math.min(strokeCount, 3) }, function() {
       return `<span class="stroke-dot"></span>`;
@@ -3412,7 +3735,12 @@ Max 80 words total.`;
           if (Number(hole.hole) <= 9) outTotal += Number(displayed);
           else inTotal += Number(displayed);
         }
-        row += `<td><div class="score-cell-wrap">${isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : ""}<input type="text" inputmode="numeric" pattern="[0-9]*" id="score-${player.id}-${hole.hole}" value="${escapeAttr(raw)}" oninput="handleScoreInput()"></div></td>`;
+        const par = Number(hole.par) || 0;
+        const badgeHtml = raw ? scoreBadge(Number(raw), par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
+        const dotHtml = isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
+        row += `<td onclick="openHoleDetail('${activeScoreMatchId}','${player.id}',${hole.hole})" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;">
+          <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${player.id}-${hole.hole}">${badgeHtml}</div></div>
+        </td>`;
         if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
       });
       row += `<td id="ptotal-in-${player.id}">${inTotal || ""}</td><td id="ptotal-tot-${player.id}">${total || ""}</td></tr>`;
@@ -5366,6 +5694,17 @@ ${closer}`;
 
   window.testSwamiApi = testSwamiApi;
   window.runConfidenceMeter = runConfidenceMeter;
+  window.openHoleDetail = openHoleDetail;
+  window.closeHoleDetail = closeHoleDetail;
+  window.navHoleDetail = navHoleDetail;
+  window.switchHoleDetailPlayer = switchHoleDetailPlayer;
+  window.setHoleDetailField = setHoleDetailField;
+  window.adjustHoleDetailScore = adjustHoleDetailScore;
+  window.adjustHoleDetailPutts = adjustHoleDetailPutts;
+  window.adjustHoleDetailBalls = adjustHoleDetailBalls;
+  window.toggleHoleDetailHazard = toggleHoleDetailHazard;
+  window.saveHoleDetail = saveHoleDetail;
+  window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
   window.openMatchHome = openMatchHome;
