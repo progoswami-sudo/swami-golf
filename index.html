@@ -3637,7 +3637,12 @@ Max 80 words total.`;
   function renderScoreEntry() {
     const wrap = document.getElementById("scoreEntryTableWrap");
     const info = document.getElementById("scoreEntryMatchInfo");
-    if (!wrap || !info) return;
+    console.log("renderScoreEntry called — wrap:", !!wrap, "info:", !!info, "matchId:", activeScoreMatchId);
+    if (!wrap || !info) { console.warn("wrap or info not found"); return; }
+
+    // IMMEDIATE test write — if this doesn't show, something clears wrap after this runs
+    wrap.innerHTML = `<div style="color:lime;font-size:18px;font-weight:bold;padding:12px;">🟢 RENDER CALLED</div>`;
+    console.log("Set wrap innerHTML to RENDER CALLED, wrap.innerHTML length:", wrap.innerHTML.length);
 
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     if (!match) {
