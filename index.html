@@ -1175,7 +1175,10 @@
   </div>
 
   <div id="matchSetupScreen" class="hidden secondary-screen">
-    <h2 id="matchSetupTitle">Set Up Match</h2>
+    <div class="sticky-page-header">
+      <button onclick="openMatchHome()" class="secondary">Back</button>
+      <h2 id="matchSetupTitle">Set Up Match</h2>
+    </div>
 
     <div class="card">
       <label class="form-label" for="matchDate">Date</label>
@@ -1261,7 +1264,6 @@
       </div>
 
       <button onclick="saveMatch()">Save Match</button>
-      <button onclick="openMatchHome()" class="secondary">Back</button>
       <div id="confidenceMeterCard" class="dynamic-point-card hidden">
         <h3>🧠 Swami's Prediction</h3>
         <div id="confidenceMeterText" class="pulse-text" style="margin-top:8px;line-height:1.5;"></div>
@@ -2446,58 +2448,97 @@
     show("matchSetupScreen");
     loadMatchPlayerSelectors();
 
-    document.getElementById("matchDate").value = getTodayDateString();
-    populateCourseDropdown("");
-    document.getElementById("matchCourseOther").value = "";
-    populateTeeDropdown("");
-    document.getElementById("matchTeesOther").value = "";
-    if (document.getElementById("matchNumberOfHoles")) document.getElementById("matchNumberOfHoles").value = "18";
-    if (document.getElementById("matchStartingHole")) document.getElementById("matchStartingHole").value = "1";
-    document.getElementById("matchNumberOfHoles").value = "18";
-    document.getElementById("matchStartingHole").value = "1";
-    setMatchRoundValue("1");
-    document.getElementById("matchFormat").value = "Best Ball";
-    document.getElementById("matchScoringType").value = "Gross";
-    document.getElementById("matchValueType").value = "Points";
-    document.getElementById("matchSetupTitle").innerText = matchId ? "Edit Match" : "Set Up Match";
+    // Reset confidence meter
+    const cmCard = document.getElementById("confidenceMeterCard");
+    const cmBtn = document.getElementById("confidenceMeterBtn");
+    if (cmCard) cmCard.classList.add("hidden");
+    if (cmBtn) { cmBtn.disabled = false; cmBtn.innerText = "Ask Swami for a Prediction"; }
 
+    // Determine source match and mode
     let sourceMatch = null;
+    let mode = "new"; // "new" | "edit" | "copy"
 
     if (matchId) {
-      sourceMatch = matches.find(match => match.id === matchId);
+      sourceMatch = matches.find(m => m.id === matchId);
+      mode = "edit";
     } else if (copyFromId) {
-      sourceMatch = matches.find(match => match.id === copyFromId);
-      document.getElementById("matchSetupTitle").innerText = "Copy Match";
+      sourceMatch = matches.find(m => m.id === copyFromId);
+      mode = "copy";
+    }
+
+    // Set page title
+    const titleEl = document.getElementById("matchSetupTitle");
+    if (titleEl) {
+      titleEl.innerText = mode === "edit" ? "Edit Match" : "Set Up Match";
     }
 
     if (sourceMatch) {
+      // ── Pre-populate all fields from source match ──────────────────────────
+
+      // Date
       document.getElementById("matchDate").value = sourceMatch.matchDate || getTodayDateString();
+
+      // Course — populate dropdown first, THEN set tees (order matters)
       populateCourseDropdown(sourceMatch.course || "");
-      document.getElementById("matchCourseOther").value = sourceMatch.course || "";
+      const courseOther = document.getElementById("matchCourseOther");
+      if (courseOther) courseOther.value = sourceMatch.course || "";
+
+      // Tees — must come after course dropdown is populated
       populateTeeDropdown(sourceMatch.tees || "");
-      document.getElementById("matchTeesOther").value = sourceMatch.tees || "";
-      if (document.getElementById("matchNumberOfHoles")) document.getElementById("matchNumberOfHoles").value = String(sourceMatch.numberOfHoles || "18");
-      if (document.getElementById("matchStartingHole")) document.getElementById("matchStartingHole").value = String(sourceMatch.startingHole || "1");
-      document.getElementById("matchNumberOfHoles").value = String(sourceMatch.numberOfHoles || "18");
-      document.getElementById("matchStartingHole").value = String(sourceMatch.startingHole || "1");
+      const teeOther = document.getElementById("matchTeesOther");
+      if (teeOther) teeOther.value = sourceMatch.tees || "";
+
+      // Holes / Starting Hole
+      const holesEl = document.getElementById("matchNumberOfHoles");
+      const startEl = document.getElementById("matchStartingHole");
+      if (holesEl) holesEl.value = String(sourceMatch.numberOfHoles || "18");
+      if (startEl) startEl.value = String(sourceMatch.startingHole || "1");
+
+      // Round
       setMatchRoundValue(sourceMatch.round || "1");
+
+      // Format, Scoring, Value Type
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
-      if (copyFromId) {
+
+      // Render the correct value/point fields for this format
+      handleMatchFormatChange();
+
+      // Populate value settings AFTER fields are rendered
+      if (sourceMatch.valueSettings) {
+        setTimeout(() => populateMatchValueFields(sourceMatch.valueSettings), 0);
+      }
+
+      // Players — Copy clears teams so user picks fresh players; Edit restores them
+      if (mode === "copy") {
         setMultiSelectValues("matchTeamAPlayers", []);
         setMultiSelectValues("matchTeamBPlayers", []);
       } else {
         setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
         setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
       }
-    }
 
-    handleMatchFormatChange();
-
-    if (sourceMatch && sourceMatch.valueSettings) {
-      // Must run after handleMatchFormatChange which renders the fields
-      setTimeout(() => populateMatchValueFields(sourceMatch.valueSettings), 0);
+    } else {
+      // ── Brand new match — set all defaults ────────────────────────────────
+      document.getElementById("matchDate").value = getTodayDateString();
+      populateCourseDropdown("");
+      const courseOther = document.getElementById("matchCourseOther");
+      if (courseOther) courseOther.value = "";
+      populateTeeDropdown("");
+      const teeOther = document.getElementById("matchTeesOther");
+      if (teeOther) teeOther.value = "";
+      const holesEl = document.getElementById("matchNumberOfHoles");
+      const startEl = document.getElementById("matchStartingHole");
+      if (holesEl) holesEl.value = "18";
+      if (startEl) startEl.value = "1";
+      setMatchRoundValue("1");
+      document.getElementById("matchFormat").value = "Best Ball";
+      document.getElementById("matchScoringType").value = "Gross";
+      document.getElementById("matchValueType").value = "Points";
+      setMultiSelectValues("matchTeamAPlayers", []);
+      setMultiSelectValues("matchTeamBPlayers", []);
+      handleMatchFormatChange();
     }
   }
 
