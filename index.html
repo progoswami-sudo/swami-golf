@@ -1945,10 +1945,18 @@ Respond ONLY with valid JSON, nothing else:
       const raw = await callSwami(memePrompt, 100);
       console.log("Meme raw response:", raw);
       if (raw) {
-        const cleaned = raw.replace(/```json[\s\S]*?```|```/g, "").trim();
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        console.log("Meme JSON match:", jsonMatch ? jsonMatch[0] : "NO MATCH");
-        if (jsonMatch) memeData = JSON.parse(jsonMatch[0]);
+        // Strip markdown code fences then find the JSON object
+        const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        const start = stripped.indexOf("{");
+        const end = stripped.lastIndexOf("}");
+        console.log("Meme stripped, start:", start, "end:", end);
+        if (start !== -1 && end !== -1 && end > start) {
+          const jsonStr = stripped.slice(start, end + 1);
+          console.log("Meme JSON string:", jsonStr);
+          memeData = JSON.parse(jsonStr);
+        } else {
+          console.warn("No JSON object found in meme response");
+        }
       }
     } catch (e) {
       console.warn("Meme JSON parse failed:", e);
