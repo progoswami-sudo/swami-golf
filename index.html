@@ -1262,6 +1262,11 @@
 
       <button onclick="saveMatch()">Save Match</button>
       <button onclick="openMatchHome()" class="secondary">Back</button>
+      <div id="confidenceMeterCard" class="dynamic-point-card hidden">
+        <h3>🧠 Swami's Prediction</h3>
+        <div id="confidenceMeterText" class="pulse-text" style="margin-top:8px;line-height:1.5;"></div>
+      </div>
+      <button onclick="runConfidenceMeter()" class="secondary" style="background:#7c3aed;" id="confidenceMeterBtn">Ask Swami for a Prediction</button>
     </div>
   </div>
 
@@ -1667,7 +1672,27 @@
     ]
   };
 
-  function getSwamiMedia(action) {
+  async function getAiSwamiMedia(action, subject, swamiText) {
+    const tones = { schedule: "scheduling/logistics", player: "golf player personalities", team: "sports rivalries", chat: "group chat banter" };
+    const toneList = ["schedule","player","team","chat"];
+    const tone = toneList.find(t => ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action)) ? "schedule"
+      : ["playerAdd","playerEdit"].includes(action) ? "player"
+      : ["teams"].includes(action) ? "team" : "chat";
+
+    const captionPrompt = `Write a single punchy meme caption (under 12 words) for a golf trip moment. Context: ${swamiText} Action: ${action}. Subject: ${subject}. Make it feel like a real internet meme — reference pop culture, movies, sports, or viral moments if they fit. No quotes, no hashtags, just the caption text.`;
+    const titlePrompt = `Write a 2-3 word meme title (like a classic meme format name) for this golf trip moment: ${swamiText}. Think: "Distracted Boyfriend", "This Is Fine", "Drake Pointing", "Galaxy Brain". Just the title, no punctuation.`;
+
+    const [caption, title] = await Promise.all([
+      callSwami(captionPrompt, 60),
+      callSwami(titlePrompt, 30)
+    ]);
+
+    return {
+      mediaType: "image",
+      imageUrl: buildSwamiMemeSvg(title || "Swami Says", caption || swamiText.slice(0, 80), tone),
+      imageCaption: caption || ""
+    };
+  }
     const list = swamiMediaLibrary[action] || swamiMediaLibrary.userComment;
     const recentKey = `swamiGolf.${activeTripId}.recentSwamiMedia`;
     const recent = JSON.parse(localStorage.getItem(recentKey) || "[]");
@@ -2604,6 +2629,76 @@
     });
   }
 
+  async function runConfidenceMeter() {
+    const btn = document.getElementById("confidenceMeterBtn");
+    const card = document.getElementById("confidenceMeterCard");
+    const textEl = document.getElementById("confidenceMeterText");
+    if (!btn || !card || !textEl) return;
+
+    btn.disabled = true;
+    btn.innerText = "Swami is thinking...";
+    card.classList.remove("hidden");
+    textEl.innerHTML = `<em style="color:#bfdbfe;">Calculating probabilities and checking the group chat energy...</em>`;
+
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+    const course = getSelectedCourseName() || "the course";
+    const format = document.getElementById("matchFormat").value || "Best Ball";
+    const scoring = document.getElementById("matchScoringType").value || "Gross";
+
+    const teamAIds = getMultiSelectValues("matchTeamAPlayers");
+    const teamBIds = getMultiSelectValues("matchTeamBPlayers");
+    const teamAPlayers = teamAIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+    const teamBPlayers = teamBIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+
+    const tee = getTeeForMatch({ courseId: getSelectedCourseId(), teeId: getSelectedTeeId(), tees: getSelectedTeeName(), course: course });
+
+    function describePlayer(p) {
+      const ch = calculateCourseHandicap(p.handicapIndex, tee);
+      return `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI ${p.handicapIndex || "N/A"}${ch !== null ? ", CH " + ch : ""}${p.strengths && p.strengths.length ? ", " + p.strengths[0] : ""}${p.weaknesses && p.weaknesses.length ? ", weakness: " + p.weaknesses[0] : ""})`;
+    }
+
+    const teamADesc = teamAPlayers.map(describePlayer).join(", ") || "unknown players";
+    const teamBDesc = teamBPlayers.map(describePlayer).join(", ") || "unknown players";
+
+    // Past match history between these teams
+    const pastMatches = matches.filter(m => {
+      const aOverlap = (m.teamAPlayerIds || []).some(id => teamAIds.includes(id));
+      const bOverlap = (m.teamBPlayerIds || []).some(id => teamBIds.includes(id));
+      return aOverlap && bOverlap;
+    });
+    const historyNote = pastMatches.length
+      ? `Past matchups: ${teamA} won ${pastMatches.filter(m => Number(m.teamAScore||m.overallA||0) > Number(m.teamBScore||m.overallB||0)).length}, ${teamB} won ${pastMatches.filter(m => Number(m.teamBScore||m.overallB||0) > Number(m.teamAScore||m.overallA||0)).length}.`
+      : "No prior head-to-head history.";
+
+    const prompt = `You are Swami — the dry, golf-savvy, slightly savage AI oracle for a golf trip.
+
+Upcoming match:
+- Format: ${format} (${scoring})
+- Course: ${course}
+- ${teamA}: ${teamADesc}
+- ${teamB}: ${teamBDesc}
+- ${historyNote}
+
+Write a Swami pre-match prediction. Structure it exactly like this:
+Line 1: "Swami Prediction: [TeamA] XX% — [TeamB] YY%" (the two percentages must add to 100)
+Line 2-3: Two sentences of sharp, specific reasoning. Reference player names, handicaps, known weaknesses. Make it feel like it comes from someone who's watched every shot these guys have ever taken.
+Line 4: One closing trash-talk line targeting the team Swami thinks will lose. Keep it golf-specific and slightly savage.
+
+Max 80 words total.`;
+
+    const result = await callSwami(prompt, 180);
+
+    if (result) {
+      textEl.innerHTML = result.replace(/\n/g, "<br>");
+    } else {
+      textEl.innerHTML = `<em>Swami is unavailable. Probably watching someone three-putt.</em>`;
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Ask Again";
+  }
+
   function getMultiSelectValues(elementId) {
     return Array.from(document.getElementById(elementId).selectedOptions).map(option => option.value);
   }
@@ -3229,8 +3324,48 @@
       relevantMatches = matches;
     }
 
-    const body = buildRecapText(type, scopeLabel, relevantMatches);
     const title = getRecapTitle(type, scopeLabel);
+
+    // Build rich data context for Claude
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+    const teamAScore = activeTripData.teamAScore || "0";
+    const teamBScore = activeTripData.teamBScore || "0";
+
+    const matchSummaries = relevantMatches.map(m => {
+      const aPlayers = getPlayerNames(m.teamAPlayerIds || []);
+      const bPlayers = getPlayerNames(m.teamBPlayerIds || []);
+      const aScore = m.teamAScore || m.overallA || "0";
+      const bScore = m.teamBScore || m.overallB || "0";
+      return `${m.format || "Match"} at ${m.course || "TBD"} (${m.tees || "TBD"} tees, Round ${m.round || "1"}): ${teamA} [${aPlayers}] ${aScore} — ${teamB} [${bPlayers}] ${bScore}`;
+    }).join(". ");
+
+    const playerSummaries = players.map(p => {
+      return `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI: ${p.handicapIndex || "N/A"}, Team: ${p.team || "unassigned"}${p.strengths && p.strengths.length ? ", Strengths: " + p.strengths.slice(0,2).join(" & ") : ""}${p.weaknesses && p.weaknesses.length ? ", Weakness: " + p.weaknesses[0] : ""})`;
+    }).join("; ");
+
+    const recentFeedPosts = [...feedPosts]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 8)
+      .filter(p => p.type !== "admin")
+      .map(p => `${p.author}: "${p.text}"`)
+      .join(" | ");
+
+    const recapPrompts = {
+      day: `Write a Swami Golf daily recap for ${scopeLabel}. You are Swami — dry, golf-savvy, sharp wit, occasionally savage but never offensive. Like ESPN SportsCenter meets group chat roast.\n\nMatch results: ${matchSummaries || "No matches recorded today."}\nPlayers: ${playerSummaries || "No players loaded."}\nFeed highlights: ${recentFeedPosts || "No feed activity."}\nTrip score: ${teamA} ${teamAScore} — ${teamB} ${teamBScore}.\n\nStructure: punchy opening line → match/score commentary with real names → callout 1-2 players → group dynamic note → dry closing verdict. Pop culture refs welcome. Max 180 words.`,
+      round: `Write a Swami Golf round recap for ${scopeLabel}. You are Swami — dry, sharp, golf-savvy, one of the guys.\n\nMatches: ${matchSummaries || "No matches."}\nPlayers: ${playerSummaries || "None."}\nTrip score: ${teamA} ${teamAScore} — ${teamB} ${teamBScore}.\nFeed: ${recentFeedPosts || "Quiet."}\n\nInclude: score commentary, player callouts by name with handicap context, team momentum take, dry closing line. Max 160 words.`,
+      match: `Write a Swami Golf match recap. You are Swami.\n\nMatch: ${matchSummaries || "No data."}\nPlayers: ${playerSummaries || "Unknown."}\nTrip score: ${teamA} ${teamAScore} — ${teamB} ${teamBScore}.\n\nSharp and specific: reference course, format, scores, player names. One roast, one compliment, one dry verdict. Max 140 words.`,
+      trip: `Write the Swami Golf end-of-trip final report. ESPN wrap-up meets roast meets documentary narration.\n\nTrip: ${activeTripData.name || trips[activeTripId].name}\nFinal score: ${teamA} ${teamAScore} — ${teamB} ${teamBScore}\nAll matches: ${matchSummaries || "None."}\nAll players: ${playerSummaries || "None."}\nFeed highlights: ${recentFeedPosts || "None."}\nGolf rounds: ${itineraryEvents.filter(e=>e.section==="golf").length}.\n\nStructure: dramatic opening → final score verdict → MVP (by name, with reason) → Most Improved → Wildcard/most unpredictable → Quote of the trip (invent something plausible) → closing Swami note they'll screenshot.\n\nReal names throughout. Pop culture welcome. Max 250 words.`
+    };
+
+    const recapPrompt = recapPrompts[type] || recapPrompts.trip;
+
+    // Show loading state
+    const previewEl = document.getElementById("recapPreview");
+    if (previewEl) previewEl.innerHTML = `<div class="empty-state">🧠 Swami is reviewing the evidence...</div>`;
+
+    let body = await callSwami(recapPrompt, 450);
+    if (!body) body = buildRecapText(type, scopeLabel, relevantMatches); // fallback to templates
 
     const recap = {
       title,
@@ -3241,7 +3376,7 @@
     };
 
     await addDoc(recapsCollection(), recap);
-    document.getElementById("recapPreview").innerHTML = renderRecapHtml(recap);
+    if (previewEl) previewEl.innerHTML = renderRecapHtml(recap);
     await addSwamiPost("recapAdd", title);
   }
 
@@ -3919,9 +4054,69 @@ ${closer}`;
     await addDoc(feedCollection(), post);
   }
 
+  // ─── AI CORE ────────────────────────────────────────────────────────────────
+
+  async function callSwami(prompt, maxTokens = 180) {
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, maxTokens })
+      });
+      if (!res.ok) throw new Error("API error " + res.status);
+      const data = await res.json();
+      return data.text || null;
+    } catch (err) {
+      console.warn("Swami AI unavailable, using fallback:", err);
+      return null;
+    }
+  }
+
+  function buildTripContext() {
+    const tripName = activeTripData.name || trips[activeTripId].name;
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+    const teamAScore = activeTripData.teamAScore || "0";
+    const teamBScore = activeTripData.teamBScore || "0";
+    const playerList = players.map(p =>
+      `${p.name}${p.nickname ? ` "${p.nickname}"` : ""} (HI: ${p.handicapIndex || "N/A"}, Team: ${p.team || "unassigned"}${p.strengths && p.strengths.length ? ", Strengths: " + p.strengths.slice(0,2).join("/") : ""}${p.weaknesses && p.weaknesses.length ? ", Weakness: " + p.weaknesses[0] : ""})`
+    ).join("; ");
+    const recentFeed = [...feedPosts]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5)
+      .map(p => `${p.author}: "${p.text}"`)
+      .join(" | ");
+    return `Trip: ${tripName}. Teams: ${teamA} (${teamAScore} pts) vs ${teamB} (${teamBScore} pts). Players: ${playerList || "none yet"}. Recent feed: ${recentFeed || "none"}.`;
+  }
+
   async function addSwamiPost(action, subject) {
-    const text = getSwamiComment(action, subject);
-    const media = Math.random() < 0.45 ? getSwamiMedia(action) : null;
+    const ctx = buildTripContext();
+    const actionPrompts = {
+      playerAdd: `A new player just joined the golf trip: ${subject}. ${ctx} Write a short, funny, sharp Swami reaction. Reference their handicap or team if available. Use pop culture or sports references if they fit naturally. Max 2 sentences.`,
+      playerEdit: `A player's profile was just updated: ${subject}. ${ctx} Write a brief Swami reaction implying mild suspicion about why someone would edit their profile right before a trip. Max 2 sentences.`,
+      itineraryAdd: `A new event was added to the trip itinerary: "${subject}". ${ctx} Write a short Swami reaction about scheduling, adult logistics, or the chaos of group travel. Max 2 sentences.`,
+      itineraryEdit: `The itinerary event "${subject}" was just edited. ${ctx} Write a brief Swami reaction about plans changing. Max 2 sentences.`,
+      itineraryDelete: `The itinerary event "${subject}" was just deleted. ${ctx} Write a brief Swami reaction about something being removed from the schedule. Dry humor about free time or chaos. Max 2 sentences.`,
+      matchAdd: `A new match was just created: ${subject}. ${ctx} Write a short Swami pre-match comment. Reference the format, teams, or players involved if known. Max 2 sentences.`,
+      matchEdit: `A match was just edited: ${subject}. ${ctx} Write a brief Swami reaction implying negotiation or rule-lawyering happened. Max 2 sentences.`,
+      matchDelete: `A match was deleted: ${subject}. ${ctx} Write a brief Swami reaction about erasing evidence or cutting losses. Max 2 sentences.`,
+      scoreUpdate: `Scores were just updated for: ${subject}. ${ctx} Write a short Swami reaction commenting on the score update. Reference any momentum shift or team implications. Max 2 sentences.`,
+      userComment: `A trip member named ${subject} just posted in the group feed. ${ctx} Write a Swami reaction to someone posting in the group chat. Be witty about group dynamics. Max 2 sentences.`,
+      recapAdd: `A recap was just generated: "${subject}". ${ctx} Write a brief Swami teaser for the recap. Max 1-2 sentences.`,
+      momentAdd: `A match moment was just logged: "${subject}". ${ctx} Write a brief Swami reaction. Max 1 sentence.`,
+      teams: `Team names were just updated: ${subject}. ${ctx} Write a Swami reaction about the rivalry forming. Max 2 sentences.`
+    };
+
+    const aiPrompt = actionPrompts[action] || `Something happened on the golf trip: ${subject}. ${ctx} Write a brief Swami reaction. Max 2 sentences.`;
+    let text = await callSwami(aiPrompt, 150);
+    if (!text) text = getSwamiComment(action, subject); // fallback to templates
+
+    const useMedia = Math.random() < 0.45;
+    let media = null;
+    if (useMedia) {
+      media = await getAiSwamiMedia(action, subject, text);
+    }
+
     await addFeedPost("Swami Says", text, "admin", media);
   }
 
@@ -4610,6 +4805,7 @@ ${closer}`;
     return String(text == null ? "" : text).replace(/"/g, "&quot;");
   }
 
+  window.runConfidenceMeter = runConfidenceMeter;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
   window.openMatchHome = openMatchHome;
