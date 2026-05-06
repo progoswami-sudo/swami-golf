@@ -3590,6 +3590,7 @@ Max 80 words total.`;
   }
 
   function renderStrokeDots(count) {
+    const strokeCount = Number(count || 0);
     if (!strokeCount) return "";
     const dots = Array.from({ length: Math.min(strokeCount, 3) }, function() {
       return `<span class="stroke-dot"></span>`;
@@ -3637,12 +3638,7 @@ Max 80 words total.`;
   function renderScoreEntry() {
     const wrap = document.getElementById("scoreEntryTableWrap");
     const info = document.getElementById("scoreEntryMatchInfo");
-    console.log("renderScoreEntry called — wrap:", !!wrap, "info:", !!info, "matchId:", activeScoreMatchId);
-    if (!wrap || !info) { console.warn("wrap or info not found"); return; }
-
-    // IMMEDIATE test write — if this doesn't show, something clears wrap after this runs
-    wrap.innerHTML = `<div style="color:lime;font-size:18px;font-weight:bold;padding:12px;">🟢 RENDER CALLED</div>`;
-    console.log("Set wrap innerHTML to RENDER CALLED, wrap.innerHTML length:", wrap.innerHTML.length);
+    if (!wrap || !info) return;
 
     const match = matches.find(function(item) { return item.id === activeScoreMatchId; });
     if (!match) {
@@ -3771,34 +3767,28 @@ Max 80 words total.`;
     const teamAName = activeTripData.teamA || "Team A";
     const teamBName = activeTripData.teamB || "Team B";
 
-    const diagLines = [
-      `match: ${match.id}`,
-      `players: ${playersForMatch.length} — ${playersForMatch.map(p=>p.name).join(", ")||"none"}`,
-      `holes: ${holes.length}`,
-      `tee: ${tee ? "found" : "NOT FOUND"}`,
-      `rows: ${playerRows.length} chars`,
-    ];
+    const diagLines = [];
     console.log("renderScoreEntry diag:", diagLines);
     // Append diag to info so we can confirm wrap is functional
-    info.innerHTML += `<div style="margin-top:6px;font-size:11px;color:#60a5fa;">${diagLines.join(" | ")}</div>`;
+    info.innerHTML += ``;
 
     try {
-      const testRow = `<tr style="color:white;"><td style="padding:8px;color:white;">TEST CELL</td><td style="padding:8px;color:yellow;">SCORE</td></tr>`;
       wrap.innerHTML = `
-        <div style="color:lime;font-size:16px;padding:8px;">✅ WRAP IS RENDERING — ${playersForMatch.length} players, ${holes.length} holes</div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px;">
-          <table style="border-collapse:collapse;width:max-content;color:white;">
+        <div class="score-entry-wrap">
+          <table class="score-entry-table">
             ${header}
             ${statRow("PAR", "par")}
+            ${statRow("HCP", "hcp")}
+            ${statRow("YDS", "yardage")}
             ${playerRows}
-            <tr class="team-score-row"><td style="color:white;">${escapeHtml(teamAName)}</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
-            <tr class="team-score-row"><td style="color:white;">${escapeHtml(teamBName)}</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
+            <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
+            <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
           </table>
         </div>
       `;
     } catch(e) {
       console.error("renderScoreEntry failed:", e);
-      wrap.innerHTML = `<div style="color:#f87171;padding:8px;">❌ Error: ${e.message}</div>`;
+      wrap.innerHTML = `<div style="color:#f87171;padding:8px;">❌ Scorecard error: ${e.message}</div>`;
     }
   }
 
