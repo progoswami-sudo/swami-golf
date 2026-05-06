@@ -1,0 +1,8235 @@
+{
+  "schemaVersion": "1.0",
+  "libraryName": "Swami Golf Pinehurst Course Library",
+  "createdFor": "Swami Golf",
+  "createdAt": "2026-05-05",
+  "normalizationRule": "lowercase; replace & with and; replace non-alphanumeric with hyphen; trim leading/trailing hyphens",
+  "dataNotes": [
+    "Most hole-by-hole yardage/par/HCP data was transcribed from official Pinehurst course pages.",
+    "The Cradle hole-by-hole yardage is from 18Birdies; Pinehurst official page confirms total yardage/par/opening year.",
+    "No. 11 is included as a future-course placeholder."
+  ],
+  "courses": {
+    "pinehurst-no-1": {
+      "id": "pinehurst-no-1",
+      "name": "Pinehurst No. 1",
+      "location": "Pinehurst, NC",
+      "par": 70,
+      "yardage": 6089,
+      "openingYear": 1898,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-1/",
+      "notes": "",
+      "tees": {
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6089,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 401,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 466,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 173,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 6,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 167,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 8,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 9,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 367,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 410,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 12,
+              "yardage": 222,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 414,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 390,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 426,
+              "par": 5,
+              "hcp": 18
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 5806,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 365,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 458,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 143,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 6,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 161,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 8,
+              "yardage": 338,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 9,
+              "yardage": 126,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 357,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 394,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 12,
+              "yardage": 218,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 369,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 318,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 418,
+              "par": 5,
+              "hcp": 18
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5466,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 365,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 422,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 118,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 6,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 143,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 8,
+              "yardage": 338,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 9,
+              "yardage": 126,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 394,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 12,
+              "yardage": 157,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 303,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 318,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 418,
+              "par": 5,
+              "hcp": 18
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5167,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 319,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 2,
+              "yardage": 358,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 3,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 4,
+              "yardage": 422,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 5,
+              "yardage": 118,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 6,
+              "yardage": 281,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 7,
+              "yardage": 143,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 8,
+              "yardage": 249,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 9,
+              "yardage": 109,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 10,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 11,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 12,
+              "yardage": 136,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 13,
+              "yardage": 369,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 14,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 15,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 16,
+              "yardage": 303,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 17,
+              "yardage": 288,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 18,
+              "yardage": 389,
+              "par": 5,
+              "hcp": 13
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 4197,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 237,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 2,
+              "yardage": 358,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 3,
+              "yardage": 250,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 4,
+              "yardage": 340,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 5,
+              "yardage": 90,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 6,
+              "yardage": 215,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 7,
+              "yardage": 104,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 8,
+              "yardage": 249,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 9,
+              "yardage": 106,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 10,
+              "yardage": 242,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 11,
+              "yardage": 262,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 12,
+              "yardage": 136,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 13,
+              "yardage": 331,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 14,
+              "yardage": 227,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 15,
+              "yardage": 235,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 16,
+              "yardage": 227,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 17,
+              "yardage": 288,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 18,
+              "yardage": 300,
+              "par": 5,
+              "hcp": 13
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-2": {
+      "id": "pinehurst-no-2",
+      "name": "Pinehurst No. 2",
+      "location": "Pinehurst, NC",
+      "par": 70,
+      "yardage": 7588,
+      "openingYear": 1907,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-2/",
+      "notes": "",
+      "tees": {
+        "us-open": {
+          "teeName": "US Open",
+          "totalYardage": 7588,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 402,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 507,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 529,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 576,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 242,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 424,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 8,
+              "yardage": 502,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 191,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 617,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 483,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 484,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 473,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 202,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 528,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 205,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 451,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6961,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 393,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 439,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 350,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 474,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 508,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 203,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 393,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 8,
+              "yardage": 469,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 580,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 455,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 419,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 433,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 183,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 513,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 185,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 415,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "ross": {
+          "teeName": "Ross",
+          "totalYardage": 6627,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 393,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 350,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 434,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 508,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 178,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 393,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 8,
+              "yardage": 469,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 580,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 419,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 513,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 185,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6307,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 376,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 330,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 434,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 462,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 178,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 8,
+              "yardage": 440,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 455,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 12,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 419,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 478,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 162,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "tufts": {
+          "teeName": "Tufts",
+          "totalYardage": 5949,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 376,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 330,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 326,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 432,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 7,
+              "yardage": 313,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 8,
+              "yardage": 440,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 455,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 347,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 437,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 152,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5771,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 2,
+              "yardage": 390,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 3,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 4,
+              "yardage": 326,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 432,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 6,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 313,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 419,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 140,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 10,
+              "yardage": 438,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 336,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 13,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 347,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 16,
+              "yardage": 437,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 152,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5302,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 2,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 3,
+              "yardage": 283,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 4,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 417,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 6,
+              "yardage": 116,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 306,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 400,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 10,
+              "yardage": 421,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 320,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 293,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 13,
+              "yardage": 278,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 16,
+              "yardage": 411,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-3": {
+      "id": "pinehurst-no-3",
+      "name": "Pinehurst No. 3",
+      "location": "Pinehurst, NC",
+      "par": 68,
+      "yardage": 5155,
+      "openingYear": 1910,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-3/",
+      "notes": "",
+      "tees": {
+        "white": {
+          "teeName": "White",
+          "totalYardage": 5155,
+          "totalPar": 68,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 283,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 119,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 346,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 4,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 296,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 6,
+              "yardage": 166,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 8,
+              "yardage": 111,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 338,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 502,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 196,
+              "par": 3,
+              "hcp": 6
+            },
+            {
+              "hole": 13,
+              "yardage": 423,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 191,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 328,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 319,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 346,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 18,
+              "yardage": 386,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 4823,
+          "totalPar": 68,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 263,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 109,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 4,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 285,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 6,
+              "yardage": 149,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 304,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 8,
+              "yardage": 99,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 311,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 321,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 458,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 177,
+              "par": 3,
+              "hcp": 6
+            },
+            {
+              "hole": 13,
+              "yardage": 411,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 177,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 297,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 336,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 18,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 4347,
+          "totalPar": 68,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 251,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 98,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 307,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 4,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 276,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 134,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 278,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 8,
+              "yardage": 83,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 283,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 429,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 13,
+              "yardage": 403,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 128,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 15,
+              "yardage": 296,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 16,
+              "yardage": 267,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 306,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 18,
+              "yardage": 262,
+              "par": 4,
+              "hcp": 16
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 3642,
+          "totalPar": 68,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 193,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 60,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 267,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 4,
+              "yardage": 82,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 187,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 97,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 252,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 8,
+              "yardage": 76,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 244,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 238,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 389,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 119,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 13,
+              "yardage": 329,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 109,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 15,
+              "yardage": 256,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 16,
+              "yardage": 241,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 251,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 18,
+              "yardage": 252,
+              "par": 4,
+              "hcp": 16
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-4": {
+      "id": "pinehurst-no-4",
+      "name": "Pinehurst No. 4",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 7227,
+      "openingYear": 1919,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-4/",
+      "notes": "",
+      "tees": {
+        "orange": {
+          "teeName": "Orange",
+          "totalYardage": 7227,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 450,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 512,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 431,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 489,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 217,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 439,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 409,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 527,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 432,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 453,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 529,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 216,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 398,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 321,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 590,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 487,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6961,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 420,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 498,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 140,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 481,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 200,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 421,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 402,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 517,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 420,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 440,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 521,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 207,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 386,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 298,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 573,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 461,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "putter-boy": {
+          "teeName": "Putter Boy",
+          "totalYardage": 6658,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 404,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 498,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 378,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 140,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 460,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 184,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 421,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 402,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 517,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 392,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 521,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 179,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 298,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 573,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 408,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6428,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 404,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 473,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 378,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 119,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 460,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 184,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 404,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 374,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 484,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 392,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 137,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 504,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 179,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 274,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 536,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 408,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "lad": {
+          "teeName": "Lad",
+          "totalYardage": 6099,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 382,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 473,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 378,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 119,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 159,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 7,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 374,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 362,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 137,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 13,
+              "yardage": 504,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 161,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 274,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 510,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 376,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5864,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 382,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 443,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 359,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 159,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 350,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 362,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 474,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 161,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 245,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 260,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 510,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 376,
+              "par": 4,
+              "hcp": 6
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5260,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 319,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 402,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 276,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 83,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 341,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 132,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 356,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 8,
+              "yardage": 331,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 436,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 102,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 12,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 455,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 115,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 228,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 244,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 426,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 6
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-5": {
+      "id": "pinehurst-no-5",
+      "name": "Pinehurst No. 5",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 6823,
+      "openingYear": 1961,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-5/",
+      "notes": "",
+      "tees": {
+        "gold": {
+          "teeName": "Gold",
+          "totalYardage": 6823,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 410,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 485,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 393,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 425,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 166,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 409,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 377,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 430,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 9,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 371,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 185,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 523,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 188,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 436,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 505,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 388,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 18,
+              "yardage": 367,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6617,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 403,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 480,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 420,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 168,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 403,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 425,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 9,
+              "yardage": 372,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 363,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 180,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 511,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 180,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 397,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 497,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 18,
+              "yardage": 362,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6174,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 450,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 392,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 160,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 389,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 9,
+              "yardage": 363,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 334,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 158,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 479,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 161,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 471,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 360,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 18,
+              "yardage": 343,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5685,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 2,
+              "yardage": 443,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 3,
+              "yardage": 315,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 351,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 141,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 368,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 317,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 338,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 9,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 10,
+              "yardage": 300,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 311,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 138,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 439,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 121,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 350,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 420,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 18,
+              "yardage": 314,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5223,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 414,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 289,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 128,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 319,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 7,
+              "yardage": 288,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 290,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 315,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 292,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 287,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 110,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 415,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 106,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 322,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 407,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 303,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 305,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 4357,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 235,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 357,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 289,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 261,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 120,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 234,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 7,
+              "yardage": 288,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 220,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 285,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 210,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 237,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 92,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 340,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 87,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 274,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 347,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 241,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 240,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-6": {
+      "id": "pinehurst-no-6",
+      "name": "Pinehurst No. 6",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 7053,
+      "openingYear": 1975,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-6/",
+      "notes": "",
+      "tees": {
+        "gold": {
+          "teeName": "Gold",
+          "totalYardage": 7053,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 441,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 537,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 198,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 402,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 415,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 515,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 213,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 441,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 500,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 417,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 413,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 212,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 499,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 223,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 415,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 436,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6609,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 529,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 176,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 379,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 492,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 171,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 371,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 420,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 475,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 398,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 359,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 186,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 368,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 490,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 181,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 425,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6180,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 515,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 163,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 467,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 159,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 401,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 442,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 376,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 172,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 465,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 149,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 357,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 397,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "fazio": {
+          "teeName": "Fazio",
+          "totalYardage": 5907,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 461,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 136,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 467,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 159,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 442,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 146,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 465,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 149,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 332,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5683,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 461,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 136,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 5,
+              "yardage": 339,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 452,
+              "par": 5,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 403,
+              "par": 5,
+              "hcp": 18
+            },
+            {
+              "hole": 11,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 322,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 146,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 313,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 413,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 135,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 17,
+              "yardage": 332,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "cardinal": {
+          "teeName": "Cardinal",
+          "totalYardage": 5355,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 322,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 461,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 136,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 452,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 7,
+              "yardage": 131,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 294,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 335,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 403,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 11,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 269,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 146,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 272,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 413,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 16,
+              "yardage": 135,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 306,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 18,
+              "yardage": 291,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 4992,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 322,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 422,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 112,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 239,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 324,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 397,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 7,
+              "yardage": 131,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 294,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 335,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 377,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 11,
+              "yardage": 278,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 269,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 132,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 272,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 399,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 16,
+              "yardage": 92,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 306,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 18,
+              "yardage": 291,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 4200,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 234,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 330,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 112,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 239,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 5,
+              "yardage": 240,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 6,
+              "yardage": 338,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 7,
+              "yardage": 131,
+              "par": 3,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 275,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 250,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 314,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 11,
+              "yardage": 278,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 200,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 13,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 272,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 15,
+              "yardage": 340,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 16,
+              "yardage": 92,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 235,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 18,
+              "yardage": 220,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-7": {
+      "id": "pinehurst-no-7",
+      "name": "Pinehurst No. 7",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 7216,
+      "openingYear": 1986,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-7/",
+      "notes": "",
+      "tees": {
+        "gold": {
+          "teeName": "Gold",
+          "totalYardage": 7216,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 520,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 462,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 406,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 418,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 205,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 479,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 394,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 543,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 191,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 399,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 421,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 525,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 207,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 408,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 435,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 197,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 406,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 600,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6824,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 493,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 440,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 405,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 179,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 463,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 365,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 517,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 395,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 503,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 189,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 388,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 413,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 177,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 392,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 574,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "jones": {
+          "teeName": "Jones",
+          "totalYardage": 6585,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 493,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 405,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 438,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 365,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 517,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 503,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 388,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 177,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 373,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 528,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6347,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 476,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 367,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 386,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 438,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 495,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 149,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 373,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 528,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "fairwoods": {
+          "teeName": "Fairwoods",
+          "totalYardage": 6103,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 476,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 367,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 495,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 153,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 380,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 98,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 128,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 528,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5709,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 460,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 391,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 295,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 111,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 291,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 445,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 124,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 431,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 98,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 128,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 490,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "green-red": {
+          "teeName": "Green/Red",
+          "totalYardage": 5373,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 420,
+              "par": 5,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 3,
+              "yardage": 295,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 4,
+              "yardage": 340,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 5,
+              "yardage": 111,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 261,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 445,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 10,
+              "yardage": 294,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 12,
+              "yardage": 431,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 13,
+              "yardage": 98,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 14,
+              "yardage": 314,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 326,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 16,
+              "yardage": 128,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 17,
+              "yardage": 308,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 18,
+              "yardage": 490,
+              "par": 5,
+              "hcp": 12
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5183,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 420,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 2,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 285,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 322,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 103,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 261,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 8,
+              "yardage": 402,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 9,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 294,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 286,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 405,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 13,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 314,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 15,
+              "yardage": 326,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 117,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 308,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 460,
+              "par": 5,
+              "hcp": 6
+            }
+          ]
+        },
+        "fairlady": {
+          "teeName": "Fairlady",
+          "totalYardage": 4453,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 420,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 2,
+              "yardage": 213,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 285,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 217,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 103,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 228,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 261,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 8,
+              "yardage": 402,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 9,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 294,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 286,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 305,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 13,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 314,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 15,
+              "yardage": 233,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 117,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 217,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 354,
+              "par": 5,
+              "hcp": 6
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 3833,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 318,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 2,
+              "yardage": 213,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 184,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 217,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 103,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 228,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 215,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 8,
+              "yardage": 305,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 9,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 10,
+              "yardage": 188,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 229,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 12,
+              "yardage": 305,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 13,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 203,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 15,
+              "yardage": 233,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 117,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 17,
+              "yardage": 217,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 18,
+              "yardage": 354,
+              "par": 5,
+              "hcp": 6
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-8": {
+      "id": "pinehurst-no-8",
+      "name": "Pinehurst No. 8",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 7099,
+      "openingYear": 1996,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-8/",
+      "notes": "",
+      "tees": {
+        "gold": {
+          "teeName": "Gold",
+          "totalYardage": 7099,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 361,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 559,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 382,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 464,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 149,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 605,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 370,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 236,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 442,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 441,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 579,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 373,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 204,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 404,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 187,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 398,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 500,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 445,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6694,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 334,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 532,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 374,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 437,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 138,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 585,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 346,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 204,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 416,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 416,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 573,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 181,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 363,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 368,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 489,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 420,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6311,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 502,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 408,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 115,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 565,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 181,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 392,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 550,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 335,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 363,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 325,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 417,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "centennial": {
+          "teeName": "Centennial",
+          "totalYardage": 6012,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 502,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 339,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 406,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 116,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 453,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 155,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 328,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 513,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 320,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 145,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 332,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 464,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 396,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5805,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 302,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 492,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 339,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 379,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 5,
+              "yardage": 98,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 453,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 313,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 155,
+              "par": 3,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 328,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 513,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 297,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 132,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 14,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 15,
+              "yardage": 131,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 16,
+              "yardage": 311,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 456,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 396,
+              "par": 4,
+              "hcp": 2
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 5153,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 281,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 2,
+              "yardage": 418,
+              "par": 5,
+              "hcp": 7
+            },
+            {
+              "hole": 3,
+              "yardage": 301,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 338,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 94,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 6,
+              "yardage": 450,
+              "par": 5,
+              "hcp": 3
+            },
+            {
+              "hole": 7,
+              "yardage": 271,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 81,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 9,
+              "yardage": 323,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 339,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 11,
+              "yardage": 429,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 12,
+              "yardage": 289,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 126,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 307,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 15,
+              "yardage": 125,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 16,
+              "yardage": 286,
+              "par": 4,
+              "hcp": 10
+            },
+            {
+              "hole": 17,
+              "yardage": 399,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 18,
+              "yardage": 296,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-9": {
+      "id": "pinehurst-no-9",
+      "name": "Pinehurst No. 9",
+      "location": "Pinehurst, NC",
+      "par": 72,
+      "yardage": 7106,
+      "openingYear": 2014,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-9/",
+      "notes": "Pinehurst page states No. 9 is closed for renovations until August 2026.",
+      "tees": {
+        "gold": {
+          "teeName": "Gold",
+          "totalYardage": 7106,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 190,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 404,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 572,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 431,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 6,
+              "yardage": 421,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 419,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 536,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 176,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 10,
+              "yardage": 515,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 423,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 175,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 437,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 417,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 530,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 384,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 17,
+              "yardage": 219,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 446,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 6607,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 394,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 180,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 548,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 389,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 6,
+              "yardage": 389,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 373,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 503,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 160,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 10,
+              "yardage": 490,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 390,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 160,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 396,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 402,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 503,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 357,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 17,
+              "yardage": 195,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 414,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6147,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 168,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 527,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 6,
+              "yardage": 361,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 488,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 142,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 10,
+              "yardage": 457,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 349,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 375,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 479,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 317,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 17,
+              "yardage": 179,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "national": {
+          "teeName": "National",
+          "totalYardage": 5831,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 296,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 168,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 498,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 6,
+              "yardage": 361,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 355,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 488,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 10,
+              "yardage": 423,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 337,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 349,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 479,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 317,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 17,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 341,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5538,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 296,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 161,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 304,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 4,
+              "yardage": 498,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 6,
+              "yardage": 316,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 7,
+              "yardage": 320,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 453,
+              "par": 5,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 10,
+              "yardage": 423,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 314,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 132,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 326,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 14,
+              "yardage": 329,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 15,
+              "yardage": 404,
+              "par": 5,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 17,
+              "yardage": 148,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 18,
+              "yardage": 341,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 4879,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 270,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 102,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 269,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 414,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 307,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 7,
+              "yardage": 275,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 386,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 370,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 291,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 101,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 277,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 318,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 359,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 268,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 139,
+              "par": 3,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 332,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "golden-bear": {
+          "teeName": "Golden Bear",
+          "totalYardage": 4302,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 270,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 102,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 269,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 274,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 307,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 310,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 7,
+              "yardage": 218,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 306,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 276,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 291,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 101,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 215,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 318,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 300,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 268,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 139,
+              "par": 3,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 247,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        },
+        "yellow": {
+          "teeName": "Yellow",
+          "totalYardage": 3767,
+          "totalPar": 72,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 231,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 102,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 3,
+              "yardage": 221,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 4,
+              "yardage": 274,
+              "par": 5,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 202,
+              "par": 4,
+              "hcp": 17
+            },
+            {
+              "hole": 6,
+              "yardage": 219,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 7,
+              "yardage": 218,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 8,
+              "yardage": 306,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 91,
+              "par": 3,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 276,
+              "par": 5,
+              "hcp": 10
+            },
+            {
+              "hole": 11,
+              "yardage": 237,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 12,
+              "yardage": 101,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 13,
+              "yardage": 215,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 14,
+              "yardage": 214,
+              "par": 4,
+              "hcp": 16
+            },
+            {
+              "hole": 15,
+              "yardage": 300,
+              "par": 5,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 174,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 139,
+              "par": 3,
+              "hcp": 6
+            },
+            {
+              "hole": 18,
+              "yardage": 247,
+              "par": 4,
+              "hcp": 14
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-10": {
+      "id": "pinehurst-no-10",
+      "name": "Pinehurst No. 10",
+      "location": "Pinehurst, NC",
+      "par": 70,
+      "yardage": 7020,
+      "openingYear": 2024,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-10/",
+      "notes": "",
+      "tees": {
+        "blue": {
+          "teeName": "Blue",
+          "totalYardage": 7020,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 447,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 182,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 555,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 400,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 489,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 150,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 468,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 634,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 182,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 544,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 508,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 264,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 477,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 175,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 433,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "blue-white": {
+          "teeName": "Blue/White",
+          "totalYardage": 6709,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 400,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 182,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 532,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 342,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 400,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 437,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 150,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 439,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 585,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 544,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 483,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 224,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 385,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 443,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 175,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 433,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "white": {
+          "teeName": "White",
+          "totalYardage": 6439,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 400,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 163,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 532,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 308,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 374,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 437,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 357,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 439,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 585,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 170,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 494,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 483,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 224,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 361,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 443,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 142,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 405,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "white-green": {
+          "teeName": "White/Green",
+          "totalYardage": 6111,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 351,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 163,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 492,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 308,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 374,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 415,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 357,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 431,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 536,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 147,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 494,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 448,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 213,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 361,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 142,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 405,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "green": {
+          "teeName": "Green",
+          "totalYardage": 5785,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 351,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 129,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 492,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 300,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 348,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 415,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 268,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 431,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 536,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 147,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 450,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 448,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 213,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 352,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 107,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "green-red": {
+          "teeName": "Green/Red",
+          "totalYardage": 5233,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 336,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 2,
+              "yardage": 129,
+              "par": 3,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 443,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 4,
+              "yardage": 300,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 5,
+              "yardage": 348,
+              "par": 4,
+              "hcp": 9
+            },
+            {
+              "hole": 6,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 268,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 9,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 428,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 11,
+              "yardage": 123,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 12,
+              "yardage": 450,
+              "par": 5,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 16,
+              "yardage": 312,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 107,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 8
+            }
+          ]
+        },
+        "green-red-w": {
+          "teeName": "Green/Red (W)",
+          "totalYardage": 5233,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 336,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 129,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 443,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 300,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 5,
+              "yardage": 348,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 268,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 428,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 123,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 450,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 13,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 353,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 312,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 107,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 345,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        },
+        "red": {
+          "teeName": "Red",
+          "totalYardage": 4985,
+          "totalPar": 70,
+          "source": "pinehurst.com",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 336,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 2,
+              "yardage": 100,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 3,
+              "yardage": 443,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 4,
+              "yardage": 260,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 5,
+              "yardage": 306,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 7,
+              "yardage": 82,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 8,
+              "yardage": 242,
+              "par": 4,
+              "hcp": 11
+            },
+            {
+              "hole": 9,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 10,
+              "yardage": 428,
+              "par": 5,
+              "hcp": 14
+            },
+            {
+              "hole": 11,
+              "yardage": 123,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 12,
+              "yardage": 415,
+              "par": 5,
+              "hcp": 6
+            },
+            {
+              "hole": 13,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 14,
+              "yardage": 174,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 319,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 16,
+              "yardage": 312,
+              "par": 4,
+              "hcp": 12
+            },
+            {
+              "hole": 17,
+              "yardage": 101,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 327,
+              "par": 4,
+              "hcp": 4
+            }
+          ]
+        }
+      }
+    },
+    "the-cradle": {
+      "id": "the-cradle",
+      "name": "The Cradle",
+      "location": "Pinehurst, NC",
+      "par": 27,
+      "yardage": 789,
+      "openingYear": 2017,
+      "status": "active",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/cradle-short-course/",
+      "notes": "Pinehurst official page confirms total yardage/par/opening year; hole-by-hole yardages are from 18Birdies because Pinehurst page did not expose a hole table in the available text.",
+      "tees": {
+        "tee": {
+          "teeName": "Tee",
+          "totalYardage": 789,
+          "totalPar": 27,
+          "source": "18birdies.com; Pinehurst confirms total 789 yards/par 27",
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 113,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 2,
+              "yardage": 85,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 3,
+              "yardage": 66,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 4,
+              "yardage": 127,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 5,
+              "yardage": 56,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 6,
+              "yardage": 58,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 7,
+              "yardage": 92,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 8,
+              "yardage": 80,
+              "par": 3,
+              "hcp": 0
+            },
+            {
+              "hole": 9,
+              "yardage": 112,
+              "par": 3,
+              "hcp": 0
+            }
+          ]
+        }
+      }
+    },
+    "pinehurst-no-11": {
+      "id": "pinehurst-no-11",
+      "name": "Pinehurst No. 11",
+      "location": "Pinehurst, NC",
+      "par": null,
+      "yardage": null,
+      "openingYear": 2027,
+      "status": "future",
+      "sourceUrl": "https://www.pinehurst.com/golf/courses/no-11/",
+      "notes": "Future course. Pinehurst listed opening year 2027 with par/yardage N/A at time of library creation.",
+      "tees": {}
+    }
+  }
+}
