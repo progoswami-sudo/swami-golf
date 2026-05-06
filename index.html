@@ -1759,263 +1759,208 @@
     ]
   };
 
-  function buildSwamiMeme(template, lines) {
-    // Pure SVG memes — no external images, no CORS, always works
-    const t = template || "drake";
-    const l = lines || [];
+  // ── Real meme photos via server-side proxy (bypasses CORS) ──────────────────
+  // Images from imgflip's stable CDN — the actual recognizable meme photos
+  const MEME_TEMPLATES = {
+    drake: {
+      url: "https://i.imgflip.com/30b1gx.jpg",
+      textStyle: "classic",  // white Impact text top/bottom
+      boxes: [
+        { x: 0.52, y: 0.02, w: 0.46, h: 0.46, align: "left",   valign: "middle" },
+        { x: 0.52, y: 0.52, w: 0.46, h: 0.46, align: "left",   valign: "middle" }
+      ]
+    },
+    "distracted-boyfriend": {
+      url: "https://i.imgflip.com/1ur9b0.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0,  y: 0.6,  w: 0.32, h: 0.35, align: "center", valign: "bottom" },
+        { x: 0.35, y: 0.0,  w: 0.3,  h: 0.35, align: "center", valign: "top"    },
+        { x: 0.68, y: 0.45, w: 0.3,  h: 0.35, align: "center", valign: "middle" }
+      ]
+    },
+    "this-is-fine": {
+      url: "https://i.imgflip.com/wxica.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.18, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.18, align: "center", valign: "middle" }
+      ]
+    },
+    "two-buttons": {
+      url: "https://i.imgflip.com/1g8my4.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0,  y: 0.0, w: 0.48, h: 0.25, align: "center", valign: "middle" },
+        { x: 0.52, y: 0.0, w: 0.48, h: 0.25, align: "center", valign: "middle" }
+      ]
+    },
+    "change-my-mind": {
+      url: "https://i.imgflip.com/24y43o.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.25, y: 0.55, w: 0.5, h: 0.3, align: "center", valign: "middle" }
+      ]
+    },
+    "success-kid": {
+      url: "https://i.imgflip.com/1bhk.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
+      ]
+    },
+    "panik-kalm": {
+      url: "https://i.imgflip.com/3qqcmh.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.55, y: 0.05, w: 0.42, h: 0.38, align: "center", valign: "middle" },
+        { x: 0.55, y: 0.55, w: 0.42, h: 0.38, align: "center", valign: "middle" }
+      ]
+    },
+    "uno-reverse": {
+      url: "https://i.imgflip.com/3oevdk.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
+      ]
+    },
+    "gru-plan": {
+      url: "https://i.imgflip.com/26am.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.52, y: 0.01, w: 0.46, h: 0.23, align: "center", valign: "middle" },
+        { x: 0.52, y: 0.26, w: 0.46, h: 0.23, align: "center", valign: "middle" },
+        { x: 0.52, y: 0.51, w: 0.46, h: 0.23, align: "center", valign: "middle" },
+        { x: 0.52, y: 0.76, w: 0.46, h: 0.23, align: "center", valign: "middle" }
+      ]
+    }
+  };
 
-    const memes = {
-      drake: () => {
-        const top = (l[0] || "").toUpperCase();
-        const bot = (l[1] || "").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480">
-          <rect width="480" height="240" fill="#1a1a2e"/>
-          <rect y="240" width="480" height="240" fill="#16213e"/>
-          <rect x="0" y="235" width="480" height="10" fill="#0f3460"/>
-          <!-- Top panel: NO (red X) -->
-          <circle cx="90" cy="120" r="55" fill="#dc2626" opacity="0.2"/>
-          <text x="90" y="135" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="64" fill="#dc2626">✗</text>
-          <text x="260" y="100" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="white" dominant-baseline="middle">
-            ${svgWrapText(top, 200, 22).map((line, i) => `<tspan x="260" dy="${i === 0 ? 0 : 26}">${escSvg(line)}</tspan>`).join("")}
-          </text>
-          <!-- Bottom panel: YES (green check) -->
-          <circle cx="90" cy="360" r="55" fill="#16a34a" opacity="0.2"/>
-          <text x="90" y="378" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="64" fill="#16a34a">✓</text>
-          <text x="260" y="340" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="white" dominant-baseline="middle">
-            ${svgWrapText(bot, 200, 22).map((line, i) => `<tspan x="260" dy="${i === 0 ? 0 : 26}">${escSvg(line)}</tspan>`).join("")}
-          </text>
-          <text x="240" y="478" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#64748b">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "this-is-fine": () => {
-        const top = (l[0] || "THIS IS FINE").toUpperCase();
-        const bot = (l[1] || "").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320">
-          <rect width="480" height="320" fill="#b45309"/>
-          <rect width="480" height="320" fill="url(#fire)"/>
-          <defs>
-            <radialGradient id="fire" cx="50%" cy="100%" r="80%">
-              <stop offset="0%" stop-color="#dc2626" stop-opacity="0.7"/>
-              <stop offset="60%" stop-color="#f97316" stop-opacity="0.4"/>
-              <stop offset="100%" stop-color="#b45309" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <!-- Flames -->
-          <ellipse cx="80" cy="260" rx="40" ry="70" fill="#ef4444" opacity="0.6"/>
-          <ellipse cx="200" cy="280" rx="50" ry="55" fill="#f97316" opacity="0.7"/>
-          <ellipse cx="350" cy="265" rx="45" ry="65" fill="#ef4444" opacity="0.6"/>
-          <ellipse cx="440" cy="275" rx="35" ry="50" fill="#f97316" opacity="0.5"/>
-          <!-- Dog head (simplified) -->
-          <circle cx="100" cy="200" r="38" fill="#d97706"/>
-          <circle cx="86" cy="188" r="7" fill="#1e1b4b"/>
-          <circle cx="114" cy="188" r="7" fill="#1e1b4b"/>
-          <path d="M88 208 Q100 218 112 208" stroke="#1e1b4b" stroke-width="3" fill="none"/>
-          <!-- Coffee mug -->
-          <rect x="68" y="218" width="30" height="24" rx="3" fill="#f8fafc"/>
-          <path d="M98 224 Q108 228 98 234" stroke="#f8fafc" stroke-width="3" fill="none"/>
-          <!-- Text -->
-          <rect x="0" y="10" width="480" height="60" fill="rgba(0,0,0,0.55)" rx="0"/>
-          <text x="240" y="48" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="30" fill="white" stroke="black" stroke-width="1.5">${escSvg(top)}</text>
-          ${bot ? `<rect x="0" y="260" width="480" height="50" fill="rgba(0,0,0,0.55)"/>
-          <text x="240" y="292" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="26" fill="white" stroke="black" stroke-width="1.5">${escSvg(bot)}</text>` : ""}
-          <text x="240" y="318" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#92400e">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "two-buttons": () => {
-        const a = (l[0] || "OPTION A").toUpperCase();
-        const b = (l[1] || "OPTION B").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
-          <rect width="480" height="360" fill="#1e293b"/>
-          <!-- Sweating figure (simplified) -->
-          <circle cx="240" cy="200" r="50" fill="#f8c471"/>
-          <circle cx="224" cy="188" r="7" fill="#1e293b"/>
-          <circle cx="256" cy="188" r="7" fill="#1e293b"/>
-          <ellipse cx="222" cy="190" rx="3" ry="5" fill="#3b82f6" opacity="0.7"/>
-          <ellipse cx="258" cy="190" rx="3" ry="5" fill="#3b82f6" opacity="0.7"/>
-          <path d="M222 212 Q240 228 258 212" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <!-- Buttons -->
-          <rect x="30" y="30" width="160" height="80" rx="10" fill="#3b82f6"/>
-          <text x="110" y="75" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="17" fill="white">${svgWrapText(a, 140, 17).map((line, i) => `<tspan x="110" dy="${i === 0 ? 0 : 20}">${escSvg(line)}</tspan>`).join("")}</text>
-          <rect x="290" y="30" width="160" height="80" rx="10" fill="#ef4444"/>
-          <text x="370" y="75" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="17" fill="white">${svgWrapText(b, 140, 17).map((line, i) => `<tspan x="370" dy="${i === 0 ? 0 : 20}">${escSvg(line)}</tspan>`).join("")}</text>
-          <!-- Arrows pointing to figure -->
-          <line x1="160" y1="90" x2="210" y2="170" stroke="white" stroke-width="3" marker-end="url(#arr)"/>
-          <line x1="320" y1="90" x2="270" y2="170" stroke="white" stroke-width="3" marker-end="url(#arr)"/>
-          <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="white"/></marker></defs>
-          <text x="240" y="290" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="18" fill="#94a3b8">IMPOSSIBLE CHOICE</text>
-          <text x="240" y="358" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#475569">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "change-my-mind": () => {
-        const claim = l[0] || "Swami is always right";
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320">
-          <rect width="480" height="320" fill="#f1f5f9"/>
-          <!-- Table -->
-          <rect x="60" y="200" width="360" height="16" rx="4" fill="#78350f"/>
-          <rect x="80" y="216" width="20" height="80" fill="#92400e"/>
-          <rect x="380" y="216" width="20" height="80" fill="#92400e"/>
-          <!-- Sign on table -->
-          <rect x="110" y="130" width="260" height="80" rx="6" fill="white" stroke="#cbd5e1" stroke-width="2"/>
-          <text x="240" y="160" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="18" fill="#0f172a">${svgWrapText(claim.toUpperCase(), 230, 18).map((line, i) => `<tspan x="240" dy="${i === 0 ? 0 : 22}">${escSvg(line)}</tspan>`).join("")}</text>
-          <text x="240" y="225" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#64748b">CHANGE MY MIND</text>
-          <!-- Seated figure -->
-          <circle cx="240" cy="80" r="35" fill="#f8c471"/>
-          <circle cx="228" cy="72" r="5" fill="#1e293b"/>
-          <circle cx="252" cy="72" r="5" fill="#1e293b"/>
-          <path d="M228 92 Q240 102 252 92" stroke="#1e293b" stroke-width="2.5" fill="none"/>
-          <text x="240" y="318" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#94a3b8">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "success-kid": () => {
-        const top = (l[0] || "SUCCESS").toUpperCase();
-        const bot = (l[1] || "").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
-          <rect width="480" height="360" fill="#0ea5e9"/>
-          <!-- Beach/sky gradient -->
-          <rect y="240" width="480" height="120" fill="#d97706" opacity="0.6"/>
-          <!-- Kid fist (simplified) -->
-          <circle cx="240" cy="200" r="55" fill="#f8c471"/>
-          <circle cx="222" cy="186" r="7" fill="#1e293b"/>
-          <circle cx="258" cy="186" r="7" fill="#1e293b"/>
-          <path d="M220 210 Q240 228 260 210" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <!-- Fist raised -->
-          <rect x="215" y="240" width="50" height="40" rx="8" fill="#f8c471"/>
-          <rect x="218" y="230" width="12" height="20" rx="4" fill="#f8c471"/>
-          <rect x="234" y="228" width="12" height="22" rx="4" fill="#f8c471"/>
-          <rect x="215" y="252" width="50" height="12" rx="4" fill="#e8a44a"/>
-          <!-- Text bars -->
-          <rect x="0" y="8" width="480" height="58" fill="rgba(0,0,0,0.55)"/>
-          <text x="240" y="44" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="28" fill="white" stroke="black" stroke-width="1.5">${escSvg(top)}</text>
-          ${bot ? `<rect x="0" y="294" width="480" height="58" fill="rgba(0,0,0,0.55)"/>
-          <text x="240" y="330" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="28" fill="white" stroke="black" stroke-width="1.5">${escSvg(bot)}</text>` : ""}
-          <text x="240" y="358" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "panik-kalm": () => {
-        const panik = (l[0] || "PANIK").toUpperCase();
-        const kalm = (l[1] || "KALM").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 260" width="480" height="260">
-          <!-- Left panel: PANIK -->
-          <rect width="240" height="260" fill="#7f1d1d"/>
-          <circle cx="120" cy="110" r="48" fill="#f8c471"/>
-          <path d="M96 90 Q100 82 108 90" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <path d="M132 90 Q136 82 144 90" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <ellipse cx="118" cy="112" rx="6" ry="8" fill="#1e293b"/>
-          <ellipse cx="122" cy="112" rx="6" ry="8" fill="#1e293b"/>
-          <path d="M104 132 Q120 122 136 132" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <rect x="0" y="200" width="240" height="50" fill="rgba(0,0,0,0.5)"/>
-          <text x="120" y="233" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="#ef4444">${escSvg(panik)}</text>
-          <!-- Right panel: KALM -->
-          <rect x="240" width="240" height="260" fill="#14532d"/>
-          <circle cx="360" cy="110" r="48" fill="#f8c471"/>
-          <circle cx="346" cy="98" r="7" fill="#1e293b"/>
-          <circle cx="374" cy="98" r="7" fill="#1e293b"/>
-          <path d="M344 126 Q360 140 376 126" stroke="#1e293b" stroke-width="3" fill="none"/>
-          <rect x="240" y="200" width="240" height="50" fill="rgba(0,0,0,0.5)"/>
-          <text x="360" y="233" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="#4ade80">${escSvg(kalm)}</text>
-          <!-- Divider -->
-          <line x1="240" y1="0" x2="240" y2="260" stroke="white" stroke-width="3"/>
-          <text x="240" y="258" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.4)">SWAMI GOLF</text>
-        </svg>`;
-      },
-
-      "uno-reverse": () => {
-        const top = (l[0] || "").toUpperCase();
-        const bot = (l[1] || "UNO REVERSE").toUpperCase();
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
-          <rect width="480" height="360" fill="#1e1b4b"/>
-          <!-- Card -->
-          <rect x="120" y="40" width="240" height="280" rx="20" fill="#dc2626" stroke="white" stroke-width="4"/>
-          <ellipse cx="240" cy="180" rx="90" ry="110" fill="#b91c1c" stroke="white" stroke-width="2"/>
-          <text x="240" y="155" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="36" fill="white">↺</text>
-          <text x="240" y="200" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="20" fill="white">REVERSE</text>
-          <text x="140" y="80" font-family="Impact,Arial Black,sans-serif" font-size="28" fill="white">↺</text>
-          <text x="340" y="310" text-anchor="end" font-family="Impact,Arial Black,sans-serif" font-size="28" fill="white" transform="rotate(180 340 305)">↺</text>
-          ${top ? `<rect x="0" y="4" width="480" height="50" fill="rgba(0,0,0,0.6)" rx="4"/>
-          <text x="240" y="36" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="white" stroke="black" stroke-width="1">${escSvg(top)}</text>` : ""}
-          <rect x="0" y="306" width="480" height="50" fill="rgba(0,0,0,0.6)"/>
-          <text x="240" y="338" text-anchor="middle" font-family="Impact,Arial Black,sans-serif" font-size="22" fill="white" stroke="black" stroke-width="1">${escSvg(bot)}</text>
-          <text x="240" y="358" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,0.3)">SWAMI GOLF</text>
-        </svg>`;
-      }
-    };
-
-    const fn = memes[t] || memes["this-is-fine"];
-    const svgStr = fn();
-    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svgStr);
+  async function fetchMemeAsDataUrl(imgUrl) {
+    try {
+      const res = await fetch(`/api/meme-proxy?url=${encodeURIComponent(imgUrl)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.dataUrl || null;
+    } catch (e) {
+      console.warn("Meme proxy fetch failed:", e);
+      return null;
+    }
   }
 
-  function svgWrapText(text, maxWidth, fontSize) {
-    // Approximate character-based wrapping (SVG doesn't do automatic wrapping)
-    const charsPerLine = Math.floor(maxWidth / (fontSize * 0.6));
-    const words = String(text || "").split(" ");
-    const lines = [];
-    let current = "";
-    words.forEach(word => {
-      if ((current + " " + word).trim().length > charsPerLine && current) {
-        lines.push(current.trim());
-        current = word;
-      } else {
-        current = (current + " " + word).trim();
-      }
+  async function buildMemeCanvas(templateKey, lines) {
+    const tmpl = MEME_TEMPLATES[templateKey];
+    if (!tmpl) return null;
+
+    const dataUrl = await fetchMemeAsDataUrl(tmpl.url);
+    if (!dataUrl) return null;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const W = img.naturalWidth  || 600;
+        const H = img.naturalHeight || 600;
+        const canvas = document.createElement("canvas");
+        canvas.width  = W;
+        canvas.height = H;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        tmpl.boxes.forEach((box, i) => {
+          const text = (lines[i] || "").toUpperCase().trim();
+          if (!text) return;
+
+          const bx = box.x * W,  by = box.y * H;
+          const bw = box.w * W,  bh = box.h * H;
+
+          // Auto-size font to fit width
+          let fSize = Math.max(16, Math.floor(W / 12));
+          ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
+          while (ctx.measureText(text).width > bw - 8 && fSize > 12) {
+            fSize -= 2;
+            ctx.font = `900 ${fSize}px Impact, Arial Black, sans-serif`;
+          }
+
+          // Vertical position within box
+          const ty = box.valign === "top"    ? by + fSize :
+                     box.valign === "bottom" ? by + bh - 6 :
+                                               by + bh / 2 + fSize * 0.35;
+
+          const tx = box.align === "center" ? bx + bw / 2 : bx + 6;
+          ctx.textAlign    = box.align === "center" ? "center" : "left";
+          ctx.textBaseline = "alphabetic";
+
+          // Black outline
+          ctx.strokeStyle = "black";
+          ctx.lineWidth   = Math.max(4, fSize / 6);
+          ctx.lineJoin    = "round";
+          ctx.strokeText(text, tx, ty);
+
+          // White fill
+          ctx.fillStyle = "white";
+          ctx.fillText(text, tx, ty);
+        });
+
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
     });
-    if (current) lines.push(current.trim());
-    return lines.length ? lines : [""];
-  }
-
-  function escSvg(text) {
-    return String(text || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
   }
 
   async function getAiSwamiMedia(action, subject, swamiText) {
-    const templateKeys = "drake, this-is-fine, two-buttons, change-my-mind, success-kid, panik-kalm, uno-reverse";
+    const templateKeys = Object.keys(MEME_TEMPLATES).join(", ");
     const memePrompt = `Pick a meme template and write text for this golf trip moment: "${swamiText}"
 
 Available templates: ${templateKeys}
 
 Guide:
-- drake = rejecting sensible thing, approving dumb thing (2 lines)
-- this-is-fine = denial while chaos unfolds (1-2 lines)
-- two-buttons = sweating over impossible choice (2 lines, one per button)
-- change-my-mind = bold unprovable golf claim (1 line)
-- success-kid = small victory, huge satisfaction (1-2 lines)
-- panik-kalm = panic then calm or calm then panic (2 lines)
-- uno-reverse = turning something back on someone (1-2 lines)
+- drake = rejecting sensible thing (top), approving dumb thing (bottom) — 2 lines
+- distracted-boyfriend = ignoring one thing for another — 3 labels: [ignored], [distracted by], [the person]
+- this-is-fine = denial while everything burns — 1-2 lines
+- two-buttons = sweating over impossible choice — 2 lines (one per button)
+- change-my-mind = bold unprovable golf claim — 1 line for the sign
+- success-kid = small victory, huge satisfaction — top and bottom
+- panik-kalm = panic/calm reaction — 2 lines (top panel, bottom panel)
+- uno-reverse = turning something back — 1-2 lines
+- gru-plan = plan that backfires — 4 lines (steps 1, 2, 3 same as step 2 but realized)
 
-Rules: max 5 words per line, golf-trip specific, use player names if given, be funny
-Respond ONLY with valid JSON:
+Rules: max 6 words per line, golf-trip specific, use real player names if available, be specific not generic
+Respond ONLY with valid JSON, nothing else:
 {"template":"template-key","lines":["line1","line2"]}`;
 
     let memeData = null;
     try {
-      const raw = await callSwami(memePrompt, 80);
+      const raw = await callSwami(memePrompt, 100);
       if (raw) {
-        const cleaned = raw.replace(/```json|```/g, "").trim();
-        memeData = JSON.parse(cleaned);
+        const cleaned = raw.replace(/```json[\s\S]*?```|```/g, "").trim();
+        // Find JSON object in response even if there's extra text
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) memeData = JSON.parse(jsonMatch[0]);
       }
     } catch (e) {
       console.warn("Meme JSON parse failed:", e);
     }
 
     if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
-      const imageUrl = buildSwamiMeme(memeData.template, memeData.lines);
-      return {
-        mediaType: "image",
-        imageUrl,
-        imageCaption: memeData.lines.filter(Boolean).join(" / ")
-      };
+      try {
+        const imageUrl = await buildMemeCanvas(memeData.template, memeData.lines);
+        if (imageUrl) {
+          return {
+            mediaType: "image",
+            imageUrl,
+            imageCaption: memeData.lines.filter(Boolean).join(" / ")
+          };
+        }
+      } catch (e) {
+        console.warn("Canvas meme build failed:", e);
+      }
     }
 
-    // Fallback: old SVG card
+    // Fallback: SVG meme card (still better than nothing)
+    console.warn("Falling back to SVG meme. memeData:", JSON.stringify(memeData));
     const tone = ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action) ? "schedule"
       : ["playerAdd","playerEdit"].includes(action) ? "player"
       : ["teams"].includes(action) ? "team" : "chat";
@@ -2024,6 +1969,14 @@ Respond ONLY with valid JSON:
       imageUrl: buildSwamiMemeSvg("Swami Says", swamiText.slice(0, 80), tone),
       imageCaption: swamiText.slice(0, 80)
     };
+  }
+
+  function escSvg(text) {
+    return String(text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   function getSwamiMedia(action) {
