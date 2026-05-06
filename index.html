@@ -3343,10 +3343,28 @@ Max 80 words total.`;
     holeDetailMatchId = matchId;
     holeDetailPlayerId = playerId;
     holeDetailHoleNum = Number(holeNum);
-    // Load any existing hole detail data from match
     const match = matches.find(m => m.id === matchId);
     if (match) {
       holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
+
+      // Pre-populate defaults for holes that haven't been entered yet
+      const holes = getScorecardForMatch(match).holes;
+      const hole = holes.find(h => Number(h.hole) === holeDetailHoleNum);
+      const par = hole ? Number(hole.par) || 4 : 4;
+      const existingScore = ((match.holeScores || {})[playerId] || {})[holeDetailHoleNum];
+
+      if (!holeDetailData[playerId]) holeDetailData[playerId] = {};
+      if (!holeDetailData[playerId][holeDetailHoleNum]) {
+        holeDetailData[playerId][holeDetailHoleNum] = {
+          score: existingScore ? Number(existingScore) : par,
+          putts: 2
+        };
+      } else {
+        // Fill in any missing defaults on existing data
+        const pd = holeDetailData[playerId][holeDetailHoleNum];
+        if (!pd.score) pd.score = existingScore ? Number(existingScore) : par;
+        if (pd.putts === undefined || pd.putts === null || pd.putts === "") pd.putts = 2;
+      }
     }
     renderHoleDetail();
     show("holeDetailScreen");
