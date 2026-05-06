@@ -1408,6 +1408,7 @@
   });
 
   document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() { try { renderTripTiles(); } catch (error) { console.warn(error); } }, 0);
     document.querySelectorAll(".trip-tile").forEach(function(tile) {
       tile.addEventListener("click", function() {
         const tripId = tile.getAttribute("data-trip-id");
@@ -1488,7 +1489,7 @@
 
 
   let courseLibraryLoaded = false;
-  const COURSE_LIBRARY_URL = "./pinehurst-course-library.json";
+  const COURSE_LIBRARY_URLS = ["./pinehurst-course-library.json", "./pinehurst-course-library-v1.1.json", "./pinehurst-course-library-for-repo.json"];
 
   let courseLibrary = {
     // Add scorecards here. Example:
@@ -1771,8 +1772,8 @@
 
     await initializeTripIfNeeded("pinehurst2026");
     await initializeTripIfNeeded("testGolfTrip");
-    await loadCourseLibrary();
-    await loadTrips();
+    try { await loadCourseLibrary(); } catch (error) { console.warn("Course library load skipped", error); }
+    try { await loadTrips(); } catch (error) { console.warn("Trip loading skipped", error); }
     renderTripTiles();
   });
 
@@ -1801,31 +1802,26 @@
   }
 
   async function loadCourseLibrary() {
-    try {
-      const response = await fetch(COURSE_LIBRARY_URL, { cache: "no-store" });
+    const urls = typeof COURSE_LIBRARY_URLS !== "undefined" ? COURSE_LIBRARY_URLS : ["./pinehurst-course-library.json"];
 
-      if (!response.ok) {
-        throw new Error(`Course library request failed: ${response.status}`);
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const response = await fetch(urls[i], { cache: "no-store" });
+        if (!response.ok) continue;
+
+        const library = await response.json();
+        courseLibrary = library && library.courses ? library.courses : (library || {});
+        courseLibraryLoaded = true;
+        populateCourseDropdown();
+        return courseLibrary;
+      } catch (error) {
+        console.warn("Course library could not be loaded from " + urls[i], error);
       }
-
-      const library = await response.json();
-
-      if (library && library.courses) {
-        courseLibrary = library.courses;
-      } else {
-        courseLibrary = library || {};
-      }
-
-      courseLibraryLoaded = true;
-      populateCourseDropdown();
-
-      return courseLibrary;
-    } catch (error) {
-      console.warn("Course library could not be loaded.", error);
-      courseLibraryLoaded = false;
-      populateCourseDropdown();
-      return courseLibrary;
     }
+
+    courseLibraryLoaded = false;
+    populateCourseDropdown();
+    return courseLibrary;
   }
 
   function getCourseOptions() {
@@ -1870,19 +1866,28 @@
     courseSelect.appendChild(other);
 
     if (currentValue) {
-      const found = Array.from(courseSelect.options).some(function(option) {
-        return option.value === currentValue;
+      let found = false;
+      Array.from(courseSelect.options).forEach(function(option) {
+        if (option.value === currentValue || option.getAttribute("data-course-id") === normalizeCourseKey(currentValue)) {
+          courseSelect.value = option.value;
+          found = true;
+        }
       });
 
-      courseSelect.value = found ? currentValue : "__other__";
       setOtherCourseVisibility(!found);
+
       if (!found) {
-        document.getElementById("matchCourseOther").value = currentValue;
+        courseSelect.value = "__other__";
+        const otherCourse = document.getElementById("matchCourseOther");
+        if (otherCourse) otherCourse.value = currentValue;
       }
+    } else {
+      setOtherCourseVisibility(false);
     }
 
     populateTeeDropdown();
   }
+
 
   function getSelectedCourseName() {
     const select = document.getElementById("matchCourse");
@@ -1898,9 +1903,16 @@
   }
 
   function getSelectedCourseId() {
-    const courseName = getSelectedCourseName();
-    return normalizeCourseKey(courseName);
+    const select = document.getElementById("matchCourse");
+
+    if (!select || select.value === "__other__") {
+      return normalizeCourseKey(getSelectedCourseName());
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    return selectedOption ? (selectedOption.getAttribute("data-course-id") || normalizeCourseKey(select.value)) : normalizeCourseKey(select.value);
   }
+
 
   function setOtherCourseVisibility(showOther) {
     const other = document.getElementById("matchCourseOther");
@@ -1944,17 +1956,26 @@
     teeSelect.appendChild(other);
 
     if (currentValue) {
-      const found = Array.from(teeSelect.options).some(function(option) {
-        return option.value === currentValue;
+      let found = false;
+      Array.from(teeSelect.options).forEach(function(option) {
+        if (option.value === currentValue || option.getAttribute("data-tee-id") === normalizeCourseKey(currentValue)) {
+          teeSelect.value = option.value;
+          found = true;
+        }
       });
 
-      teeSelect.value = found ? currentValue : "__other__";
       setOtherTeeVisibility(!found);
+
       if (!found) {
-        document.getElementById("matchTeesOther").value = currentValue;
+        teeSelect.value = "__other__";
+        const otherTee = document.getElementById("matchTeesOther");
+        if (otherTee) otherTee.value = currentValue;
       }
+    } else {
+      setOtherTeeVisibility(false);
     }
   }
+
 
   function getSelectedTeeName() {
     const select = document.getElementById("matchTees");
@@ -1968,6 +1989,18 @@
 
     return select.value.trim();
   }
+
+  function getSelectedTeeId() {
+    const select = document.getElementById("matchTees");
+
+    if (!select || select.value === "__other__") {
+      return normalizeCourseKey(getSelectedTeeName());
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    return selectedOption ? (selectedOption.getAttribute("data-tee-id") || normalizeCourseKey(select.value)) : normalizeCourseKey(select.value);
+  }
+
 
   function setOtherTeeVisibility(showOther) {
     const other = document.getElementById("matchTeesOther");
@@ -2555,6 +2588,10 @@
     const matchDate = document.getElementById("matchDate").value;
     const course = getSelectedCourseName();
     const tees = getSelectedTeeName();
+    const courseId = getSelectedCourseId();
+    const teeId = getSelectedTeeId();
+    const selectedCourse = courseLibrary[courseId];
+    const selectedTee = selectedCourse && selectedCourse.tees ? selectedCourse.tees[teeId] : null;
     const numberOfHoles = String(document.getElementById("matchNumberOfHoles") ? document.getElementById("matchNumberOfHoles").value : "18");
     const startingHole = String(document.getElementById("matchStartingHole") ? document.getElementById("matchStartingHole").value : "1");
     const round = String(document.getElementById("matchRound").value || "1");
@@ -2574,7 +2611,7 @@
     console.log("Saving match round", round);
 
     const matchData = {
-      matchDate, course, tees, numberOfHoles, startingHole, round, format, scoringType, valueType, valueSettings,
+      matchDate, course, tees, courseId, teeId, teeRating: selectedTee ? selectedTee.rating : null, teeSlope: selectedTee ? selectedTee.slope : null, teeYardage: selectedTee ? selectedTee.totalYardage : null, numberOfHoles, startingHole, round, format, scoringType, valueType, valueSettings,
       teamAPlayerIds, teamBPlayerIds,
       teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
       frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
@@ -2707,10 +2744,15 @@
 
 
   function getTeeForMatch(match) {
-    const course = courseLibrary[normalizeCourseKey(match.course || "")];
+    const courseKey = match.courseId || normalizeCourseKey(match.course || "");
+    const teeKey = match.teeId || normalizeCourseKey(match.tees || "");
+    const course = courseLibrary[courseKey];
+
     if (!course || !course.tees) return null;
-    return course.tees[normalizeCourseKey(match.tees || "")] || null;
+
+    return course.tees[teeKey] || null;
   }
+
 
   function calculateCourseHandicap(handicapIndex, tee) {
     const index = Number(handicapIndex);
@@ -2740,7 +2782,7 @@
     const inHoles = holes.filter(function(h){ return Number(h.hole) >= 10; });
     const sum = function(arr, field) { return arr.reduce(function(total, h) { return total + (Number(h[field]) || 0); }, 0); };
 
-    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}`;
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${tee ? "" : "<br><span style=\"color:#fecaca\">No matching scorecard found. Check course/tee selection and confirm the JSON file is uploaded beside index.html.</span>"}`;
 
     const holeHeaders = holes.map(function(h) { return `<th>${escapeHtml(h.hole)}</th>`; }).join("");
     const parCells = holes.map(function(h) { return `<td>${escapeHtml(h.par)}</td>`; }).join("");
