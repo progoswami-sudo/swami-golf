@@ -1003,6 +1003,26 @@
     .sc-double { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid #f87171;outline:2px solid #f87171;outline-offset:2px;color:#f87171;font-weight:bold;font-size:13px; }
     .sc-worse  { display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid #dc2626;color:#fca5a5;font-weight:bold;font-size:11px; }
 
+    /* ── Photo Library ──────────────────────────────────────────────────── */
+    .photo-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px 80px; }
+    .photo-grid-item { position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;touch-action:manipulation;border-radius:4px; }
+    .photo-grid-item img { width:100%;height:100%;object-fit:cover;display:block;transition:opacity 0.15s; }
+    .photo-grid-item:active img { opacity:0.7; }
+    .photo-grid-item .photo-category-dot { position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.8); }
+    .photo-category-tab { padding:8px 16px;border-radius:20px;border:1.5px solid #375984;background:#13294d;font-size:13px;white-space:nowrap;cursor:pointer;touch-action:manipulation;user-select:none;flex-shrink:0;margin:0;width:auto;transition:background 0.1s; }
+    .photo-category-tab.active { background:#1d4ed8;border-color:#60a5fa;font-weight:bold; }
+    .photo-category-chip-btn { padding:9px 14px;border-radius:20px;border:1.5px solid #375984;background:#0f2442;font-size:13px;cursor:pointer;touch-action:manipulation;user-select:none;margin:0;width:auto;transition:background 0.1s,border-color 0.1s; }
+    .photo-category-chip-btn.selected { background:#1d4ed8;border-color:#60a5fa;font-weight:bold; }
+    .photo-player-chip { padding:9px 14px;border-radius:20px;border:1.5px solid #375984;background:#0f2442;font-size:13px;cursor:pointer;touch-action:manipulation;user-select:none;margin:0;width:auto;transition:background 0.1s; }
+    .photo-player-chip.selected { background:#7c3aed;border-color:#a78bfa;font-weight:bold; }
+    .photo-viewer-img { width:100%;max-height:65vh;object-fit:contain;display:block;background:#000; }
+    .photo-viewer-meta { padding:16px 14px; }
+    .photo-viewer-caption { font-size:16px;font-weight:600;margin-bottom:8px; }
+    .photo-viewer-tags { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px; }
+    .photo-viewer-tag { padding:5px 12px;border-radius:14px;background:#13294d;border:1px solid #375984;font-size:12px;color:#93c5fd; }
+    .photo-empty-section { text-align:center;padding:40px 20px;color:#475569;font-size:14px; }
+    .photo-section-header { padding:12px 14px 6px;font-size:12px;font-weight:bold;color:#93c5fd;text-transform:uppercase;letter-spacing:0.08em; }
+
     .score-entry-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -1111,6 +1131,7 @@
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
             <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
             <div class="home-menu-item" onclick="openExpenses()">Expenses</div>
+            <div class="home-menu-item" onclick="openPhotoLibrary()">Photos</div>
             <div class="home-menu-item" onclick="openPlayerList()">Players</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
@@ -1596,10 +1617,80 @@
     </div>
   </div>
 
-</div>
+  <!-- ── PHOTO LIBRARY ──────────────────────────────────────────────────── -->
+  <div id="photoLibraryScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Photo Library</h2>
+      <button onclick="openPhotoUpload()" style="width:auto;padding:8px 14px;margin:0;font-size:14px;">+ Add</button>
+    </div>
+    <!-- Category filter tabs -->
+    <div id="photoCategoryTabs" style="display:flex;gap:8px;overflow-x:auto;padding:12px 14px 4px;-webkit-overflow-scrolling:touch;"></div>
+    <!-- Stats bar -->
+    <div id="photoStatsBar" style="padding:4px 14px 8px;font-size:12px;color:#93c5fd;"></div>
+    <!-- Photo grid -->
+    <div id="photoGrid"></div>
+  </div>
 
+  <!-- Photo Upload/Edit Screen -->
+  <div id="photoUploadScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="show('photoLibraryScreen');renderPhotoLibrary();" class="secondary">Back</button>
+      <h2 id="photoUploadTitle">Add Photo</h2>
+    </div>
+    <div class="card">
 
-<script>
+      <!-- Camera / file picker -->
+      <div id="photoPreviewWrap" style="text-align:center;margin-bottom:12px;">
+        <div id="photoPreviewEmpty" style="border:2px dashed #375984;border-radius:14px;padding:40px 20px;color:#93c5fd;cursor:pointer;" onclick="document.getElementById('photoFileInput').click()">
+          <div style="font-size:40px;">📷</div>
+          <div style="margin-top:8px;font-size:14px;">Tap to take photo or choose from library</div>
+        </div>
+        <img id="photoPreviewImg" style="display:none;width:100%;border-radius:14px;max-height:300px;object-fit:cover;" />
+      </div>
+      <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoFileSelected(event)"/>
+
+      <label class="form-label">Category</label>
+      <div id="photoCategoryChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+
+      <label class="form-label" for="photoCaption">Caption</label>
+      <input id="photoCaption" placeholder="What's happening here?"/>
+
+      <label class="form-label">Tag Players</label>
+      <div id="photoTaggedPlayers" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+
+      <label class="form-label" for="photoLinkedMatch">Link to Match (optional)</label>
+      <select id="photoLinkedMatch">
+        <option value="">No match linked</option>
+      </select>
+
+      <label class="form-label" for="photoLinkedExpense">Link to Expense (optional)</label>
+      <select id="photoLinkedExpense">
+        <option value="">No expense linked</option>
+      </select>
+
+      <!-- Upload progress -->
+      <div id="photoUploadProgress" style="display:none;margin:12px 0;">
+        <div style="font-size:13px;color:#93c5fd;margin-bottom:6px;" id="photoUploadProgressLabel">Uploading...</div>
+        <div style="background:#0f2442;border-radius:8px;height:8px;overflow:hidden;">
+          <div id="photoUploadProgressBar" style="height:100%;background:#3b82f6;width:0%;transition:width 0.2s;border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <button onclick="savePhoto()" id="savePhotoBtn">Save Photo</button>
+      <button id="deletePhotoBtn" onclick="deletePhoto()" class="danger hidden">Delete Photo</button>
+    </div>
+  </div>
+
+  <!-- Full-screen Photo Viewer -->
+  <div id="photoViewerScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="closePhotoViewer()" class="secondary">Back</button>
+      <h2 id="photoViewerTitle">Photo</h2>
+      <button onclick="openPhotoUpload(currentViewingPhotoId)" style="width:auto;padding:8px 12px;margin:0;font-size:13px;" class="secondary">Edit</button>
+    </div>
+    <div id="photoViewerContent"></div>
+  </div>
   window.__swamiAppReady = false;
   window.__pendingTripId = null;
 
@@ -1651,6 +1742,13 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
+    getStorage,
+    ref as storageRef,
+    uploadBytesResumable,
+    getDownloadURL,
+    deleteObject
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import {
     getAuth,
     signInAnonymously,
     onAuthStateChanged
@@ -1681,6 +1779,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const storage = getStorage(app, "gs://swami-golf.firebasestorage.app");
 
   let activeTripId = "pinehurst2026";
   let currentUser = null;
@@ -1691,6 +1790,7 @@
   let matches = [];
   let recaps = [];
   let expenses = [];
+  let photos = [];
   let editingMatchId = null;
   let activeScoreMatchId = null;
   let editingPlayerId = null;
@@ -2283,6 +2383,10 @@ Respond ONLY with valid JSON, nothing else:
     return collection(db, "trips", tripId, "expenses");
   }
 
+  function photosCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "photos");
+  }
+
   async function loadCourseLibrary() {
     const urls = typeof COURSE_LIBRARY_URLS !== "undefined" ? COURSE_LIBRARY_URLS : ["./pinehurst-course-library.json"];
 
@@ -2712,6 +2816,16 @@ Respond ONLY with valid JSON, nothing else:
         renderExpenses();
       })
     );
+
+    unsubscribers.push(
+      onSnapshot(photosCollection(tripId), snapshot => {
+        photos = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        })).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        renderPhotoLibrary();
+      })
+    );
   }
 
   function resetScrollToTop() {
@@ -2770,6 +2884,9 @@ Respond ONLY with valid JSON, nothing else:
       "teamScreen",
       "expensesScreen",
       "expenseEditorScreen",
+      "photoLibraryScreen",
+      "photoUploadScreen",
+      "photoViewerScreen",
       "playerListScreen",
       "playerScreen"
     ].forEach(x => {
@@ -5101,6 +5218,7 @@ ${closer}`;
       userComment:  `${subject} posted in the trip feed. ${ctx}\n\nSwami reaction to the post. ${variationSeed} ${maxWords}`,
       expenseAdd:   `${subject}. ${ctx}\n\nSwami reaction to someone paying for a group expense. Reference the amount or category if specific enough to be funny. ${variationSeed} ${maxWords}`,
       momentAdd:    `Match moment logged: "${subject}". ${ctx}\n\nSwami reaction. 1 sentence only.`,
+      photoAdd:     `A photo was just added to the golf trip library: ${subject}. ${ctx}\n\nSwami reaction to someone documenting the trip. ${variationSeed} ${maxWords}`,
       teams:        `Teams set: ${subject}. ${ctx}\n\nSwami reaction to the rivalry. ${variationSeed} ${maxWords}`
     };
 
@@ -6243,8 +6361,319 @@ ${closer}`;
     renderExpenses();
   }
 
-  // ── END EXPENSES MODULE ──────────────────────────────────────────────────────
+  // ── PHOTO LIBRARY ────────────────────────────────────────────────────────────
+
+  const PHOTO_CATEGORIES = [
+    { id: "all",        label: "All Photos",  emoji: "🖼️",  color: "#3b82f6" },
+    { id: "moments",    label: "Moments",     emoji: "📸",  color: "#8b5cf6" },
+    { id: "scorecards", label: "Scorecards",  emoji: "📋",  color: "#10b981" },
+    { id: "receipts",   label: "Receipts",    emoji: "🧾",  color: "#f59e0b" },
+    { id: "other",      label: "Other",       emoji: "📁",  color: "#64748b" }
+  ];
+
+  let activePhotoCategory = "all";
+  let editingPhotoId = null;
+  let currentViewingPhotoId = null;
+  let selectedPhotoPlayerIds = [];
+  let selectedPhotoCategory = "moments";
+  let photoFileDataUrl = null;
+  let photoFileBlob = null;
+
+  function openPhotoLibrary() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    activePhotoCategory = "all";
+    show("photoLibraryScreen");
+    renderPhotoLibrary();
+  }
+
+  function renderPhotoLibrary() {
+    if (!document.getElementById("photoLibraryScreen")) return;
+    renderPhotoCategoryTabs();
+    renderPhotoGrid();
+    renderPhotoStatsBar();
+  }
+
+  function renderPhotoCategoryTabs() {
+    const el = document.getElementById("photoCategoryTabs");
+    if (!el) return;
+    el.innerHTML = PHOTO_CATEGORIES.map(cat => {
+      const count = cat.id === "all" ? photos.length : photos.filter(p => p.category === cat.id).length;
+      return `<button class="photo-category-tab ${activePhotoCategory === cat.id ? "active" : ""}"
+        onclick="setPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label} ${count ? `<span style="font-size:11px;opacity:0.7;">(${count})</span>` : ""}</button>`;
+    }).join("");
+  }
+
+  function renderPhotoStatsBar() {
+    const el = document.getElementById("photoStatsBar");
+    if (!el) return;
+    const filtered = activePhotoCategory === "all" ? photos : photos.filter(p => p.category === activePhotoCategory);
+    el.textContent = filtered.length ? `${filtered.length} photo${filtered.length !== 1 ? "s" : ""}` : "";
+  }
+
+  function setPhotoCategory(catId) {
+    activePhotoCategory = catId;
+    renderPhotoLibrary();
+  }
+
+  function renderPhotoGrid() {
+    const grid = document.getElementById("photoGrid");
+    if (!grid) return;
+    const filtered = activePhotoCategory === "all" ? photos : photos.filter(p => p.category === activePhotoCategory);
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="photo-empty-section">${activePhotoCategory === "all" ? "No photos yet. Tap + Add to get started." : "No photos in this category yet."}</div>`;
+      return;
+    }
+
+    const cat = PHOTO_CATEGORIES.find(c => c.id !== "all");
+    grid.innerHTML = `<div class="photo-grid">${filtered.map(photo => {
+      const catInfo = PHOTO_CATEGORIES.find(c => c.id === photo.category) || PHOTO_CATEGORIES[0];
+      return `<div class="photo-grid-item" onclick="openPhotoViewer('${escapeAttr(photo.id)}')">
+        <img src="${escapeAttr(photo.url)}" loading="lazy" alt="${escapeAttr(photo.caption || "")}">
+        <div class="photo-category-dot" style="background:${catInfo.color};"></div>
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  function openPhotoViewer(photoId) {
+    currentViewingPhotoId = photoId;
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+
+    const taggedPlayers = (photo.taggedPlayerIds || []).map(id => {
+      const p = players.find(pl => pl.id === id);
+      return p ? p.name : null;
+    }).filter(Boolean);
+
+    const linkedMatch = photo.linkedMatchId ? matches.find(m => m.id === photo.linkedMatchId) : null;
+    const linkedExpense = photo.linkedExpenseId ? expenses.find(e => e.id === photo.linkedExpenseId) : null;
+    const catInfo = PHOTO_CATEGORIES.find(c => c.id === photo.category) || PHOTO_CATEGORIES[1];
+
+    document.getElementById("photoViewerTitle").textContent = catInfo.emoji + " " + catInfo.label;
+    document.getElementById("photoViewerContent").innerHTML = `
+      <img class="photo-viewer-img" src="${escapeAttr(photo.url)}" alt="${escapeAttr(photo.caption || "")}">
+      <div class="photo-viewer-meta">
+        ${photo.caption ? `<div class="photo-viewer-caption">${escapeHtml(photo.caption)}</div>` : ""}
+        <div style="font-size:12px;color:#64748b;margin-bottom:8px;">${formatFeedTime(photo.createdAt)}</div>
+        ${taggedPlayers.length ? `<div class="photo-viewer-tags">${taggedPlayers.map(n => `<span class="photo-viewer-tag">👤 ${escapeHtml(n)}</span>`).join("")}</div>` : ""}
+        ${linkedMatch ? `<div style="margin-top:8px;font-size:13px;color:#93c5fd;">🏌️ ${escapeHtml(linkedMatch.format || "Match")} at ${escapeHtml(linkedMatch.course || "")}</div>` : ""}
+        ${linkedExpense ? `<div style="margin-top:4px;font-size:13px;color:#93c5fd;">🧾 ${escapeHtml(linkedExpense.description || "Expense")} — $${Number(linkedExpense.amount || 0).toFixed(2)}</div>` : ""}
+      </div>
+    `;
+    show("photoViewerScreen");
+  }
+
+  function closePhotoViewer() {
+    show("photoLibraryScreen");
+    renderPhotoLibrary();
+  }
+
+  function openPhotoUpload(photoId = null) {
+    editingPhotoId = photoId;
+    photoFileDataUrl = null;
+    photoFileBlob = null;
+    selectedPhotoPlayerIds = [];
+    selectedPhotoCategory = "moments";
+
+    document.getElementById("photoUploadTitle").textContent = photoId ? "Edit Photo" : "Add Photo";
+    document.getElementById("deletePhotoBtn").classList.toggle("hidden", !photoId);
+    document.getElementById("savePhotoBtn").textContent = "Save Photo";
+    document.getElementById("photoCaption").value = "";
+    document.getElementById("photoUploadProgress").style.display = "none";
+
+    // Reset preview
+    document.getElementById("photoPreviewEmpty").style.display = "block";
+    document.getElementById("photoPreviewImg").style.display = "none";
+    document.getElementById("photoFileInput").value = "";
+
+    // Build category chips
+    const chipsEl = document.getElementById("photoCategoryChips");
+    chipsEl.innerHTML = PHOTO_CATEGORIES.filter(c => c.id !== "all").map(cat => `
+      <button class="photo-category-chip-btn ${cat.id === selectedPhotoCategory ? "selected" : ""}"
+        onclick="selectPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label}</button>
+    `).join("");
+
+    // Build player tag chips
+    renderPhotoPlayerChips();
+
+    // Build match dropdown
+    const matchSel = document.getElementById("photoLinkedMatch");
+    matchSel.innerHTML = `<option value="">No match linked</option>` +
+      matches.map(m => `<option value="${escapeAttr(m.id)}">${escapeHtml(m.format || "Match")} — ${escapeHtml(m.course || "")}</option>`).join("");
+
+    // Build expense dropdown
+    const expSel = document.getElementById("photoLinkedExpense");
+    expSel.innerHTML = `<option value="">No expense linked</option>` +
+      expenses.map(e => `<option value="${escapeAttr(e.id)}">${escapeHtml(e.description || "Expense")} — $${Number(e.amount || 0).toFixed(2)}</option>`).join("");
+
+    // Populate existing data if editing
+    if (photoId) {
+      const photo = photos.find(p => p.id === photoId);
+      if (photo) {
+        document.getElementById("photoCaption").value = photo.caption || "";
+        selectedPhotoCategory = photo.category || "moments";
+        selectedPhotoPlayerIds = [...(photo.taggedPlayerIds || [])];
+        matchSel.value = photo.linkedMatchId || "";
+        expSel.value = photo.linkedExpenseId || "";
+        // Show existing image
+        document.getElementById("photoPreviewEmpty").style.display = "none";
+        const previewImg = document.getElementById("photoPreviewImg");
+        previewImg.src = photo.url;
+        previewImg.style.display = "block";
+        // Re-render chips with selections
+        chipsEl.innerHTML = PHOTO_CATEGORIES.filter(c => c.id !== "all").map(cat => `
+          <button class="photo-category-chip-btn ${cat.id === selectedPhotoCategory ? "selected" : ""}"
+            onclick="selectPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label}</button>
+        `).join("");
+        renderPhotoPlayerChips();
+      }
+    }
+
+    show("photoUploadScreen");
+  }
+
+  function selectPhotoCategory(catId) {
+    selectedPhotoCategory = catId;
+    document.querySelectorAll(".photo-category-chip-btn").forEach(btn => {
+      btn.classList.toggle("selected", btn.textContent.includes(PHOTO_CATEGORIES.find(c => c.id === catId)?.label || ""));
+    });
+  }
+
+  function renderPhotoPlayerChips() {
+    const el = document.getElementById("photoTaggedPlayers");
+    if (!el) return;
+    el.innerHTML = players.map(p => `
+      <button class="photo-player-chip ${selectedPhotoPlayerIds.includes(p.id) ? "selected" : ""}"
+        onclick="togglePhotoPlayer('${escapeAttr(p.id)}')">${escapeHtml(p.name.split(" ")[0])}</button>
+    `).join("");
+  }
+
+  function togglePhotoPlayer(playerId) {
+    const idx = selectedPhotoPlayerIds.indexOf(playerId);
+    if (idx === -1) selectedPhotoPlayerIds.push(playerId);
+    else selectedPhotoPlayerIds.splice(idx, 1);
+    renderPhotoPlayerChips();
+  }
+
+  function handlePhotoFileSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    photoFileBlob = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      photoFileDataUrl = e.target.result;
+      document.getElementById("photoPreviewEmpty").style.display = "none";
+      const img = document.getElementById("photoPreviewImg");
+      img.src = photoFileDataUrl;
+      img.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function savePhoto() {
+    const caption = document.getElementById("photoCaption").value.trim();
+    const linkedMatchId = document.getElementById("photoLinkedMatch").value;
+    const linkedExpenseId = document.getElementById("photoLinkedExpense").value;
+    const btn = document.getElementById("savePhotoBtn");
+
+    if (!editingPhotoId && !photoFileBlob) {
+      alert("Please select a photo first.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    let url = editingPhotoId ? (photos.find(p => p.id === editingPhotoId)?.url || "") : "";
+
+    // Upload new photo if file selected
+    if (photoFileBlob) {
+      try {
+        const path = `trips/${activeTripId}/photos/${Date.now()}_${photoFileBlob.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, photoFileBlob);
+
+        // Show progress
+        document.getElementById("photoUploadProgress").style.display = "block";
+
+        url = await new Promise((resolve, reject) => {
+          uploadTask.on("state_changed",
+            (snapshot) => {
+              const pct = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              document.getElementById("photoUploadProgressBar").style.width = pct + "%";
+              document.getElementById("photoUploadProgressLabel").textContent = `Uploading... ${Math.round(pct)}%`;
+            },
+            reject,
+            async () => {
+              const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadUrl);
+            }
+          );
+        });
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert("Upload failed: " + err.message);
+        btn.disabled = false;
+        btn.textContent = "Save Photo";
+        return;
+      }
+    }
+
+    const photoData = {
+      url,
+      caption,
+      category: selectedPhotoCategory,
+      taggedPlayerIds: selectedPhotoPlayerIds,
+      linkedMatchId: linkedMatchId || null,
+      linkedExpenseId: linkedExpenseId || null,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editingPhotoId) {
+      await updateDoc(doc(db, "trips", activeTripId, "photos", editingPhotoId), photoData);
+    } else {
+      photoData.createdAt = new Date().toISOString();
+      const docRef = await addDoc(photosCollection(), photoData);
+      // Swami reacts
+      const catInfo = PHOTO_CATEGORIES.find(c => c.id === selectedPhotoCategory);
+      const taggedNames = selectedPhotoPlayerIds.map(id => players.find(p => p.id === id)?.name).filter(Boolean);
+      await addSwamiPost("photoAdd", `${catInfo?.label || "Photo"} added${taggedNames.length ? " — featuring " + taggedNames.join(", ") : ""}${caption ? `: "${caption}"` : ""}`);
+    }
+
+    show("photoLibraryScreen");
+    renderPhotoLibrary();
+  }
+
+  async function deletePhoto() {
+    if (!editingPhotoId) return;
+    if (!confirm("Delete this photo?")) return;
+    const photo = photos.find(p => p.id === editingPhotoId);
+    if (photo?.url && photo.url.includes("firebasestorage")) {
+      try {
+        const fileRef = storageRef(storage, photo.url);
+        await deleteObject(fileRef);
+      } catch (e) {
+        console.warn("Could not delete storage file:", e);
+      }
+    }
+    await deleteDoc(doc(db, "trips", activeTripId, "photos", editingPhotoId));
+    show("photoLibraryScreen");
+    renderPhotoLibrary();
+  }
+
+  // ── END PHOTO LIBRARY ────────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
+  window.openPhotoLibrary = openPhotoLibrary;
+  window.openPhotoUpload = openPhotoUpload;
+  window.openPhotoViewer = openPhotoViewer;
+  window.closePhotoViewer = closePhotoViewer;
+  window.savePhoto = savePhoto;
+  window.deletePhoto = deletePhoto;
+  window.setPhotoCategory = setPhotoCategory;
+  window.selectPhotoCategory = selectPhotoCategory;
+  window.togglePhotoPlayer = togglePhotoPlayer;
+  window.handlePhotoFileSelected = handlePhotoFileSelected;
   window.openExpenses = openExpenses;
   window.openExpenseEditor = openExpenseEditor;
   window.saveExpense = saveExpense;
