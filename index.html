@@ -1139,20 +1139,18 @@
       </div>
 
       <div id="loginStatus" style="margin-top:16px;font-size:13px;color:#f87171;display:none;"></div>
-      <!-- Debug panel - remove after diagnosis -->
-      <div id="debugPanel" style="margin-top:20px;padding:12px;background:#0f2442;border:1px solid #375984;border-radius:10px;font-size:11px;color:#93c5fd;text-align:left;width:100%;max-width:360px;word-break:break-all;display:none;"></div>
     </div>
   </div>
 
   <div id="appHome" class="hidden">
     <div class="hamburger-wrap">
       <button class="hamburger-btn" onclick="toggleHomeMenu(event)">☰</button>
-      <div id="userPill" style="font-size:12px;color:#93c5fd;padding:6px 10px;background:#13294d;border:1px solid #375984;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;cursor:pointer;" onclick="openUserProfile()"></div>
       <div id="homeMenu" class="home-menu hidden">
         <div class="home-menu-item" onclick="createTrip()">Create Trip</div>
         <div class="home-menu-item" onclick="requestNotifications()">Notifications On</div>
         <div class="home-menu-item" onclick="turnOffNotifications()">Notifications Off</div>
       </div>
+      <div id="userPill" onclick="openUserProfile()" style="cursor:pointer;font-size:22px;padding:6px;touch-action:manipulation;user-select:none;margin-left:auto;">👤</div>
     </div>
 
     <div class="logo">
@@ -1764,16 +1762,23 @@
 
   <div id="userProfileScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <button onclick="show('appHome')" class="secondary">Back</button>
       <h2>My Account</h2>
     </div>
     <div class="card">
-      <div style="text-align:center;padding:8px 0 16px;">
-        <div style="font-size:48px;margin-bottom:8px;">👤</div>
-        <div id="userProfileEmail" style="font-size:16px;font-weight:600;color:#93c5fd;"></div>
-        <div id="userProfileRole" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
+      <div style="text-align:center;padding:8px 0 20px;">
+        <div style="font-size:56px;margin-bottom:10px;">👤</div>
+        <div id="userProfileEmail" style="font-size:14px;color:#64748b;"></div>
       </div>
-      <div id="userLinkedPlayer" style="margin-bottom:16px;padding:12px;background:#0f2442;border-radius:12px;border:1px solid #375984;font-size:14px;"></div>
+
+      <label class="form-label" for="userDisplayName">Your Name</label>
+      <input id="userDisplayName" placeholder="First and last name" style="margin-bottom:8px;"/>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">This name is used as your player identity across all golf trips.</div>
+
+      <label class="form-label" for="userNickname">Nickname (optional)</label>
+      <input id="userNickname" placeholder="What the group calls you"/>
+
+      <button onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
       <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
     </div>
   </div>
@@ -2434,14 +2439,7 @@ Respond ONLY with valid JSON, nothing else:
   const NAME_COOKIE  = "swamiGolfName";
   const UID_COOKIE   = "swamiGolfUid";
 
-  function dbg(msg) {
-    console.log(msg);
-    const el = document.getElementById("debugPanel");
-    if (el) {
-      el.style.display = "block";
-      el.innerHTML += `<div>${new Date().toISOString().slice(11,19)} ${msg}</div>`;
-    }
-  }
+  // (debug panel removed)
 
   function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -2459,25 +2457,25 @@ Respond ONLY with valid JSON, nothing else:
 
   async function trySilentSignIn() {
     const uid = getCookie(UID_COOKIE);
-    dbg(`UID cookie: ${uid ? uid.slice(0,8)+"..." : "NOT FOUND"}`);
-    dbg(`Email cookie: ${getCookie(EMAIL_COOKIE) || "NOT FOUND"}`);
-    dbg(`All cookies: ${document.cookie.slice(0,100) || "NONE"}`);
+    console.log(`UID cookie: ${uid ? uid.slice(0,8)+"..." : "NOT FOUND"}`);
+    console.log(`Email cookie: ${getCookie(EMAIL_COOKIE) || "NOT FOUND"}`);
+    console.log(`All cookies: ${document.cookie.slice(0,100) || "NONE"}`);
     if (!uid) return false;
     try {
-      dbg("Calling /api/auth-token...");
+      console.log("Calling /api/auth-token...");
       const res = await fetch("/api/auth-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid })
       });
       const data = await res.json();
-      dbg(`auth-token: ${res.status} — ${JSON.stringify(data).slice(0,80)}`);
+      console.log(`auth-token: ${res.status} — ${JSON.stringify(data).slice(0,80)}`);
       if (!res.ok) return false;
       await signInWithCustomToken(auth, data.token);
-      dbg("Silent sign-in SUCCESS ✅");
+      console.log("Silent sign-in SUCCESS ✅");
       return true;
     } catch (e) {
-      dbg(`Silent sign-in ERROR: ${e.message}`);
+      console.log(`Silent sign-in ERROR: ${e.message}`);
       return false;
     }
   }
@@ -2544,18 +2542,51 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   function openUserProfile() {
-    const emailEl  = document.getElementById("userProfileEmail");
-    const roleEl   = document.getElementById("userProfileRole");
-    const linkedEl = document.getElementById("userLinkedPlayer");
-    if (emailEl) emailEl.textContent = currentUser?.email || "Anonymous";
-    if (roleEl)  roleEl.textContent  = currentUser?.email ? "Signed in with email" : "Guest (anonymous)";
-    const linked = players.find(p => p.email?.toLowerCase() === currentUser?.email?.toLowerCase());
-    if (linkedEl) {
-      linkedEl.innerHTML = linked
-        ? `<strong>Linked player:</strong> ${escapeHtml(linked.name)}${linked.nickname ? ` "${escapeHtml(linked.nickname)}"` : ""}`
-        : `<span style="color:#64748b;">No player profile linked to your email yet.</span>`;
+    const emailEl = document.getElementById("userProfileEmail");
+    if (emailEl) emailEl.textContent = currentUser?.email || "";
+
+    // Load saved profile data
+    const nameEl = document.getElementById("userDisplayName");
+    const nickEl = document.getElementById("userNickname");
+    if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
+    if (nickEl) nickEl.value = getCookie("swamiGolfNickname") || "";
+
+    // Load from Firestore if available
+    if (currentUser?.uid) {
+      getDoc(doc(db, "users", currentUser.uid)).then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (nameEl && data.name) nameEl.value = data.name;
+          if (nickEl && data.nickname) nickEl.value = data.nickname;
+        }
+      }).catch(() => {});
     }
     show("userProfileScreen");
+  }
+
+  async function saveUserProfile() {
+    const name     = (document.getElementById("userDisplayName").value || "").trim();
+    const nickname = (document.getElementById("userNickname").value || "").trim();
+
+    if (!name) { alert("Please enter your name."); return; }
+    if (!currentUser?.uid) return;
+
+    // Save to Firestore users collection
+    await setDoc(doc(db, "users", currentUser.uid), {
+      name, nickname,
+      email: currentUser.email || "",
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    // Update cookies
+    setCookie(NAME_COOKIE, nickname || name.split(" ")[0]);
+    setCookie("swamiGolfNickname", nickname);
+
+    // Update user pill
+    const pill = document.getElementById("userPill");
+    if (pill) pill.textContent = "👤";
+
+    show("appHome");
   }
 
   // Handle magic link on page load
@@ -2579,7 +2610,7 @@ Respond ONLY with valid JSON, nothing else:
   } else {
     // Try silent sign-in with stored UID before showing login
     const uid = getCookie(UID_COOKIE);
-    dbg(`Page load — isSignInLink: false, UID: ${uid ? "found" : "not found"}`);
+    console.log(`Page load — isSignInLink: false, UID: ${uid ? "found" : "not found"}`);
     if (uid) {
       // Show a brief loading state while we attempt silent sign-in
       document.getElementById("loginScreen").classList.remove("hidden");
@@ -2609,7 +2640,7 @@ Respond ONLY with valid JSON, nothing else:
 
   // Auth state observer
   onAuthStateChanged(auth, async user => {
-    dbg(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"}`);
+    console.log(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"}`);
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
@@ -2648,7 +2679,7 @@ Respond ONLY with valid JSON, nothing else:
         : "👤 Guest";
     }
 
-    document.getElementById("syncStatus").innerText = "Connected. Real-time sync active.";
+    document.getElementById("syncStatus").style.display = "none";
 
     await initializeTripIfNeeded("pinehurst2026");
     await initializeTripIfNeeded("testGolfTrip");
@@ -7327,6 +7358,7 @@ ${closer}`;
     if (e.key === "Enter") sendMagicLink();
   });
 
+  window.saveUserProfile = saveUserProfile;
   window.sendMagicLink = sendMagicLink;
   window.showLoginEmailStep = showLoginEmailStep;
   window.signOutUser = signOutUser;
