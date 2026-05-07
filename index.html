@@ -6330,7 +6330,7 @@ ${closer}`;
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             ${venmoBtn}${paypalBtn}${noPaymentMsg}
             <button onclick="markPaymentPaid('${escapeAttr(t.fromId)}','${escapeAttr(t.toId)}','${escapeAttr(t.from)}','${escapeAttr(t.to)}',${t.amount})"
-              style="padding:7px 12px;background:#166534;color:#86efac;border-radius:20px;font-size:12px;font-weight:600;width:auto;margin:0;border:1.5px solid #86efac;">
+              style="padding:7px 12px;background:transparent;color:#86efac;border-radius:20px;font-size:12px;font-weight:600;width:auto;margin:0;border:1.5px solid #166534;">
               ✓ Mark Paid
             </button>
           </div>
@@ -6345,9 +6345,9 @@ ${closer}`;
         .map(pmt => `
           <div class="settlement-row" style="opacity:0.65;justify-content:space-between;">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <span style="text-decoration:line-through;color:#94a3b8;">${escapeHtml(pmt.from)}</span>
+              <span style="color:#94a3b8;">${escapeHtml(pmt.from)}</span>
               <span style="color:#475569;font-size:12px;">paid $${Number(pmt.amount).toFixed(2)} to</span>
-              <span style="text-decoration:line-through;color:#94a3b8;">${escapeHtml(pmt.to)}</span>
+              <span style="color:#94a3b8;">${escapeHtml(pmt.to)}</span>
               <span style="font-size:11px;color:#475569;">${formatFeedTime(pmt.settledAt)}</span>
             </div>
             <button onclick="unmarkPaymentPaid('${escapeAttr(pmt.id)}')"
