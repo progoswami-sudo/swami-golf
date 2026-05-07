@@ -1113,7 +1113,7 @@
         <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
           placeholder="you@example.com"
           style="margin-bottom:12px;"/>
-        <button onclick="sendMagicLink()" id="sendLinkBtn">Send Sign-In Link</button>
+        <button id="sendLinkBtn">Send Sign-In Link</button>
         <p style="font-size:12px;color:#64748b;text-align:center;margin-top:12px;">
           We'll email you a magic link. No password needed.
         </p>
@@ -1125,7 +1125,7 @@
         <p style="color:#93c5fd;font-size:14px;" id="loginSentMessage">
           We sent a sign-in link to your email. Tap it to continue.
         </p>
-        <button onclick="showLoginEmailStep()" class="secondary" style="margin-top:16px;">Use a different email</button>
+        <button id="useDifferentEmailBtn" class="secondary" style="margin-top:16px;">Use a different email</button>
       </div>
 
       <div id="loginStatus" style="margin-top:16px;font-size:13px;color:#f87171;display:none;"></div>
@@ -7188,6 +7188,13 @@ ${closer}`;
   window.toggleHoleDetailHazard = toggleHoleDetailHazard;
   window.saveHoleDetail = saveHoleDetail;
   window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
+  // Wire up login buttons inside module (avoids deferred module timing issue)
+  document.getElementById("sendLinkBtn")?.addEventListener("click", sendMagicLink);
+  document.getElementById("useDifferentEmailBtn")?.addEventListener("click", showLoginEmailStep);
+  document.getElementById("loginEmail")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMagicLink();
+  });
+
   window.sendMagicLink = sendMagicLink;
   window.showLoginEmailStep = showLoginEmailStep;
   window.signOutUser = signOutUser;
