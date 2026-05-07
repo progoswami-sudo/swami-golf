@@ -1842,6 +1842,7 @@
     signInWithEmailLink,
     isSignInWithEmailLink,
     sendSignInLinkToEmail,
+    signInWithCustomToken,
     onAuthStateChanged,
     linkWithCredential,
     EmailAuthProvider
@@ -2426,9 +2427,10 @@ Respond ONLY with valid JSON, nothing else:
   // ── AUTH ─────────────────────────────────────────────────────────────────────
 
   const APP_URL = window.location.origin + window.location.pathname;
-  const EMAIL_KEY = "swamiGolf.pendingEmail";
+  const EMAIL_KEY    = "swamiGolf.pendingEmail";
   const EMAIL_COOKIE = "swamiGolfEmail";
   const NAME_COOKIE  = "swamiGolfName";
+  const UID_COOKIE   = "swamiGolfUid";
 
   function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -2442,6 +2444,25 @@ Respond ONLY with valid JSON, nothing else:
 
   function deleteCookie(name) {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+  }
+
+  async function trySilentSignIn() {
+    const uid = getCookie(UID_COOKIE);
+    if (!uid) return false;
+    try {
+      const res = await fetch("/api/auth-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid })
+      });
+      if (!res.ok) return false;
+      const { token } = await res.json();
+      await signInWithCustomToken(auth, token);
+      return true;
+    } catch (e) {
+      console.warn("Silent sign-in failed:", e);
+      return false;
+    }
   }
 
   function showWelcomeBackStep(email, displayName) {
@@ -2498,6 +2519,7 @@ Respond ONLY with valid JSON, nothing else:
   async function signOutUser() {
     deleteCookie(EMAIL_COOKIE);
     deleteCookie(NAME_COOKIE);
+    deleteCookie(UID_COOKIE);
     await auth.signOut();
     document.getElementById("loginScreen").classList.remove("hidden");
     document.getElementById("appHome").classList.add("hidden");
@@ -2537,14 +2559,23 @@ Respond ONLY with valid JSON, nothing else:
           showLoginError("Sign-in failed: " + (err.message || err.code));
         });
     }
-  }
-
-  // Check for returning user cookie on load
-  const savedEmail = getCookie(EMAIL_COOKIE);
-  const savedName  = getCookie(NAME_COOKIE);
-  if (savedEmail) {
-    // Show welcome back step immediately before Firebase resolves
-    showWelcomeBackStep(savedEmail, savedName);
+  } else {
+    // Try silent sign-in with stored UID before showing login
+    const uid = getCookie(UID_COOKIE);
+    if (uid) {
+      trySilentSignIn().then(success => {
+        if (!success) {
+          // Silent sign-in failed — show welcome back or email entry
+          const savedEmail = getCookie(EMAIL_COOKIE);
+          if (savedEmail) {
+            showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
+          } else {
+            showLoginEmailStep();
+          }
+        }
+        // If success, onAuthStateChanged will handle showing the app
+      });
+    }
   }
 
   // Auth state observer
@@ -2552,11 +2583,10 @@ Respond ONLY with valid JSON, nothing else:
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
-      // Show welcome back if we have a saved email, otherwise show email entry
-      const saved = getCookie(EMAIL_COOKIE);
-      if (saved) {
-        showWelcomeBackStep(saved, getCookie(NAME_COOKIE));
-      } else {
+      const savedEmail = getCookie(EMAIL_COOKIE);
+      if (savedEmail && !getCookie(UID_COOKIE)) {
+        showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
+      } else if (!getCookie(UID_COOKIE)) {
         showLoginEmailStep();
       }
       return;
@@ -2564,10 +2594,10 @@ Respond ONLY with valid JSON, nothing else:
 
     currentUser = user;
 
-    // Save email + display name to cookie for next session
+    // Store UID + email + name in cookies for silent re-auth next session
+    setCookie(UID_COOKIE, user.uid);
     if (user.email) {
       setCookie(EMAIL_COOKIE, user.email);
-      // Try to find their player name for a personal greeting
       const linkedPlayer = players.find(p =>
         p.email?.toLowerCase() === user.email.toLowerCase()
       );
