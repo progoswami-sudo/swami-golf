@@ -1090,7 +1090,7 @@
     .stroke-dots { display: flex; gap: 3px; justify-content: center; }
     .stroke-dot { width: 6px; height: 6px; border-radius: 50%; background: #facc15; display: inline-block; flex-shrink: 0; }
     .team-score-row td { font-weight: 800; background: rgba(19, 41, 77, 0.9); }
-    .team-score-win { background: #16a34a !important; color: #ffffff; }
+    .team-score-win { background: #166534 !important; color: #86efac !important; }
     .moments-list { margin-top: 12px; }
     .moment-item { border: 1px solid #375984; background: #13294d; border-radius: 12px; padding: 10px; margin-top: 8px; font-size: 14px; line-height: 1.35; }
   </style>
@@ -1647,7 +1647,7 @@
   <!-- Photo Upload/Edit Screen -->
   <div id="photoUploadScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="show('photoLibraryScreen');renderPhotoLibrary();" class="secondary">Back</button>
+      <button onclick="goBackFromPhotoUpload()" class="secondary">Back</button>
       <h2 id="photoUploadTitle">Add Photo</h2>
     </div>
     <div class="card">
@@ -3992,15 +3992,19 @@ Max 80 words total.`;
     });
     header += "<th>IN</th><th>TOTAL</th></tr>";
 
+    const teamAIds = match.teamAPlayerIds || [];
+    const teamBIds = match.teamBPlayerIds || [];
+    const teamAName = activeTripData.teamA || "Team A";
+    const teamBName = activeTripData.teamB || "Team B";
+
+    // Build player rows grouped by team, with team name row below each group
     let playerRows = "";
-    playersForMatch.forEach(function(player) {
+
+    function buildPlayerRow(player) {
       const data = strokeData[player.id];
-      const isTeamA = (match.teamAPlayerIds || []).includes(player.id);
-      const nameColor = isTeamA ? "#93c5fd" : "#86efac";
-      const nameHtml = `<span style="color:${nameColor};font-weight:600;">${escapeHtml(player.name)}</span>`;
       const chLabel = data.ch === null ? "(CH N/A)" : `(CH ${data.ch})`;
       const strokeLabel = isNet ? ` ${data.strokes ? `(${data.strokes})` : "(0)"}` : "";
-      const label = `${nameHtml} <span style="color:#94a3b8;font-size:11px;">${chLabel}${strokeLabel}</span>`;
+      const label = `${escapeHtml(player.name)} <span style="color:#94a3b8;font-size:11px;">${chLabel}${strokeLabel}</span>`;
 
       let row = `<tr><td style="white-space:nowrap;">${label}</td>`;
       let outTotal = 0, inTotal = 0, total = 0;
@@ -4022,19 +4026,33 @@ Max 80 words total.`;
         if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
       });
       row += `<td id="ptotal-in-${player.id}">${inTotal || ""}</td><td id="ptotal-tot-${player.id}">${total || ""}</td></tr>`;
-      playerRows += row;
-    });
+      return row;
+    }
 
-    const teamAIds = match.teamAPlayerIds || [];
-    const teamBIds = match.teamBPlayerIds || [];
-    const teamAName = activeTripData.teamA || "Team A";
-    const teamBName = activeTripData.teamB || "Team B";
+    // Team A players
+    const teamAPlayers = playersForMatch.filter(p => teamAIds.includes(p.id));
+    const teamBPlayers = playersForMatch.filter(p => teamBIds.includes(p.id));
+    const unassigned = playersForMatch.filter(p => !teamAIds.includes(p.id) && !teamBIds.includes(p.id));
 
-    const diagLines = [];
-    console.log("renderScoreEntry diag:", diagLines);
-    // Append diag to info so we can confirm wrap is functional
-    info.innerHTML += ``;
+    teamAPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
+    if (teamAPlayers.length) {
+      playerRows += `<tr class="team-score-row"><td style="color:#93c5fd;font-weight:700;padding-left:6px;">${escapeHtml(teamAName)}</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>`;
+    }
 
+    // Double separator between teams
+    if (teamAPlayers.length && (teamBPlayers.length || unassigned.length)) {
+      const colCount = holes.length + (holes.length > 9 ? 3 : 2);
+      playerRows += `<tr><td colspan="${colCount + 1}" style="padding:0;border-top:3px double #375984;"></td></tr>`;
+    }
+
+    teamBPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
+    if (teamBPlayers.length) {
+      playerRows += `<tr class="team-score-row"><td style="color:#86efac;font-weight:700;padding-left:6px;">${escapeHtml(teamBName)}</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>`;
+    }
+
+    unassigned.forEach(p => { playerRows += buildPlayerRow(p); });
+
+    // Double separator below YDS row — handled via CSS class
     try {
       wrap.innerHTML = `
         <div class="score-entry-wrap">
@@ -4043,9 +4061,8 @@ Max 80 words total.`;
             ${statRow("PAR", "par")}
             ${statRow("HCP", "hcp")}
             ${statRow("YDS", "yardage")}
+            <tr class="yds-divider-row"><td colspan="100" style="padding:0;border-bottom:3px double #375984;height:0;"></td></tr>
             ${playerRows}
-            <tr class="team-score-row"><td><span style="color:#93c5fd;font-weight:600;">${escapeHtml(teamAName)}</span></td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
-            <tr class="team-score-row"><td><span style="color:#86efac;font-weight:600;">${escapeHtml(teamBName)}</span></td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
           </table>
         </div>
       `;
@@ -5125,27 +5142,29 @@ ${closer}`;
       return;
     }
 
-    sortedPosts.forEach(post => {
+    sortedPosts.forEach((post, idx) => {
       const div = document.createElement("div");
       div.className = "feed-post";
-
-      const mediaHtml = post.imageUrl
-        ? `
-          <div class="feed-media">
-            <img src="${escapeAttr(post.imageUrl)}" alt="${escapeAttr(post.imageCaption || "Swami Says media")}">
-            ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
-          </div>
-        `
-        : "";
+      const imgId = post.imageUrl ? `feed-img-${idx}` : "";
 
       div.innerHTML = `
         <div class="feed-author">${escapeHtml(post.author)}</div>
         <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
         <div class="feed-text">${renderPostText(post)}</div>
-        ${mediaHtml}
+        ${post.imageUrl ? `
+          <div class="feed-media">
+            <img id="${imgId}" alt="${escapeHtml(post.imageCaption || "Swami media")}" style="display:block;width:100%;border-radius:10px;">
+            ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
+          </div>` : ""}
       `;
 
       list.appendChild(div);
+
+      // Set src after DOM insertion to avoid base64 string misparse in innerHTML
+      if (imgId) {
+        const img = div.querySelector(`#${imgId}`);
+        if (img) img.src = post.imageUrl;
+      }
     });
   }
 
@@ -6517,6 +6536,7 @@ ${closer}`;
   }
 
   function openPhotoUpload(photoId = null) {
+    photoUploadReturnScreen = "photoLibraryScreen";
     editingPhotoId = photoId;
     photoFileDataUrl = null;
     photoFileBlob = null;
@@ -6730,8 +6750,20 @@ ${closer}`;
     reader.readAsDataURL(file);
   }
 
+  let photoUploadReturnScreen = "photoLibraryScreen";
+
+  function goBackFromPhotoUpload() {
+    if (photoUploadReturnScreen === "scoreEntryScreen") {
+      show("scoreEntryScreen");
+      setTimeout(renderScoreEntry, 50);
+    } else {
+      show("photoLibraryScreen");
+      renderPhotoLibrary();
+    }
+  }
+
   function openScorecardPhotoCapture() {
-    // Open photo upload pre-set to Scorecards category, linked to current match
+    photoUploadReturnScreen = "scoreEntryScreen";
     openPhotoUpload();
     // After screen renders, pre-select Scorecards and link match
     setTimeout(() => {
@@ -6750,6 +6782,7 @@ ${closer}`;
 
   // ── END PHOTO LIBRARY ────────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
+  window.goBackFromPhotoUpload = goBackFromPhotoUpload;
   window.handleExpenseReceiptSelected = handleExpenseReceiptSelected;
   window.openScorecardPhotoCapture = openScorecardPhotoCapture;
   window.openPhotoLibrary = openPhotoLibrary;
