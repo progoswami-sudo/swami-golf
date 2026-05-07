@@ -1108,6 +1108,16 @@
       </div>
       <p style="color:#93c5fd;font-size:15px;margin:0 0 40px;">Your AI-powered golf trip companion</p>
 
+      <!-- Welcome back step (returning users) -->
+      <div id="loginWelcomeStep" class="card hidden" style="width:100%;max-width:360px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">👋</div>
+        <h3 id="loginWelcomeName" style="margin:0 0 6px;"></h3>
+        <p id="loginWelcomeEmail" style="font-size:13px;color:#64748b;margin:0 0 20px;"></p>
+        <button id="welcomeSignInBtn">Send Sign-In Link</button>
+        <button id="welcomeNotMeBtn" class="secondary" style="margin-top:8px;">Not me — use different email</button>
+      </div>
+
+      <!-- Email entry step (new users) -->
       <div id="loginEmailStep" class="card" style="width:100%;max-width:360px;text-align:left;">
         <label class="form-label" for="loginEmail">Your Email Address</label>
         <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
@@ -2417,24 +2427,49 @@ Respond ONLY with valid JSON, nothing else:
 
   const APP_URL = window.location.origin + window.location.pathname;
   const EMAIL_KEY = "swamiGolf.pendingEmail";
+  const EMAIL_COOKIE = "swamiGolfEmail";
+  const NAME_COOKIE  = "swamiGolfName";
 
-  async function sendMagicLink() {
-    const email = document.getElementById("loginEmail").value.trim();
+  function setCookie(name, value, days = 365) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`;
+  }
+
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  function deleteCookie(name) {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+  }
+
+  function showWelcomeBackStep(email, displayName) {
+    document.getElementById("loginWelcomeStep").classList.remove("hidden");
+    document.getElementById("loginEmailStep").classList.add("hidden");
+    document.getElementById("loginSentStep").classList.add("hidden");
+    document.getElementById("loginWelcomeName").textContent =
+      displayName ? `Welcome back, ${displayName}!` : "Welcome back!";
+    document.getElementById("loginWelcomeEmail").textContent = email;
+  }
+
+  async function sendMagicLink(emailOverride) {
+    const email = emailOverride || document.getElementById("loginEmail").value.trim();
     if (!email || !email.includes("@")) {
       showLoginError("Please enter a valid email address.");
       return;
     }
     const btn = document.getElementById("sendLinkBtn");
-    btn.disabled = true;
-    btn.textContent = "Sending...";
+    const wBtn = document.getElementById("welcomeSignInBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Sending..."; }
+    if (wBtn) { wBtn.disabled = true; wBtn.textContent = "Sending..."; }
 
     try {
-      const actionCodeSettings = {
-        url: APP_URL,
-        handleCodeInApp: true
-      };
+      const actionCodeSettings = { url: APP_URL, handleCodeInApp: true };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       localStorage.setItem(EMAIL_KEY, email);
+      // Show sent confirmation
+      document.getElementById("loginWelcomeStep").classList.add("hidden");
       document.getElementById("loginEmailStep").classList.add("hidden");
       document.getElementById("loginSentStep").classList.remove("hidden");
       document.getElementById("loginSentMessage").textContent =
@@ -2442,8 +2477,9 @@ Respond ONLY with valid JSON, nothing else:
     } catch (err) {
       console.error("Send magic link error:", err);
       showLoginError("Failed to send link: " + (err.message || err.code));
-      btn.disabled = false;
-      btn.textContent = "Send Sign-In Link";
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Send Sign-In Link"; }
+      if (wBtn) { wBtn.disabled = false; wBtn.textContent = "Send Sign-In Link"; }
     }
   }
 
@@ -2453,22 +2489,24 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   function showLoginEmailStep() {
+    document.getElementById("loginWelcomeStep").classList.add("hidden");
     document.getElementById("loginEmailStep").classList.remove("hidden");
     document.getElementById("loginSentStep").classList.add("hidden");
     document.getElementById("loginStatus").style.display = "none";
   }
 
   async function signOutUser() {
+    deleteCookie(EMAIL_COOKIE);
+    deleteCookie(NAME_COOKIE);
     await auth.signOut();
     document.getElementById("loginScreen").classList.remove("hidden");
     document.getElementById("appHome").classList.add("hidden");
-    document.getElementById("loginEmail").value = "";
     showLoginEmailStep();
   }
 
   function openUserProfile() {
-    const emailEl = document.getElementById("userProfileEmail");
-    const roleEl  = document.getElementById("userProfileRole");
+    const emailEl  = document.getElementById("userProfileEmail");
+    const roleEl   = document.getElementById("userProfileRole");
     const linkedEl = document.getElementById("userLinkedPlayer");
     if (emailEl) emailEl.textContent = currentUser?.email || "Anonymous";
     if (roleEl)  roleEl.textContent  = currentUser?.email ? "Signed in with email" : "Guest (anonymous)";
@@ -2476,14 +2514,14 @@ Respond ONLY with valid JSON, nothing else:
     if (linkedEl) {
       linkedEl.innerHTML = linked
         ? `<strong>Linked player:</strong> ${escapeHtml(linked.name)}${linked.nickname ? ` "${escapeHtml(linked.nickname)}"` : ""}`
-        : `<span style="color:#64748b;">No player profile linked to your email yet. Ask your trip admin to add your email to your player profile.</span>`;
+        : `<span style="color:#64748b;">No player profile linked to your email yet.</span>`;
     }
     show("userProfileScreen");
   }
 
   // Handle magic link on page load
   if (isSignInWithEmailLink(auth, window.location.href)) {
-    let email = localStorage.getItem(EMAIL_KEY);
+    let email = localStorage.getItem(EMAIL_KEY) || getCookie(EMAIL_COOKIE);
     if (!email) {
       email = window.prompt("Please enter your email to confirm sign-in:");
     }
@@ -2491,7 +2529,6 @@ Respond ONLY with valid JSON, nothing else:
       signInWithEmailLink(auth, email, window.location.href)
         .then(result => {
           localStorage.removeItem(EMAIL_KEY);
-          // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
           currentUser = result.user;
         })
@@ -2502,16 +2539,41 @@ Respond ONLY with valid JSON, nothing else:
     }
   }
 
+  // Check for returning user cookie on load
+  const savedEmail = getCookie(EMAIL_COOKIE);
+  const savedName  = getCookie(NAME_COOKIE);
+  if (savedEmail) {
+    // Show welcome back step immediately before Firebase resolves
+    showWelcomeBackStep(savedEmail, savedName);
+  }
+
   // Auth state observer
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      // Show login screen
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
+      // Show welcome back if we have a saved email, otherwise show email entry
+      const saved = getCookie(EMAIL_COOKIE);
+      if (saved) {
+        showWelcomeBackStep(saved, getCookie(NAME_COOKIE));
+      } else {
+        showLoginEmailStep();
+      }
       return;
     }
 
     currentUser = user;
+
+    // Save email + display name to cookie for next session
+    if (user.email) {
+      setCookie(EMAIL_COOKIE, user.email);
+      // Try to find their player name for a personal greeting
+      const linkedPlayer = players.find(p =>
+        p.email?.toLowerCase() === user.email.toLowerCase()
+      );
+      const displayName = linkedPlayer?.nickname || linkedPlayer?.name?.split(" ")[0] || "";
+      if (displayName) setCookie(NAME_COOKIE, displayName);
+    }
 
     // Hide login, show app
     document.getElementById("loginScreen").classList.add("hidden");
@@ -2520,8 +2582,9 @@ Respond ONLY with valid JSON, nothing else:
     // Update user pill
     const pill = document.getElementById("userPill");
     if (pill) {
-      pill.textContent = user.email
-        ? "👤 " + user.email.split("@")[0]
+      const savedN = getCookie(NAME_COOKIE);
+      pill.textContent = savedN ? "👤 " + savedN
+        : user.email ? "👤 " + user.email.split("@")[0]
         : "👤 Guest";
     }
 
@@ -7189,8 +7252,17 @@ ${closer}`;
   window.saveHoleDetail = saveHoleDetail;
   window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
   // Wire up login buttons inside module (avoids deferred module timing issue)
-  document.getElementById("sendLinkBtn")?.addEventListener("click", sendMagicLink);
+  document.getElementById("sendLinkBtn")?.addEventListener("click", () => sendMagicLink());
   document.getElementById("useDifferentEmailBtn")?.addEventListener("click", showLoginEmailStep);
+  document.getElementById("welcomeSignInBtn")?.addEventListener("click", () => {
+    const email = getCookie(EMAIL_COOKIE);
+    if (email) sendMagicLink(email);
+  });
+  document.getElementById("welcomeNotMeBtn")?.addEventListener("click", () => {
+    deleteCookie(EMAIL_COOKIE);
+    deleteCookie(NAME_COOKIE);
+    showLoginEmailStep();
+  });
   document.getElementById("loginEmail")?.addEventListener("keydown", e => {
     if (e.key === "Enter") sendMagicLink();
   });
