@@ -1613,6 +1613,12 @@
         <option value="">Assign to Team</option>
       </select>
 
+      <label class="form-label" for="playerVenmo">Venmo Username (optional)</label>
+      <input id="playerVenmo" placeholder="e.g. frank-mcgolf (no @)"/>
+
+      <label class="form-label" for="playerPaypal">PayPal.me Username (optional)</label>
+      <input id="playerPaypal" placeholder="e.g. frankmcgolf"/>
+
       <label class="form-label" for="swamiIntel">Swami Intel</label>
       <textarea id="swamiIntel" placeholder="Give Swami something to work with. Inside jokes, quirks, superstitions, rivalries, notable moments, anything. The more specific, the better the roasts."></textarea>
 
@@ -5829,6 +5835,8 @@ ${closer}`;
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
+    document.getElementById("playerVenmo").value = "";
+    document.getElementById("playerPaypal").value = "";
     document.getElementById("swamiIntel").value = "";
 
     selectedStrengths = [];
@@ -5848,6 +5856,8 @@ ${closer}`;
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
     document.getElementById("playerTeam").value = player.team || "";
+    document.getElementById("playerVenmo").value = player.venmo || "";
+    document.getElementById("playerPaypal").value = player.paypal || "";
     document.getElementById("swamiIntel").value = player.swamiIntel || "";
 
     selectedStrengths = player.strengths || [];
@@ -5875,6 +5885,9 @@ ${closer}`;
       return;
     }
 
+    const venmo = document.getElementById("playerVenmo").value.trim().replace(/^@/, "");
+    const paypal = document.getElementById("playerPaypal").value.trim().replace(/^@/, "");
+
     const player = {
       name,
       nickname,
@@ -5882,6 +5895,8 @@ ${closer}`;
       gender,
       team,
       swamiIntel,
+      venmo,
+      paypal,
       strengths: selectedStrengths,
       weaknesses: selectedWeaknesses,
       updatedAt: new Date().toISOString()
@@ -6214,19 +6229,24 @@ ${closer}`;
   }
 
   function computeSettlements(balances) {
-    // Minimum transactions algorithm
-    const debtors  = balances.filter(b => b.net < -0.01).map(b => ({ ...b, net: b.net })).sort((a,b) => a.net - b.net);
-    const creditors = balances.filter(b => b.net > 0.01).map(b => ({ ...b, net: b.net })).sort((a,b) => b.net - a.net);
+    const debtors   = balances.filter(b => b.net < -0.01).map(b => ({ ...b })).sort((a,b) => a.net - b.net);
+    const creditors = balances.filter(b => b.net > 0.01).map(b => ({ ...b })).sort((a,b) => b.net - a.net);
     const transactions = [];
     let i = 0, j = 0;
     while (i < debtors.length && j < creditors.length) {
-      const debt = -debtors[i].net;
+      const debt   = -debtors[i].net;
       const credit = creditors[j].net;
       const amount = Math.min(debt, credit);
-      transactions.push({ from: debtors[i].name, to: creditors[j].name, amount });
-      debtors[i].net += amount;
+      transactions.push({
+        from:   debtors[i].name,
+        fromId: debtors[i].id,
+        to:     creditors[j].name,
+        toId:   creditors[j].id,
+        amount
+      });
+      debtors[i].net  += amount;
       creditors[j].net -= amount;
-      if (Math.abs(debtors[i].net) < 0.01) i++;
+      if (Math.abs(debtors[i].net)  < 0.01) i++;
       if (Math.abs(creditors[j].net) < 0.01) j++;
     }
     return transactions;
@@ -6251,15 +6271,50 @@ ${closer}`;
       </div>
     `).join("") : `<div class="empty-state">Add expenses to see balances.</div>`;
 
-    setEl.innerHTML = settlements.length ? settlements.map(t => `
-      <div class="settlement-row">
-        <span style="color:#f87171;font-weight:600;">${escapeHtml(t.from)}</span>
-        <span style="color:#64748b;">pays</span>
-        <span class="settlement-amount">$${t.amount.toFixed(2)}</span>
-        <span style="color:#64748b;">to</span>
-        <span style="color:#4ade80;font-weight:600;">${escapeHtml(t.to)}</span>
-      </div>
-    `).join("") : `<div class="empty-state" style="font-size:13px;">${expenses.length ? "✅ All settled up!" : "No expenses yet."}</div>`;
+    setEl.innerHTML = settlements.length ? settlements.map(t => {
+      const toPlayer = players.find(p => p.id === t.toId);
+      const tripName = (activeTripData.name || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
+      const note = encodeURIComponent(`${tripName} settlement`);
+      const amount = t.amount.toFixed(2);
+
+      const venmoHandle = toPlayer?.venmo?.trim();
+      const paypalHandle = toPlayer?.paypal?.trim();
+
+      const venmoBtn = venmoHandle
+        ? `<a href="venmo://paycharge?txn=pay&recipients=${encodeURIComponent(venmoHandle)}&amount=${amount}&note=${note}"
+            style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#008CFF;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;touch-action:manipulation;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19.1 2c.8 1.3 1.2 2.7 1.2 4.6 0 5.7-4.9 13.1-8.9 13.1-3.7 0-4.4-3.1-6.6-9.3L7.4 9c.7 2.1 1.5 4.9 2.8 4.9 1.1 0 3.1-2.9 3.1-5.2 0-1.4-.5-2.3-1.4-2.3-.8 0-1.8.7-2.5 1.9.3-3.2 2.5-6.3 5.5-6.3 2.1 0 2.2 2.8 2.2 2.8s-.1-.8 2-2.8z"/></svg>
+            Venmo
+           </a>`
+        : "";
+
+      const paypalBtn = paypalHandle
+        ? `<a href="https://paypal.me/${encodeURIComponent(paypalHandle)}/${amount}"
+            target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#003087;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;touch-action:manipulation;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M20.1 7.2c.1-.7.1-1.4 0-2-.6-3.2-3.4-4.2-6.7-4.2H5.8c-.5 0-.9.4-1 .8L2 19.4c-.1.4.2.7.6.7h4.2l1.1-6.7v.2c.1-.5.5-.8 1-.8h2c4 0 7.1-1.6 8-6.3v-.3z"/><path d="M20.1 7.2c-.9 4.7-4 6.3-8 6.3h-2c-.5 0-.9.4-1 .8l-1.4 8.7c0 .3.2.6.5.6H12c.4 0 .8-.3.9-.7l.1-.3.7-4.3.1-.3c.1-.4.5-.7.9-.7h.6c3.7 0 6.5-1.5 7.4-5.8.4-1.7.2-3.2-.6-4.3z"/></svg>
+            PayPal
+           </a>`
+        : "";
+
+      const noPaymentMsg = (!venmoHandle && !paypalHandle)
+        ? `<span style="font-size:11px;color:#475569;">No payment info — ask ${escapeHtml(t.to)} to add Venmo/PayPal to their profile</span>`
+        : "";
+
+      return `
+        <div class="settlement-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="color:#f87171;font-weight:600;">${escapeHtml(t.from)}</span>
+            <span style="color:#64748b;">pays</span>
+            <span class="settlement-amount">$${amount}</span>
+            <span style="color:#64748b;">to</span>
+            <span style="color:#4ade80;font-weight:600;">${escapeHtml(t.to)}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            ${venmoBtn}${paypalBtn}${noPaymentMsg}
+          </div>
+        </div>`;
+    }).join("") : `<div class="empty-state" style="font-size:13px;">${expenses.length ? "✅ All settled up!" : "No expenses yet."}</div>`;
   }
 
   function renderExpenseList() {
