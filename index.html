@@ -1139,6 +1139,8 @@
       </div>
 
       <div id="loginStatus" style="margin-top:16px;font-size:13px;color:#f87171;display:none;"></div>
+      <!-- Debug panel - remove after diagnosis -->
+      <div id="debugPanel" style="margin-top:20px;padding:12px;background:#0f2442;border:1px solid #375984;border-radius:10px;font-size:11px;color:#93c5fd;text-align:left;width:100%;max-width:360px;word-break:break-all;display:none;"></div>
     </div>
   </div>
 
@@ -2432,6 +2434,15 @@ Respond ONLY with valid JSON, nothing else:
   const NAME_COOKIE  = "swamiGolfName";
   const UID_COOKIE   = "swamiGolfUid";
 
+  function dbg(msg) {
+    console.log(msg);
+    const el = document.getElementById("debugPanel");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML += `<div>${new Date().toISOString().slice(11,19)} ${msg}</div>`;
+    }
+  }
+
   function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`;
@@ -2448,22 +2459,25 @@ Respond ONLY with valid JSON, nothing else:
 
   async function trySilentSignIn() {
     const uid = getCookie(UID_COOKIE);
-    console.log("trySilentSignIn — UID cookie:", uid ? uid.slice(0,8)+"..." : "NOT FOUND");
+    dbg(`UID cookie: ${uid ? uid.slice(0,8)+"..." : "NOT FOUND"}`);
+    dbg(`Email cookie: ${getCookie(EMAIL_COOKIE) || "NOT FOUND"}`);
+    dbg(`All cookies: ${document.cookie.slice(0,100) || "NONE"}`);
     if (!uid) return false;
     try {
+      dbg("Calling /api/auth-token...");
       const res = await fetch("/api/auth-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid })
       });
       const data = await res.json();
-      console.log("auth-token response:", res.status, JSON.stringify(data).slice(0, 100));
+      dbg(`auth-token: ${res.status} — ${JSON.stringify(data).slice(0,80)}`);
       if (!res.ok) return false;
       await signInWithCustomToken(auth, data.token);
-      console.log("Silent sign-in SUCCESS");
+      dbg("Silent sign-in SUCCESS ✅");
       return true;
     } catch (e) {
-      console.warn("Silent sign-in failed:", e.message);
+      dbg(`Silent sign-in ERROR: ${e.message}`);
       return false;
     }
   }
@@ -2565,6 +2579,7 @@ Respond ONLY with valid JSON, nothing else:
   } else {
     // Try silent sign-in with stored UID before showing login
     const uid = getCookie(UID_COOKIE);
+    dbg(`Page load — isSignInLink: false, UID: ${uid ? "found" : "not found"}`);
     if (uid) {
       // Show a brief loading state while we attempt silent sign-in
       document.getElementById("loginScreen").classList.remove("hidden");
@@ -2594,6 +2609,7 @@ Respond ONLY with valid JSON, nothing else:
 
   // Auth state observer
   onAuthStateChanged(auth, async user => {
+    dbg(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"}`);
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
