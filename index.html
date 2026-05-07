@@ -937,6 +937,40 @@
       align-items: end;
     }
 
+    /* ── Expenses ────────────────────────────────────────────────────── */
+    .expense-card { background:#13294d;border:1px solid #375984;border-radius:14px;padding:14px;margin:10px 14px;cursor:pointer;touch-action:manipulation;transition:opacity 0.1s; }
+    .expense-card:active { opacity:0.75; }
+    .expense-card-header { display:flex;justify-content:space-between;align-items:flex-start;gap:8px; }
+    .expense-title { font-weight:bold;font-size:15px; }
+    .expense-amount { font-size:18px;font-weight:bold;color:#4ade80;white-space:nowrap; }
+    .expense-meta { font-size:12px;color:#93c5fd;margin-top:4px; }
+    .expense-splits { margin-top:8px;font-size:12px;color:#bfdbfe; }
+    .expense-category-chip { padding:6px 12px;border-radius:16px;border:1.5px solid #375984;background:#0f2442;font-size:12px;cursor:pointer;touch-action:manipulation;user-select:none;margin:0;width:auto;transition:all 0.1s; }
+    .expense-category-chip.selected { background:#0f766e;border-color:#4ade80;font-weight:bold; }
+    .expense-category-chip:active { opacity:0.7; }
+    .expense-split-player-chip { padding:8px 14px;border-radius:20px;border:1.5px solid #375984;background:#0f2442;font-size:13px;cursor:pointer;touch-action:manipulation;user-select:none;margin:0;width:auto;transition:all 0.1s; }
+    .expense-split-player-chip.selected { background:#1d4ed8;border-color:#60a5fa;font-weight:bold; }
+    .expense-split-player-chip:active { opacity:0.7; }
+    .balance-row { display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e3a5f; }
+    .balance-row:last-child { border-bottom:none; }
+    .balance-name { font-size:14px;font-weight:600; }
+    .balance-amount { font-size:15px;font-weight:bold; }
+    .balance-positive { color:#4ade80; }
+    .balance-negative { color:#f87171; }
+    .balance-zero { color:#94a3b8; }
+    .settlement-row { display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #1e3a5f;font-size:13px; }
+    .settlement-row:last-child { border-bottom:none; }
+    .settlement-amount { font-weight:bold;color:#facc15;white-space:nowrap; }
+    .expense-summary-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center; }
+    .expense-summary-item { background:#0f2442;border-radius:10px;padding:10px; }
+    .expense-summary-val { font-size:20px;font-weight:bold;color:#4ade80; }
+    .expense-summary-label { font-size:11px;color:#93c5fd;margin-top:2px; }
+    .split-detail-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+    .split-detail-name { font-size:13px;min-width:80px;color:#bfdbfe; }
+    .split-detail-input { flex:1;margin:0;padding:8px; }
+    .split-detail-calc { font-size:12px;color:#93c5fd;min-width:50px;text-align:right; }
+    .settled-badge { display:inline-block;padding:2px 8px;border-radius:8px;background:#14532d;color:#4ade80;font-size:11px;font-weight:bold;margin-left:6px; }
+
     /* ── Hole Detail Screen ─────────────────────────────────────────── */
     .hole-detail-card { background:#13294d;border:1px solid #375984;border-radius:14px;padding:16px;margin:12px 14px; }
     .hole-detail-section-title { font-size:12px;font-weight:bold;color:#93c5fd;text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 8px; }
@@ -1076,6 +1110,7 @@
             <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
             <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
+            <div class="home-menu-item" onclick="openExpenses()">Expenses</div>
             <div class="home-menu-item" onclick="openPlayerList()">Players</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
@@ -1091,6 +1126,10 @@
 
       <div class="mini-tile" onclick="openItinerary()">
         View Trip Itinerary
+      </div>
+
+      <div class="mini-tile" onclick="openExpenses()" style="background:linear-gradient(135deg,#1a3a2a,#0f2d1e);border-color:#2d6a4f;">
+        💰 Trip Expenses
       </div>
 
       <div class="card score-card" onclick="openMatchHome()">
@@ -1120,6 +1159,65 @@
     </div>
   </div>
 
+
+  <!-- ── EXPENSES ──────────────────────────────────────────────────────── -->
+  <div id="expensesScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Expenses</h2>
+      <button onclick="openExpenseEditor()" style="width:auto;padding:8px 14px;margin:0;font-size:14px;">+ Add</button>
+    </div>
+    <div class="card">
+      <div id="expenseSummaryBar"></div>
+    </div>
+    <div class="card">
+      <div class="feed-title" style="margin-bottom:10px;">Balances</div>
+      <div id="expenseBalances"></div>
+    </div>
+    <div class="card">
+      <div class="feed-title" style="margin-bottom:10px;">Settlement Plan</div>
+      <div id="expenseSettlement"></div>
+    </div>
+    <div id="expenseList"></div>
+  </div>
+
+  <div id="expenseEditorScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="show('expensesScreen');renderExpenses();" class="secondary">Back</button>
+      <h2 id="expenseEditorTitle">Add Expense</h2>
+    </div>
+    <div class="card">
+      <label class="form-label" for="expenseDescription">Description</label>
+      <input id="expenseDescription" placeholder="e.g. Dinner at the clubhouse"/>
+
+      <label class="form-label" for="expenseAmount">Total Amount ($)</label>
+      <input id="expenseAmount" type="number" step="0.01" placeholder="0.00" inputmode="decimal"/>
+
+      <label class="form-label" for="expenseCategory">Category</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="expenseCategoryChips"></div>
+      <input id="expenseCategoryCustom" placeholder="Or type a custom category" style="margin-top:0;"/>
+
+      <label class="form-label" for="expensePaidBy">Paid By</label>
+      <select id="expensePaidBy"></select>
+
+      <label class="form-label">Split Among</label>
+      <div id="expenseSplitPlayers" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+
+      <label class="form-label">Split Method</label>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="splitMethodEqual" onclick="setSplitMethod('equal')" style="flex:1;margin:0;padding:10px;font-size:13px;" class="backup">Equal</button>
+        <button id="splitMethodCustom" onclick="setSplitMethod('custom')" style="flex:1;margin:0;padding:10px;font-size:13px;" class="secondary">Custom $</button>
+        <button id="splitMethodPercent" onclick="setSplitMethod('percent')" style="flex:1;margin:0;padding:10px;font-size:13px;" class="secondary">%</button>
+      </div>
+      <div id="expenseSplitDetail"></div>
+
+      <label class="form-label" for="expenseNote">Note (optional)</label>
+      <input id="expenseNote" placeholder="Any details..."/>
+
+      <button onclick="saveExpense()">Save Expense</button>
+      <button id="deleteExpenseBtn" onclick="deleteExpense()" class="danger hidden" style="margin-top:8px;">Delete Expense</button>
+    </div>
+  </div>
 
   <div id="tripFeedScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
@@ -1596,6 +1694,7 @@
   let feedPosts = [];
   let matches = [];
   let recaps = [];
+  let expenses = [];
   let editingMatchId = null;
   let activeScoreMatchId = null;
   let editingPlayerId = null;
@@ -2184,6 +2283,10 @@ Respond ONLY with valid JSON, nothing else:
     return collection(db, "trips", tripId, "recaps");
   }
 
+  function expensesCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "expenses");
+  }
+
   async function loadCourseLibrary() {
     const urls = typeof COURSE_LIBRARY_URLS !== "undefined" ? COURSE_LIBRARY_URLS : ["./pinehurst-course-library.json"];
 
@@ -2603,6 +2706,16 @@ Respond ONLY with valid JSON, nothing else:
         renderSwamiPulse();
       })
     );
+
+    unsubscribers.push(
+      onSnapshot(expensesCollection(tripId), snapshot => {
+        expenses = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        renderExpenses();
+      })
+    );
   }
 
   function resetScrollToTop() {
@@ -2659,6 +2772,8 @@ Respond ONLY with valid JSON, nothing else:
       "momentsScreen",
       "teamRosterScreen",
       "teamScreen",
+      "expensesScreen",
+      "expenseEditorScreen",
       "playerListScreen",
       "playerScreen"
     ].forEach(x => {
@@ -4988,7 +5103,7 @@ ${closer}`;
       matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
       scoreUpdate:  `Scores updated: ${subject}. ${ctx}\n\nSwami reaction — momentum, lead changes, who's struggling. ${variationSeed} ${maxWords}`,
       userComment:  `${subject} posted in the trip feed. ${ctx}\n\nSwami reaction to the post. ${variationSeed} ${maxWords}`,
-      recapAdd:     `Recap generated: "${subject}". ${ctx}\n\nSwami one-liner teasing the recap. 1 sentence only.`,
+      expenseAdd:   `${subject}. ${ctx}\n\nSwami reaction to someone paying for a group expense. Reference the amount or category if specific enough to be funny. ${variationSeed} ${maxWords}`,
       momentAdd:    `Match moment logged: "${subject}". ${ctx}\n\nSwami reaction. 1 sentence only.`,
       teams:        `Teams set: ${subject}. ${ctx}\n\nSwami reaction to the rivalry. ${variationSeed} ${maxWords}`
     };
@@ -5754,8 +5869,381 @@ ${closer}`;
 
   window.testSwamiApi = testSwamiApi;
   window.runConfidenceMeter = runConfidenceMeter;
-  window.promptEditTeamName = promptEditTeamName;
+  // ── EXPENSES MODULE ──────────────────────────────────────────────────────────
+
+  const EXPENSE_CATEGORIES = ["🏌️ Golf Fees", "🍽️ Meals", "🏨 Accommodation", "🚗 Transport", "🍺 Bar Tab", "🛒 Other"];
+  const SPLIT_METHODS = ["equal", "custom", "percent"];
+
+  let editingExpenseId = null;
+  let expenseSplitMethod = "equal";
+  let expenseSelectedPlayers = [];
+
+  function openExpenses() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    show("expensesScreen");
+    renderExpenses();
+  }
+
+  function renderExpenses() {
+    if (!document.getElementById("expensesScreen")) return;
+    renderExpenseSummary();
+    renderExpenseBalances();
+    renderExpenseList();
+  }
+
+  function renderExpenseSummary() {
+    const el = document.getElementById("expenseSummaryBar");
+    if (!el) return;
+    const total = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const perPerson = players.length ? total / players.length : 0;
+    const categories = {};
+    expenses.forEach(e => { categories[e.category || "Other"] = (categories[e.category || "Other"] || 0) + Number(e.amount || 0); });
+    const topCat = Object.entries(categories).sort((a,b) => b[1]-a[1])[0];
+    el.innerHTML = `
+      <div class="expense-summary-grid">
+        <div class="expense-summary-item">
+          <div class="expense-summary-val">$${total.toFixed(2)}</div>
+          <div class="expense-summary-label">Total Spent</div>
+        </div>
+        <div class="expense-summary-item">
+          <div class="expense-summary-val">${expenses.length}</div>
+          <div class="expense-summary-label">Expenses</div>
+        </div>
+        <div class="expense-summary-item">
+          <div class="expense-summary-val">$${perPerson.toFixed(2)}</div>
+          <div class="expense-summary-label">Per Person</div>
+        </div>
+      </div>
+      ${topCat ? `<div style="text-align:center;font-size:12px;color:#93c5fd;margin-top:10px;">Top category: <strong>${escapeHtml(topCat[0])}</strong> ($${topCat[1].toFixed(2)})</div>` : ""}
+    `;
+  }
+
+  function computeBalances() {
+    // For each player, track how much they paid vs how much they owe
+    const paid = {};    // how much each person paid
+    const owed = {};    // how much each person owes across all expenses
+    players.forEach(p => { paid[p.id] = 0; owed[p.id] = 0; });
+
+    expenses.forEach(expense => {
+      const payerId = expense.paidById;
+      const amount = Number(expense.amount || 0);
+      if (payerId && paid[payerId] !== undefined) paid[payerId] += amount;
+
+      const splits = expense.splits || {};
+      Object.entries(splits).forEach(([pid, share]) => {
+        if (owed[pid] !== undefined) owed[pid] += Number(share || 0);
+      });
+    });
+
+    // Net balance = paid - owed (positive = others owe you, negative = you owe others)
+    return players.map(p => ({
+      id: p.id,
+      name: p.name,
+      paid: paid[p.id] || 0,
+      owed: owed[p.id] || 0,
+      net: (paid[p.id] || 0) - (owed[p.id] || 0)
+    }));
+  }
+
+  function computeSettlements(balances) {
+    // Minimum transactions algorithm
+    const debtors  = balances.filter(b => b.net < -0.01).map(b => ({ ...b, net: b.net })).sort((a,b) => a.net - b.net);
+    const creditors = balances.filter(b => b.net > 0.01).map(b => ({ ...b, net: b.net })).sort((a,b) => b.net - a.net);
+    const transactions = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const debt = -debtors[i].net;
+      const credit = creditors[j].net;
+      const amount = Math.min(debt, credit);
+      transactions.push({ from: debtors[i].name, to: creditors[j].name, amount });
+      debtors[i].net += amount;
+      creditors[j].net -= amount;
+      if (Math.abs(debtors[i].net) < 0.01) i++;
+      if (Math.abs(creditors[j].net) < 0.01) j++;
+    }
+    return transactions;
+  }
+
+  function renderExpenseBalances() {
+    const balEl = document.getElementById("expenseBalances");
+    const setEl = document.getElementById("expenseSettlement");
+    if (!balEl || !setEl) return;
+    const balances = computeBalances();
+    const settlements = computeSettlements(balances);
+
+    balEl.innerHTML = balances.length ? balances.map(b => `
+      <div class="balance-row">
+        <span class="balance-name">${escapeHtml(b.name)}</span>
+        <div style="text-align:right;">
+          <div class="balance-amount ${b.net > 0.01 ? "balance-positive" : b.net < -0.01 ? "balance-negative" : "balance-zero"}">
+            ${b.net > 0.01 ? "+" : ""}$${Math.abs(b.net).toFixed(2)}
+          </div>
+          <div style="font-size:11px;color:#64748b;">paid $${b.paid.toFixed(2)} · owes $${b.owed.toFixed(2)}</div>
+        </div>
+      </div>
+    `).join("") : `<div class="empty-state">Add expenses to see balances.</div>`;
+
+    setEl.innerHTML = settlements.length ? settlements.map(t => `
+      <div class="settlement-row">
+        <span style="color:#f87171;font-weight:600;">${escapeHtml(t.from)}</span>
+        <span style="color:#64748b;">pays</span>
+        <span class="settlement-amount">$${t.amount.toFixed(2)}</span>
+        <span style="color:#64748b;">to</span>
+        <span style="color:#4ade80;font-weight:600;">${escapeHtml(t.to)}</span>
+      </div>
+    `).join("") : `<div class="empty-state" style="font-size:13px;">${expenses.length ? "✅ All settled up!" : "No expenses yet."}</div>`;
+  }
+
+  function renderExpenseList() {
+    const container = document.getElementById("expenseList");
+    if (!container) return;
+    if (!expenses.length) {
+      container.innerHTML = `<div class="empty-state" style="margin:14px;">No expenses yet. Tap + Add to get started.</div>`;
+      return;
+    }
+    const sorted = [...expenses].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+    container.innerHTML = sorted.map(exp => {
+      const payer = players.find(p => p.id === exp.paidById);
+      const payerName = payer ? payer.name : exp.paidByName || "Unknown";
+      const splitNames = Object.keys(exp.splits || {}).map(pid => {
+        const p = players.find(pl => pl.id === pid);
+        return p ? p.name.split(" ")[0] : pid;
+      }).join(", ");
+      return `
+        <div class="expense-card" onclick="openExpenseEditor('${escapeAttr(exp.id)}')">
+          <div class="expense-card-header">
+            <div>
+              <div class="expense-title">${escapeHtml(exp.description || "Expense")}</div>
+              <div class="expense-meta">${escapeHtml(exp.category || "Other")} · Paid by ${escapeHtml(payerName)}</div>
+            </div>
+            <div class="expense-amount">$${Number(exp.amount||0).toFixed(2)}</div>
+          </div>
+          ${splitNames ? `<div class="expense-splits">Split: ${escapeHtml(splitNames)}</div>` : ""}
+          ${exp.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">${escapeHtml(exp.note)}</div>` : ""}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function openExpenseEditor(expenseId = null) {
+    editingExpenseId = expenseId;
+    expenseSplitMethod = "equal";
+    expenseSelectedPlayers = players.map(p => p.id); // default: all players
+
+    document.getElementById("expenseEditorTitle").textContent = expenseId ? "Edit Expense" : "Add Expense";
+    document.getElementById("deleteExpenseBtn").classList.toggle("hidden", !expenseId);
+
+    // Reset form
+    document.getElementById("expenseDescription").value = "";
+    document.getElementById("expenseAmount").value = "";
+    document.getElementById("expenseCategoryCustom").value = "";
+    document.getElementById("expenseNote").value = "";
+
+    // Build category chips
+    let selectedCategory = EXPENSE_CATEGORIES[0];
+    const chipsEl = document.getElementById("expenseCategoryChips");
+    const renderCategoryChips = () => {
+      chipsEl.innerHTML = EXPENSE_CATEGORIES.map(cat => `
+        <button class="expense-category-chip ${cat === selectedCategory ? "selected" : ""}"
+          onclick="(function(){document.querySelectorAll('.expense-category-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected');document.getElementById('expenseCategoryCustom').value='';}).call(this)"
+          data-cat="${escapeAttr(cat)}">${escapeHtml(cat)}</button>
+      `).join("");
+    };
+    renderCategoryChips();
+
+    // Build paidBy dropdown
+    const paidByEl = document.getElementById("expensePaidBy");
+    paidByEl.innerHTML = players.map(p => `<option value="${escapeAttr(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+
+    // Build split players
+    renderExpenseSplitPlayers();
+    setSplitMethod("equal");
+
+    // Load existing if editing
+    if (expenseId) {
+      const exp = expenses.find(e => e.id === expenseId);
+      if (exp) {
+        document.getElementById("expenseDescription").value = exp.description || "";
+        document.getElementById("expenseAmount").value = exp.amount || "";
+        document.getElementById("expenseNote").value = exp.note || "";
+        paidByEl.value = exp.paidById || "";
+        expenseSelectedPlayers = Object.keys(exp.splits || {});
+        expenseSplitMethod = exp.splitMethod || "equal";
+        if (exp.category && !EXPENSE_CATEGORIES.includes(exp.category)) {
+          document.getElementById("expenseCategoryCustom").value = exp.category;
+        } else {
+          selectedCategory = exp.category || EXPENSE_CATEGORIES[0];
+        }
+        renderCategoryChips();
+        renderExpenseSplitPlayers();
+        setSplitMethod(expenseSplitMethod, exp.splits);
+      }
+    }
+
+    show("expenseEditorScreen");
+  }
+
+  function renderExpenseSplitPlayers() {
+    const el = document.getElementById("expenseSplitPlayers");
+    el.innerHTML = players.map(p => `
+      <button class="expense-split-player-chip ${expenseSelectedPlayers.includes(p.id) ? "selected" : ""}"
+        onclick="toggleExpenseSplitPlayer('${escapeAttr(p.id)}')">${escapeHtml(p.name.split(" ")[0])}</button>
+    `).join("");
+  }
+
+  function toggleExpenseSplitPlayer(playerId) {
+    const idx = expenseSelectedPlayers.indexOf(playerId);
+    if (idx === -1) expenseSelectedPlayers.push(playerId);
+    else if (expenseSelectedPlayers.length > 1) expenseSelectedPlayers.splice(idx, 1);
+    renderExpenseSplitPlayers();
+    setSplitMethod(expenseSplitMethod);
+  }
+
+  function setSplitMethod(method, existingSplits = null) {
+    expenseSplitMethod = method;
+    ["equal","custom","percent"].forEach(m => {
+      const btn = document.getElementById(`splitMethod${m.charAt(0).toUpperCase()+m.slice(1)}`);
+      if (btn) btn.className = m === method ? "backup" : "secondary";
+      if (btn) { btn.style.flex="1"; btn.style.margin="0"; btn.style.padding="10px"; btn.style.fontSize="13px"; }
+    });
+
+    const detail = document.getElementById("expenseSplitDetail");
+    const amount = parseFloat(document.getElementById("expenseAmount").value) || 0;
+    const count = expenseSelectedPlayers.length || 1;
+
+    if (method === "equal") {
+      const share = count ? amount / count : 0;
+      detail.innerHTML = expenseSelectedPlayers.map(pid => {
+        const p = players.find(pl => pl.id === pid);
+        return `<div class="split-detail-row"><span class="split-detail-name">${escapeHtml(p ? p.name.split(" ")[0] : pid)}</span><span class="split-detail-calc">$${share.toFixed(2)}</span></div>`;
+      }).join("");
+    } else if (method === "custom") {
+      detail.innerHTML = expenseSelectedPlayers.map(pid => {
+        const p = players.find(pl => pl.id === pid);
+        const val = existingSplits ? (existingSplits[pid] || "") : (amount / count).toFixed(2);
+        return `<div class="split-detail-row">
+          <span class="split-detail-name">${escapeHtml(p ? p.name.split(" ")[0] : pid)}</span>
+          <input class="split-detail-input" type="number" step="0.01" data-pid="${escapeAttr(pid)}" value="${val}" inputmode="decimal" placeholder="0.00" oninput="updateCustomSplitTotal()"/>
+        </div>`;
+      }).join("") + `<div id="customSplitTotal" style="font-size:12px;color:#93c5fd;margin-top:6px;text-align:right;"></div>`;
+      updateCustomSplitTotal();
+    } else if (method === "percent") {
+      const equalPct = count ? (100 / count).toFixed(1) : "0";
+      detail.innerHTML = expenseSelectedPlayers.map(pid => {
+        const p = players.find(pl => pl.id === pid);
+        const pct = existingSplits ? ((existingSplits[pid] / amount * 100) || equalPct) : equalPct;
+        return `<div class="split-detail-row">
+          <span class="split-detail-name">${escapeHtml(p ? p.name.split(" ")[0] : pid)}</span>
+          <input class="split-detail-input" type="number" step="0.1" data-pid="${escapeAttr(pid)}" value="${pct}" inputmode="decimal" placeholder="0" oninput="updatePercentSplitTotal()"/>
+          <span class="split-detail-calc">%</span>
+        </div>`;
+      }).join("") + `<div id="percentSplitTotal" style="font-size:12px;color:#93c5fd;margin-top:6px;text-align:right;"></div>`;
+      updatePercentSplitTotal();
+    }
+  }
+
+  function updateCustomSplitTotal() {
+    const inputs = document.querySelectorAll("#expenseSplitDetail input[data-pid]");
+    const total = Array.from(inputs).reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+    const amount = parseFloat(document.getElementById("expenseAmount").value) || 0;
+    const el = document.getElementById("customSplitTotal");
+    if (el) {
+      const diff = amount - total;
+      el.textContent = `Total assigned: $${total.toFixed(2)} of $${amount.toFixed(2)}${Math.abs(diff) > 0.01 ? ` (${diff > 0 ? "+" : ""}$${diff.toFixed(2)} remaining)` : " ✅"}`;
+      el.style.color = Math.abs(diff) > 0.01 ? "#f87171" : "#4ade80";
+    }
+  }
+
+  function updatePercentSplitTotal() {
+    const inputs = document.querySelectorAll("#expenseSplitDetail input[data-pid]");
+    const total = Array.from(inputs).reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+    const el = document.getElementById("percentSplitTotal");
+    if (el) {
+      el.textContent = `Total: ${total.toFixed(1)}%${Math.abs(total - 100) > 0.1 ? " (must equal 100%)" : " ✅"}`;
+      el.style.color = Math.abs(total - 100) > 0.1 ? "#f87171" : "#4ade80";
+    }
+  }
+
+  function getExpenseSplits() {
+    const amount = parseFloat(document.getElementById("expenseAmount").value) || 0;
+    const count = expenseSelectedPlayers.length || 1;
+    const splits = {};
+
+    if (expenseSplitMethod === "equal") {
+      const share = amount / count;
+      expenseSelectedPlayers.forEach(pid => { splits[pid] = parseFloat(share.toFixed(2)); });
+    } else if (expenseSplitMethod === "custom") {
+      document.querySelectorAll("#expenseSplitDetail input[data-pid]").forEach(el => {
+        splits[el.dataset.pid] = parseFloat(el.value) || 0;
+      });
+    } else if (expenseSplitMethod === "percent") {
+      document.querySelectorAll("#expenseSplitDetail input[data-pid]").forEach(el => {
+        splits[el.dataset.pid] = parseFloat(((parseFloat(el.value) || 0) / 100 * amount).toFixed(2));
+      });
+    }
+    return splits;
+  }
+
+  function getExpenseCategory() {
+    const custom = document.getElementById("expenseCategoryCustom").value.trim();
+    if (custom) return custom;
+    const selected = document.querySelector(".expense-category-chip.selected");
+    return selected ? selected.dataset.cat : EXPENSE_CATEGORIES[0];
+  }
+
+  async function saveExpense() {
+    const description = document.getElementById("expenseDescription").value.trim();
+    const amount = parseFloat(document.getElementById("expenseAmount").value);
+    const paidById = document.getElementById("expensePaidBy").value;
+    const paidByName = players.find(p => p.id === paidById)?.name || "";
+    const category = getExpenseCategory();
+    const note = document.getElementById("expenseNote").value.trim();
+    const splits = getExpenseSplits();
+
+    if (!description) return alert("Please enter a description.");
+    if (!amount || amount <= 0) return alert("Please enter a valid amount.");
+    if (!paidById) return alert("Please select who paid.");
+    if (!expenseSelectedPlayers.length) return alert("Please select at least one person to split with.");
+
+    const expenseData = {
+      description, amount, paidById, paidByName,
+      category, note, splits,
+      splitMethod: expenseSplitMethod,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editingExpenseId) {
+      await updateDoc(doc(db, "trips", activeTripId, "expenses", editingExpenseId), expenseData);
+    } else {
+      expenseData.createdAt = new Date().toISOString();
+      await addDoc(expensesCollection(), expenseData);
+      // Swami reacts
+      await addSwamiPost("expenseAdd", `${paidByName} paid $${amount.toFixed(2)} for ${description}`);
+    }
+
+    show("expensesScreen");
+    renderExpenses();
+  }
+
+  async function deleteExpense() {
+    if (!editingExpenseId) return;
+    if (!confirm("Delete this expense?")) return;
+    await deleteDoc(doc(db, "trips", activeTripId, "expenses", editingExpenseId));
+    show("expensesScreen");
+    renderExpenses();
+  }
+
+  // ── END EXPENSES MODULE ──────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
+  window.openExpenses = openExpenses;
+  window.openExpenseEditor = openExpenseEditor;
+  window.saveExpense = saveExpense;
+  window.deleteExpense = deleteExpense;
+  window.setSplitMethod = setSplitMethod;
+  window.toggleExpenseSplitPlayer = toggleExpenseSplitPlayer;
+  window.updateCustomSplitTotal = updateCustomSplitTotal;
+  window.updatePercentSplitTotal = updatePercentSplitTotal;
   window.toggleScorecardView = toggleScorecardView;
   window.openHoleDetail = openHoleDetail;
   window.closeHoleDetail = closeHoleDetail;
