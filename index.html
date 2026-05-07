@@ -2448,6 +2448,7 @@ Respond ONLY with valid JSON, nothing else:
 
   async function trySilentSignIn() {
     const uid = getCookie(UID_COOKIE);
+    console.log("trySilentSignIn — UID cookie:", uid ? uid.slice(0,8)+"..." : "NOT FOUND");
     if (!uid) return false;
     try {
       const res = await fetch("/api/auth-token", {
@@ -2455,12 +2456,14 @@ Respond ONLY with valid JSON, nothing else:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid })
       });
+      const data = await res.json();
+      console.log("auth-token response:", res.status, JSON.stringify(data).slice(0, 100));
       if (!res.ok) return false;
-      const { token } = await res.json();
-      await signInWithCustomToken(auth, token);
+      await signInWithCustomToken(auth, data.token);
+      console.log("Silent sign-in SUCCESS");
       return true;
     } catch (e) {
-      console.warn("Silent sign-in failed:", e);
+      console.warn("Silent sign-in failed:", e.message);
       return false;
     }
   }
@@ -2563,9 +2566,21 @@ Respond ONLY with valid JSON, nothing else:
     // Try silent sign-in with stored UID before showing login
     const uid = getCookie(UID_COOKIE);
     if (uid) {
+      // Show a brief loading state while we attempt silent sign-in
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("loginWelcomeStep").classList.add("hidden");
+      document.getElementById("loginEmailStep").classList.add("hidden");
+      document.getElementById("loginSentStep").classList.add("hidden");
+      // Show a loading indicator
+      const statusEl = document.getElementById("loginStatus");
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "#93c5fd";
+        statusEl.textContent = "⏳ Signing you in...";
+      }
       trySilentSignIn().then(success => {
         if (!success) {
-          // Silent sign-in failed — show welcome back or email entry
+          if (statusEl) statusEl.style.display = "none";
           const savedEmail = getCookie(EMAIL_COOKIE);
           if (savedEmail) {
             showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
@@ -2573,7 +2588,6 @@ Respond ONLY with valid JSON, nothing else:
             showLoginEmailStep();
           }
         }
-        // If success, onAuthStateChanged will handle showing the app
       });
     }
   }
