@@ -4627,8 +4627,9 @@ ${closer}`;
     const swamiImgCaption = latestSwami?.imageCaption || "";
     const hasSwamiImg = !!swamiImgUrl;
 
+    const swamiText = latestSwami ? (latestSwami.text || "").slice(0, 500) : "";
     const swamiHtml = latestSwami ? `
-      <div class="pulse-text">${renderPostText(latestSwami)}</div>
+      <div class="pulse-text">${escapeHtml(swamiText)}</div>
       <div class="pulse-meta">${formatFeedTime(latestSwami.createdAt)}</div>
       ${hasSwamiImg ? `<div class="feed-media" style="margin-top:10px;">
         <img id="swami-pulse-img" alt="Swami meme" style="width:100%;border-radius:10px;display:block;">
@@ -5188,7 +5189,33 @@ ${closer}`;
     };
 
     if (media && media.imageUrl) {
-      post.imageUrl = media.imageUrl;
+      // Never store base64 JPEG/PNG in Firestore — causes document bloat and rendering corruption
+      // SVG data URLs are text-safe and small; JPEG/PNG base64 must go to Storage
+      const url = media.imageUrl || "";
+      if (url.startsWith("data:image/svg")) {
+        // SVG is safe to store — small and text-based
+        post.imageUrl = url;
+      } else if (url.startsWith("data:image/jpeg") || url.startsWith("data:image/png") || url.startsWith("data:image/webp")) {
+        // Upload to Firebase Storage instead
+        try {
+          const blob = await (await fetch(url)).blob();
+          const path = `trips/${activeTripId}/memes/${Date.now()}.jpg`;
+          const fileRef = storageRef(storage, path);
+          const uploadTask = uploadBytesResumable(fileRef, blob);
+          const storageUrl = await new Promise((resolve, reject) => {
+            uploadTask.on("state_changed", null, reject, async () => {
+              resolve(await getDownloadURL(uploadTask.snapshot.ref));
+            });
+          });
+          post.imageUrl = storageUrl;
+        } catch (e) {
+          console.warn("Meme upload to Storage failed, skipping image:", e);
+          // Don't store the base64 — just skip the image
+        }
+      } else {
+        // Regular https:// URL — safe to store
+        post.imageUrl = url;
+      }
       post.mediaType = media.mediaType || "image";
       post.imageCaption = media.imageCaption || "";
     }
