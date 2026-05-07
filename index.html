@@ -1076,7 +1076,7 @@
             <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
             <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
-            <div class="home-menu-item" onclick="openSettings()">Settings</div>
+            <div class="home-menu-item" onclick="openPlayerList()">Players</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
             </div>
@@ -1096,7 +1096,7 @@
       <div class="card score-card" onclick="openMatchHome()">
         <div class="scoreboard">
           <div>
-            <div id="teamAName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('A')">Team A</div>
+            <div id="teamAName" class="team-name" onclick="event.stopPropagation(); promptEditTeamName('A')">Team A</div>
             <div class="score-click-zone">
               <div id="teamAScore" class="score">0</div>
             </div>
@@ -1105,7 +1105,7 @@
           <div class="score-click-zone">VS</div>
 
           <div>
-            <div id="teamBName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('B')">Team B</div>
+            <div id="teamBName" class="team-name" onclick="event.stopPropagation(); promptEditTeamName('B')">Team B</div>
             <div class="score-click-zone">
               <div id="teamBScore" class="score">0</div>
             </div>
@@ -1116,8 +1116,6 @@
         <div class="feed-title">Swami Pulse</div>
         <div class="feed-subtitle">Latest signals from the trip</div>
         <div id="swamiPulse" class="pulse-grid"></div>
-        <button onclick="testSwamiApi()" class="secondary" style="margin-top:12px;font-size:13px;padding:10px;">🧪 Test Swami AI Connection</button>
-        <div id="swamiTestResult" style="margin-top:8px;font-size:13px;color:#bfdbfe;display:none;"></div>
       </div>
     </div>
   </div>
@@ -1425,63 +1423,36 @@
   <div id="teamRosterScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2 id="teamRosterTitle">Team Roster</h2>
+      <h2 id="teamRosterTitle" class="team-name" onclick="promptEditTeamNameFromRoster()" style="text-decoration:underline;text-underline-offset:4px;cursor:pointer;">Team Roster</h2>
     </div>
-
     <div class="card">
       <div id="teamRosterList"></div>
     </div>
   </div>
 
-  <div id="settingsScreen" class="hidden secondary-screen">
+  <div id="teamScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2>Settings</h2>
+      <h2>Team Names</h2>
     </div>
-
     <div class="card">
-      <button onclick="openTeamEdit()">Edit Team Names</button>
-      <button onclick="openPlayerList()">Add / Edit Players</button>
-      <button onclick="exportData()" class="backup">Export Data</button>
-      <button onclick="openImportScreen()" class="import">Import Data</button>
-    </div>
-  </div>
-
-  <div id="importScreen" class="hidden secondary-screen">
-    <h2>Import Data</h2>
-
-    <div class="card">
-      <div class="helper-text">
-        Paste exported Swami Golf backup data below, then tap Import.
-        This will upload the backup data into Firebase.
-      </div>
-
-      <textarea id="importDataText" placeholder="Paste exported backup JSON here"></textarea>
-
-      <button onclick="importData()" class="import">Import</button>
-      <button onclick="openSettings()" class="secondary">Back</button>
-    </div>
-  </div>
-
-  <div id="teamScreen" class="hidden secondary-screen">
-    <h2>Team Names</h2>
-
-    <div class="card">
+      <label class="form-label" for="teamAInput">Team A Name</label>
       <input id="teamAInput" placeholder="Team A Name"/>
+      <label class="form-label" for="teamBInput">Team B Name</label>
       <input id="teamBInput" placeholder="Team B Name"/>
-
       <button onclick="saveTeams()">Save</button>
-      <button onclick="openSettings()" class="secondary">Back</button>
+      <button onclick="goTripHome()" class="secondary">Back</button>
     </div>
   </div>
 
   <div id="playerListScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header"><button onclick="openSettings()" class="secondary">Back</button><h2>Players</h2></div>
-
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Players</h2>
+    </div>
     <div class="card">
       <button onclick="openPlayer()">Add New Player</button>
       <div id="playerList"></div>
-      <button onclick="openSettings()" class="secondary">Back</button>
     </div>
   </div>
 
@@ -2687,8 +2658,6 @@ Respond ONLY with valid JSON, nothing else:
       "holeDetailScreen",
       "momentsScreen",
       "teamRosterScreen",
-      "settingsScreen",
-      "importScreen",
       "teamScreen",
       "playerListScreen",
       "playerScreen"
@@ -4437,28 +4406,45 @@ ${closer}`;
   }
 
   function openSettings() {
-    const menu = document.getElementById("tripMenu");
-    if (menu) menu.classList.add("hidden");
-    show("settingsScreen");
+    // Settings removed — redirect to player list
+    openPlayerList();
   }
 
   function openImportScreen() {
-    document.getElementById("importDataText").value = "";
-    show("importScreen");
+    // Import removed — no-op
   }
 
-  function goTripHome() {
-    openTripHome(activeTripId);
+  function promptEditTeamName(team) {
+    const current = team === "A"
+      ? (activeTripData.teamA || "Team A")
+      : (activeTripData.teamB || "Team B");
+    const newName = window.prompt(`Rename "${current}" to:`, current);
+    if (!newName || !newName.trim() || newName.trim() === current) return;
+    const update = team === "A" ? { teamA: newName.trim() } : { teamB: newName.trim() };
+    updateDoc(tripDocRef(), update).then(() => {
+      activeTripData = { ...activeTripData, ...update };
+      const el = document.getElementById(team === "A" ? "teamAName" : "teamBName");
+      if (el) el.innerText = newName.trim();
+      // Also refresh roster title if on roster screen
+      const rosterTitle = document.getElementById("teamRosterTitle");
+      if (rosterTitle && activeTeamRosterKey === team) rosterTitle.innerText = newName.trim();
+    });
   }
 
-  function openTeamEdit() {
-    show("teamScreen");
-    loadInputs();
+  let activeTeamRosterKey = null;
+
+  function promptEditTeamNameFromRoster() {
+    if (activeTeamRosterKey) promptEditTeamName(activeTeamRosterKey);
   }
 
-  function openPlayerList() {
-    show("playerListScreen");
-    renderPlayerList();
+  function openTeamRoster(teamKeyValue) {
+    activeTeamRosterKey = teamKeyValue;
+    const teamName = teamKeyValue === "A"
+      ? activeTripData.teamA || "Team A"
+      : activeTripData.teamB || "Team B";
+    document.getElementById("teamRosterTitle").innerText = teamName;
+    renderTeamRoster(teamName);
+    show("teamRosterScreen");
   }
 
   function openPlayer(playerId = null) {
@@ -4601,14 +4587,20 @@ ${closer}`;
     }
   }
 
-  function openTeamRoster(teamKeyValue) {
-    const teamName = teamKeyValue === "A"
-      ? activeTripData.teamA || "Team A"
-      : activeTripData.teamB || "Team B";
+  function goTripHome() {
+    openTripHome(activeTripId);
+  }
 
-    document.getElementById("teamRosterTitle").innerText = teamName;
-    renderTeamRoster(teamName);
-    show("teamRosterScreen");
+  function openTeamEdit() {
+    show("teamScreen");
+    loadInputs();
+  }
+
+  function openPlayerList() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    show("playerListScreen");
+    renderPlayerList();
   }
 
   function renderTeamRoster(teamName) {
@@ -5762,6 +5754,8 @@ ${closer}`;
 
   window.testSwamiApi = testSwamiApi;
   window.runConfidenceMeter = runConfidenceMeter;
+  window.promptEditTeamName = promptEditTeamName;
+  window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
   window.toggleScorecardView = toggleScorecardView;
   window.openHoleDetail = openHoleDetail;
   window.closeHoleDetail = closeHoleDetail;
