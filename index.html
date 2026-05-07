@@ -1128,10 +1128,6 @@
         View Trip Itinerary
       </div>
 
-      <div class="mini-tile" onclick="openExpenses()" style="background:linear-gradient(135deg,#1a3a2a,#0f2d1e);border-color:#2d6a4f;">
-        💰 Trip Expenses
-      </div>
-
       <div class="card score-card" onclick="openMatchHome()">
         <div class="scoreboard">
           <div>
@@ -1183,7 +1179,7 @@
 
   <div id="expenseEditorScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="show('expensesScreen');renderExpenses();" class="secondary">Back</button>
+      <button onclick="openExpenses()" class="secondary">Back</button>
       <h2 id="expenseEditorTitle">Add Expense</h2>
     </div>
     <div class="card">
@@ -5403,10 +5399,10 @@ ${closer}`;
   function updateTagBadge() {
     const badge = document.getElementById("tagBadge");
     if (!badge) return;
-
+    const assignedId = getAssignedPlayerId();
+    if (!assignedId) { badge.classList.add("hidden"); return; }
     const readIds = new Set(getReadTaggedPostIds());
     const unread = getTaggedPostsForAssignedPlayer().filter(post => !readIds.has(post.id));
-
     if (unread.length) {
       badge.innerText = unread.length;
       badge.classList.remove("hidden");
@@ -5443,10 +5439,23 @@ ${closer}`;
   }
 
   function markTagsRead() {
+    const key = taggedReadKey();
     const ids = getTaggedPostsForAssignedPlayer().map(post => post.id);
-    localStorage.setItem(taggedReadKey(), JSON.stringify(ids));
+    // Also mark ALL tagged posts (not just assigned player) as read as a fallback
+    const allTaggedIds = feedPosts
+      .filter(p => Array.isArray(p.taggedPlayerIds) && p.taggedPlayerIds.length > 0)
+      .map(p => p.id);
+    const allIds = [...new Set([...ids, ...allTaggedIds])];
+    localStorage.setItem(key, JSON.stringify(allIds));
     updateTagBadge();
     renderTaggedMessages();
+    // Visual confirmation
+    const btn = document.querySelector("#tagsScreen button.secondary");
+    if (btn) {
+      const orig = btn.innerText;
+      btn.innerText = "✅ Marked Read";
+      setTimeout(() => { btn.innerText = orig; }, 1500);
+    }
   }
 
 
