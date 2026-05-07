@@ -1703,6 +1703,10 @@
     </div>
     <div id="photoViewerContent"></div>
   </div>
+
+</div><!-- end .container -->
+
+<script>
   window.__swamiAppReady = false;
   window.__pendingTripId = null;
 
@@ -5245,17 +5249,23 @@ ${closer}`;
     };
 
     if (media && media.imageUrl) {
-      // Never store base64 JPEG/PNG in Firestore — causes document bloat and rendering corruption
-      // SVG data URLs are text-safe and small; JPEG/PNG base64 must go to Storage
       const url = media.imageUrl || "";
-      if (url.startsWith("data:image/svg")) {
-        // SVG is safe to store — small and text-based
+      if (url.startsWith("https://") || url.startsWith("http://")) {
+        // Already a remote URL — safe to store directly
         post.imageUrl = url;
-      } else if (url.startsWith("data:image/jpeg") || url.startsWith("data:image/png") || url.startsWith("data:image/webp")) {
-        // Upload to Firebase Storage instead
+      } else if (url.startsWith("data:")) {
+        // Any data URL (SVG, JPEG, PNG) — upload to Firebase Storage
         try {
-          const blob = await (await fetch(url)).blob();
-          const path = `trips/${activeTripId}/memes/${Date.now()}.jpg`;
+          let blob;
+          if (url.startsWith("data:image/svg")) {
+            // Convert SVG data URL to blob
+            const svgText = decodeURIComponent(url.split(",")[1]);
+            blob = new Blob([svgText], { type: "image/svg+xml" });
+          } else {
+            blob = await (await fetch(url)).blob();
+          }
+          const ext = url.startsWith("data:image/svg") ? "svg" : "jpg";
+          const path = `trips/${activeTripId}/memes/${Date.now()}.${ext}`;
           const fileRef = storageRef(storage, path);
           const uploadTask = uploadBytesResumable(fileRef, blob);
           const storageUrl = await new Promise((resolve, reject) => {
@@ -5266,11 +5276,8 @@ ${closer}`;
           post.imageUrl = storageUrl;
         } catch (e) {
           console.warn("Meme upload to Storage failed, skipping image:", e);
-          // Don't store the base64 — just skip the image
+          // Skip image entirely — don't store data URL in Firestore
         }
-      } else {
-        // Regular https:// URL — safe to store
-        post.imageUrl = url;
       }
       post.mediaType = media.mediaType || "image";
       post.imageCaption = media.imageCaption || "";
