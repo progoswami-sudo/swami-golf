@@ -1100,9 +1100,41 @@
 
 <div class="container">
 
-  <div id="appHome">
+  <!-- ── LOGIN SCREEN ───────────────────────────────────────────────────────── -->
+  <div id="loginScreen">
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:8px;">⛳</div>
+      <h1 style="font-size:28px;font-weight:800;margin:0 0 6px;">Swami Golf</h1>
+      <p style="color:#93c5fd;font-size:15px;margin:0 0 40px;">Your AI-powered golf trip companion</p>
+
+      <div id="loginEmailStep" class="card" style="width:100%;max-width:360px;text-align:left;">
+        <label class="form-label" for="loginEmail">Your Email Address</label>
+        <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
+          placeholder="you@example.com"
+          style="margin-bottom:12px;"/>
+        <button onclick="sendMagicLink()" id="sendLinkBtn">Send Sign-In Link</button>
+        <p style="font-size:12px;color:#64748b;text-align:center;margin-top:12px;">
+          We'll email you a magic link. No password needed.
+        </p>
+      </div>
+
+      <div id="loginSentStep" class="card hidden" style="width:100%;max-width:360px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:12px;">📬</div>
+        <h3 style="margin:0 0 8px;">Check your email</h3>
+        <p style="color:#93c5fd;font-size:14px;" id="loginSentMessage">
+          We sent a sign-in link to your email. Tap it to continue.
+        </p>
+        <button onclick="showLoginEmailStep()" class="secondary" style="margin-top:16px;">Use a different email</button>
+      </div>
+
+      <div id="loginStatus" style="margin-top:16px;font-size:13px;color:#f87171;display:none;"></div>
+    </div>
+  </div>
+
+  <div id="appHome" class="hidden">
     <div class="hamburger-wrap">
       <button class="hamburger-btn" onclick="toggleHomeMenu(event)">☰</button>
+      <div id="userPill" style="font-size:12px;color:#93c5fd;padding:6px 10px;background:#13294d;border:1px solid #375984;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;cursor:pointer;" onclick="openUserProfile()"></div>
       <div id="homeMenu" class="home-menu hidden">
         <div class="home-menu-item" onclick="createTrip()">Create Trip</div>
         <div class="home-menu-item" onclick="requestNotifications()">Notifications On</div>
@@ -1617,6 +1649,9 @@
         <option value="">Assign to Team</option>
       </select>
 
+      <label class="form-label" for="playerEmail">Email Address</label>
+      <input id="playerEmail" type="email" placeholder="Links this player to their account"/>
+
       <label class="form-label" for="playerVenmo">Venmo Username (optional)</label>
       <input id="playerVenmo" placeholder="e.g. frank-mcgolf (no @)"/>
 
@@ -1714,6 +1749,22 @@
     <div id="photoViewerContent"></div>
   </div>
 
+  <div id="userProfileScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>My Account</h2>
+    </div>
+    <div class="card">
+      <div style="text-align:center;padding:8px 0 16px;">
+        <div style="font-size:48px;margin-bottom:8px;">👤</div>
+        <div id="userProfileEmail" style="font-size:16px;font-weight:600;color:#93c5fd;"></div>
+        <div id="userProfileRole" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
+      </div>
+      <div id="userLinkedPlayer" style="margin-bottom:16px;padding:12px;background:#0f2442;border-radius:12px;border:1px solid #375984;font-size:14px;"></div>
+      <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
+    </div>
+  </div>
+
 </div><!-- end .container -->
 
 <script>
@@ -1777,7 +1828,12 @@
   import {
     getAuth,
     signInAnonymously,
-    onAuthStateChanged
+    signInWithEmailLink,
+    isSignInWithEmailLink,
+    sendSignInLinkToEmail,
+    onAuthStateChanged,
+    linkWithCredential,
+    EmailAuthProvider
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import {
     getFirestore,
@@ -2356,21 +2412,124 @@ Respond ONLY with valid JSON, nothing else:
   let selectedStrengths = [];
   let selectedWeaknesses = [];
 
-  signInAnonymously(auth).catch(error => {
-    document.getElementById("syncStatus").innerText = "Firebase sign-in failed. Check Authentication settings.";
-    console.error(error);
-  });
+  // ── AUTH ─────────────────────────────────────────────────────────────────────
 
+  const APP_URL = window.location.origin + window.location.pathname;
+  const EMAIL_KEY = "swamiGolf.pendingEmail";
+
+  async function sendMagicLink() {
+    const email = document.getElementById("loginEmail").value.trim();
+    if (!email || !email.includes("@")) {
+      showLoginError("Please enter a valid email address.");
+      return;
+    }
+    const btn = document.getElementById("sendLinkBtn");
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+      const actionCodeSettings = {
+        url: APP_URL,
+        handleCodeInApp: true
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      localStorage.setItem(EMAIL_KEY, email);
+      document.getElementById("loginEmailStep").classList.add("hidden");
+      document.getElementById("loginSentStep").classList.remove("hidden");
+      document.getElementById("loginSentMessage").textContent =
+        `We sent a sign-in link to ${email}. Tap it to continue.`;
+    } catch (err) {
+      console.error("Send magic link error:", err);
+      showLoginError("Failed to send link: " + (err.message || err.code));
+      btn.disabled = false;
+      btn.textContent = "Send Sign-In Link";
+    }
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById("loginStatus");
+    if (el) { el.style.display = "block"; el.textContent = msg; }
+  }
+
+  function showLoginEmailStep() {
+    document.getElementById("loginEmailStep").classList.remove("hidden");
+    document.getElementById("loginSentStep").classList.add("hidden");
+    document.getElementById("loginStatus").style.display = "none";
+  }
+
+  async function signOutUser() {
+    await auth.signOut();
+    document.getElementById("loginScreen").classList.remove("hidden");
+    document.getElementById("appHome").classList.add("hidden");
+    document.getElementById("loginEmail").value = "";
+    showLoginEmailStep();
+  }
+
+  function openUserProfile() {
+    const emailEl = document.getElementById("userProfileEmail");
+    const roleEl  = document.getElementById("userProfileRole");
+    const linkedEl = document.getElementById("userLinkedPlayer");
+    if (emailEl) emailEl.textContent = currentUser?.email || "Anonymous";
+    if (roleEl)  roleEl.textContent  = currentUser?.email ? "Signed in with email" : "Guest (anonymous)";
+    const linked = players.find(p => p.email?.toLowerCase() === currentUser?.email?.toLowerCase());
+    if (linkedEl) {
+      linkedEl.innerHTML = linked
+        ? `<strong>Linked player:</strong> ${escapeHtml(linked.name)}${linked.nickname ? ` "${escapeHtml(linked.nickname)}"` : ""}`
+        : `<span style="color:#64748b;">No player profile linked to your email yet. Ask your trip admin to add your email to your player profile.</span>`;
+    }
+    show("userProfileScreen");
+  }
+
+  // Handle magic link on page load
+  if (isSignInWithEmailLink(auth, window.location.href)) {
+    let email = localStorage.getItem(EMAIL_KEY);
+    if (!email) {
+      email = window.prompt("Please enter your email to confirm sign-in:");
+    }
+    if (email) {
+      signInWithEmailLink(auth, email, window.location.href)
+        .then(result => {
+          localStorage.removeItem(EMAIL_KEY);
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          currentUser = result.user;
+        })
+        .catch(err => {
+          console.error("Magic link sign-in failed:", err);
+          showLoginError("Sign-in failed: " + (err.message || err.code));
+        });
+    }
+  }
+
+  // Auth state observer
   onAuthStateChanged(auth, async user => {
-    if (!user) return;
+    if (!user) {
+      // Show login screen
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("appHome").classList.add("hidden");
+      return;
+    }
 
     currentUser = user;
-    document.getElementById("syncStatus").innerText = "Connected. Real-time sync is active.";
+
+    // Hide login, show app
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("appHome").classList.remove("hidden");
+
+    // Update user pill
+    const pill = document.getElementById("userPill");
+    if (pill) {
+      pill.textContent = user.email
+        ? "👤 " + user.email.split("@")[0]
+        : "👤 Guest";
+    }
+
+    document.getElementById("syncStatus").innerText = "Connected. Real-time sync active.";
 
     await initializeTripIfNeeded("pinehurst2026");
     await initializeTripIfNeeded("testGolfTrip");
-    try { await loadCourseLibrary(); } catch (error) { console.warn("Course library load skipped", error); }
-    try { await loadTrips(); } catch (error) { console.warn("Trip loading skipped", error); }
+    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library load skipped", e); }
+    try { await loadTrips(); } catch (e) { console.warn("Trip loading skipped", e); }
     renderTripTiles();
   });
 
@@ -2926,7 +3085,8 @@ Respond ONLY with valid JSON, nothing else:
       "photoUploadScreen",
       "photoViewerScreen",
       "playerListScreen",
-      "playerScreen"
+      "playerScreen",
+      "userProfileScreen"
     ].forEach(x => {
       const el = document.getElementById(x);
       if (el) {
@@ -5851,6 +6011,7 @@ ${closer}`;
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
+    document.getElementById("playerEmail").value = "";
     document.getElementById("playerVenmo").value = "";
     document.getElementById("playerPaypal").value = "";
     document.getElementById("swamiIntel").value = "";
@@ -5872,6 +6033,7 @@ ${closer}`;
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
     document.getElementById("playerTeam").value = player.team || "";
+    document.getElementById("playerEmail").value = player.email || "";
     document.getElementById("playerVenmo").value = player.venmo || "";
     document.getElementById("playerPaypal").value = player.paypal || "";
     document.getElementById("swamiIntel").value = player.swamiIntel || "";
@@ -5903,16 +6065,11 @@ ${closer}`;
 
     const venmo = document.getElementById("playerVenmo").value.trim().replace(/^@/, "");
     const paypal = document.getElementById("playerPaypal").value.trim().replace(/^@/, "");
+    const email = (document.getElementById("playerEmail").value || "").trim().toLowerCase();
 
     const player = {
-      name,
-      nickname,
-      handicapIndex,
-      gender,
-      team,
-      swamiIntel,
-      venmo,
-      paypal,
+      name, nickname, handicapIndex, gender, team,
+      email, venmo, paypal, swamiIntel,
       strengths: selectedStrengths,
       weaknesses: selectedWeaknesses,
       updatedAt: new Date().toISOString()
@@ -7030,6 +7187,10 @@ ${closer}`;
   window.toggleHoleDetailHazard = toggleHoleDetailHazard;
   window.saveHoleDetail = saveHoleDetail;
   window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
+  window.sendMagicLink = sendMagicLink;
+  window.showLoginEmailStep = showLoginEmailStep;
+  window.signOutUser = signOutUser;
+  window.openUserProfile = openUserProfile;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
   window.openMatchHome = openMatchHome;
