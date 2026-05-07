@@ -1090,7 +1090,7 @@
     .stroke-dots { display: flex; gap: 3px; justify-content: center; }
     .stroke-dot { width: 6px; height: 6px; border-radius: 50%; background: #facc15; display: inline-block; flex-shrink: 0; }
     .team-score-row td { font-weight: 800; background: rgba(19, 41, 77, 0.9); }
-    .team-score-win { background: #166534 !important; color: #86efac !important; }
+    .team-score-win { background: #166534 !important; color: #ffffff !important; }
     .moments-list { margin-top: 12px; }
     .moment-item { border: 1px solid #375984; background: #13294d; border-radius: 12px; padding: 10px; margin-top: 8px; font-size: 14px; line-height: 1.35; }
   </style>
@@ -1699,7 +1699,7 @@
     <div class="sticky-page-header">
       <button onclick="closePhotoViewer()" class="secondary">Back</button>
       <h2 id="photoViewerTitle">Photo</h2>
-      <button onclick="openPhotoUpload(currentViewingPhotoId)" style="width:auto;padding:8px 12px;margin:0;font-size:13px;" class="secondary">Edit</button>
+      <button onclick="editCurrentPhoto()" style="width:auto;padding:8px 12px;margin:0;font-size:13px;" class="secondary">Edit</button>
     </div>
     <div id="photoViewerContent"></div>
   </div>
@@ -4615,15 +4615,25 @@ ${closer}`;
     const latestMatch = [...matches].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))[0];
     const latestRecap = [...recaps].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
 
-    // Latest Swami Reaction — full post with image
+    // Check if image is a safe URL (not a raw base64 blob that will corrupt innerHTML)
+    const isSafeImageUrl = (url) => {
+      if (!url) return false;
+      if (url.startsWith("data:image/svg")) return true; // SVG data URLs are text-safe
+      if (url.startsWith("http://") || url.startsWith("https://")) return true; // Remote URLs always safe
+      return false; // base64 JPEG/PNG data URLs — set via DOM only
+    };
+
+    const swamiImgUrl = latestSwami?.imageUrl || null;
+    const swamiImgCaption = latestSwami?.imageCaption || "";
+    const hasSwamiImg = !!swamiImgUrl;
+
     const swamiHtml = latestSwami ? `
       <div class="pulse-text">${renderPostText(latestSwami)}</div>
       <div class="pulse-meta">${formatFeedTime(latestSwami.createdAt)}</div>
-      ${latestSwami.imageUrl ? `
-        <div class="feed-media" style="margin-top:10px;">
-          <img alt="Swami meme" style="width:100%;border-radius:10px;display:block;" id="swami-pulse-img">
-          ${latestSwami.imageCaption ? `<div class="feed-media-caption">${escapeHtml(latestSwami.imageCaption)}</div>` : ""}
-        </div>` : ""}
+      ${hasSwamiImg ? `<div class="feed-media" style="margin-top:10px;">
+        <img id="swami-pulse-img" alt="Swami meme" style="width:100%;border-radius:10px;display:block;">
+        ${swamiImgCaption ? `<div class="feed-media-caption">${escapeHtml(swamiImgCaption)}</div>` : ""}
+      </div>` : ""}
     ` : "";
 
     const taggedHtml = latestTagged
@@ -4645,10 +4655,10 @@ ${closer}`;
       ${renderPulseItem("Latest Recap", recapHtml, "No recaps generated yet. Swami needs a little more material.")}
     `;
 
-    // Set image src after innerHTML to avoid base64 data URL escaping issues
-    if (latestSwami?.imageUrl) {
+    // Always set image src via DOM — never in template literal
+    if (swamiImgUrl) {
       const img = document.getElementById("swami-pulse-img");
-      if (img) img.src = latestSwami.imageUrl;
+      if (img) img.src = swamiImgUrl;
     }
   }
 
@@ -6763,8 +6773,8 @@ ${closer}`;
   }
 
   function openScorecardPhotoCapture() {
-    photoUploadReturnScreen = "scoreEntryScreen";
-    openPhotoUpload();
+    openPhotoUpload(); // this sets photoUploadReturnScreen = "photoLibraryScreen"
+    photoUploadReturnScreen = "scoreEntryScreen"; // override AFTER openPhotoUpload runs
     // After screen renders, pre-select Scorecards and link match
     setTimeout(() => {
       selectedPhotoCategory = "scorecards";
@@ -6782,6 +6792,7 @@ ${closer}`;
 
   // ── END PHOTO LIBRARY ────────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
+  window.editCurrentPhoto = function() { openPhotoUpload(currentViewingPhotoId); };
   window.goBackFromPhotoUpload = goBackFromPhotoUpload;
   window.handleExpenseReceiptSelected = handleExpenseReceiptSelected;
   window.openScorecardPhotoCapture = openScorecardPhotoCapture;
