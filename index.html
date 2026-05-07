@@ -4615,52 +4615,108 @@ ${closer}`;
     const latestMatch = [...matches].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))[0];
     const latestRecap = [...recaps].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
 
-    // Check if image is a safe URL (not a raw base64 blob that will corrupt innerHTML)
-    const isSafeImageUrl = (url) => {
-      if (!url) return false;
-      if (url.startsWith("data:image/svg")) return true; // SVG data URLs are text-safe
-      if (url.startsWith("http://") || url.startsWith("https://")) return true; // Remote URLs always safe
-      return false; // base64 JPEG/PNG data URLs — set via DOM only
-    };
+    // Build entirely via DOM — never use innerHTML with any dynamic post content
+    pulse.innerHTML = "";
 
-    const swamiImgUrl = latestSwami?.imageUrl || null;
-    const swamiImgCaption = latestSwami?.imageCaption || "";
-    const hasSwamiImg = !!swamiImgUrl;
-
-    const swamiText = latestSwami ? (latestSwami.text || "").slice(0, 500) : "";
-    const swamiHtml = latestSwami ? `
-      <div class="pulse-text">${escapeHtml(swamiText)}</div>
-      <div class="pulse-meta">${formatFeedTime(latestSwami.createdAt)}</div>
-      ${hasSwamiImg ? `<div class="feed-media" style="margin-top:10px;">
-        <img id="swami-pulse-img" alt="Swami meme" style="width:100%;border-radius:10px;display:block;">
-        ${swamiImgCaption ? `<div class="feed-media-caption">${escapeHtml(swamiImgCaption)}</div>` : ""}
-      </div>` : ""}
-    ` : "";
-
-    const taggedHtml = latestTagged
-      ? `<div class="pulse-text">${escapeHtml(latestTagged.author)}: ${renderPostText(latestTagged)}</div><div class="pulse-meta">${formatFeedTime(latestTagged.createdAt)}</div>`
-      : "";
-
-    const matchHtml = latestMatch
-      ? `<div class="pulse-text">${escapeHtml(latestMatch.format || "Match")} at ${escapeHtml(latestMatch.course || "Course TBD")} • Round ${escapeHtml(latestMatch.round || "1")}</div>`
-      : "";
-
-    const recapHtml = latestRecap
-      ? `<div class="pulse-text">${escapeHtml(latestRecap.title || "Swami Recap")}</div><div class="pulse-meta">${formatFeedTime(latestRecap.createdAt)}</div>`
-      : "";
-
-    pulse.innerHTML = `
-      ${renderPulseItem("Latest Swami Reaction", swamiHtml, "Swami is quiet. This is either peace or he is gathering evidence.")}
-      ${renderPulseItem("Latest Tagged Chat", taggedHtml, assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here.")}
-      ${renderPulseItem("Latest Match Update", matchHtml, "No match updates yet. The scoreboard is waiting for drama.")}
-      ${renderPulseItem("Latest Recap", recapHtml, "No recaps generated yet. Swami needs a little more material.")}
-    `;
-
-    // Always set image src via DOM — never in template literal
-    if (swamiImgUrl) {
-      const img = document.getElementById("swami-pulse-img");
-      if (img) img.src = swamiImgUrl;
+    function makePulseItem(label) {
+      const item = document.createElement("div");
+      item.className = "pulse-item";
+      const lbl = document.createElement("div");
+      lbl.className = "pulse-label";
+      lbl.textContent = label;
+      item.appendChild(lbl);
+      return item;
     }
+
+    function makeEmptyState(text) {
+      const d = document.createElement("div");
+      d.className = "pulse-empty";
+      d.textContent = text;
+      return d;
+    }
+
+    // Latest Swami Reaction
+    const swamiItem = makePulseItem("Latest Swami Reaction");
+    if (latestSwami) {
+      const textEl = document.createElement("div");
+      textEl.className = "pulse-text";
+      // Use textContent for safety — no HTML injection possible
+      textEl.textContent = (latestSwami.text || "").slice(0, 300);
+      swamiItem.appendChild(textEl);
+
+      const metaEl = document.createElement("div");
+      metaEl.className = "pulse-meta";
+      metaEl.textContent = formatFeedTime(latestSwami.createdAt);
+      swamiItem.appendChild(metaEl);
+
+      // Image — only if URL is a safe remote URL or SVG
+      const imgUrl = latestSwami.imageUrl || "";
+      const isSafe = imgUrl.startsWith("https://") || imgUrl.startsWith("http://") || imgUrl.startsWith("data:image/svg");
+      if (isSafe) {
+        const mediaDiv = document.createElement("div");
+        mediaDiv.className = "feed-media";
+        mediaDiv.style.marginTop = "10px";
+        const img = document.createElement("img");
+        img.alt = "Swami meme";
+        img.style.cssText = "width:100%;border-radius:10px;display:block;";
+        img.src = imgUrl;
+        mediaDiv.appendChild(img);
+        if (latestSwami.imageCaption) {
+          const cap = document.createElement("div");
+          cap.className = "feed-media-caption";
+          cap.textContent = latestSwami.imageCaption;
+          mediaDiv.appendChild(cap);
+        }
+        swamiItem.appendChild(mediaDiv);
+      }
+    } else {
+      swamiItem.appendChild(makeEmptyState("Swami is quiet. This is either peace or he is gathering evidence."));
+    }
+    pulse.appendChild(swamiItem);
+
+    // Latest Tagged Chat
+    const taggedItem = makePulseItem("Latest Tagged Chat");
+    if (latestTagged) {
+      const d = document.createElement("div");
+      d.className = "pulse-text";
+      d.textContent = `${latestTagged.author}: ${(latestTagged.text || "").slice(0, 200)}`;
+      taggedItem.appendChild(d);
+      const m = document.createElement("div");
+      m.className = "pulse-meta";
+      m.textContent = formatFeedTime(latestTagged.createdAt);
+      taggedItem.appendChild(m);
+    } else {
+      taggedItem.appendChild(makeEmptyState(assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here."));
+    }
+    pulse.appendChild(taggedItem);
+
+    // Latest Match Update
+    const matchItem = makePulseItem("Latest Match Update");
+    if (latestMatch) {
+      const d = document.createElement("div");
+      d.className = "pulse-text";
+      d.textContent = `${latestMatch.format || "Match"} at ${latestMatch.course || "Course TBD"} • Round ${latestMatch.round || "1"}`;
+      matchItem.appendChild(d);
+    } else {
+      matchItem.appendChild(makeEmptyState("No match updates yet. The scoreboard is waiting for drama."));
+    }
+    pulse.appendChild(matchItem);
+
+    // Latest Recap
+    const recapItem = makePulseItem("Latest Recap");
+    if (latestRecap) {
+      const d = document.createElement("div");
+      d.className = "pulse-text";
+      d.textContent = latestRecap.title || "Swami Recap";
+      recapItem.appendChild(d);
+      const m = document.createElement("div");
+      m.className = "pulse-meta";
+      m.textContent = formatFeedTime(latestRecap.createdAt);
+      recapItem.appendChild(m);
+    } else {
+      recapItem.appendChild(makeEmptyState("No recaps generated yet. Swami needs a little more material."));
+    }
+    pulse.appendChild(recapItem);
   }
 
   function renderPulseItem(label, htmlContent, emptyText) {
