@@ -1231,6 +1231,15 @@
       <label class="form-label" for="expenseNote">Note (optional)</label>
       <input id="expenseNote" placeholder="Any details..."/>
 
+      <label class="form-label">Receipt Photo (optional)</label>
+      <div id="expenseReceiptWrap" style="margin-bottom:12px;">
+        <div id="expenseReceiptEmpty" style="border:2px dashed #375984;border-radius:12px;padding:20px;text-align:center;color:#93c5fd;cursor:pointer;font-size:13px;" onclick="document.getElementById('expenseReceiptInput').click()">
+          📷 Tap to attach receipt photo
+        </div>
+        <img id="expenseReceiptPreview" style="display:none;width:100%;border-radius:12px;max-height:200px;object-fit:cover;cursor:pointer;" onclick="document.getElementById('expenseReceiptInput').click()"/>
+        <input type="file" id="expenseReceiptInput" accept="image/*" capture="environment" style="display:none;" onchange="handleExpenseReceiptSelected(event)"/>
+      </div>
+
       <button onclick="saveExpense()">Save Expense</button>
       <button id="deleteExpenseBtn" onclick="deleteExpense()" class="danger hidden" style="margin-top:8px;">Delete Expense</button>
     </div>
@@ -1505,7 +1514,10 @@
     <div class="card">
       <div id="scoreEntryMatchInfo" class="match-detail"></div>
       <div id="scoreEntryTableWrap" style="min-height:40px;"></div>
-      <button onclick="openMoments()" class="secondary">Match Moments</button>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="openMoments()" class="secondary" style="flex:1;">Match Moments</button>
+        <button onclick="openScorecardPhotoCapture()" class="secondary" style="flex:1;">📷 Photo</button>
+      </div>
     </div>
   </div>
 
@@ -3983,11 +3995,14 @@ Max 80 words total.`;
     let playerRows = "";
     playersForMatch.forEach(function(player) {
       const data = strokeData[player.id];
-      const label = isNet
-        ? `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"} ${data.strokes ? "(" + data.strokes + ")" : "(0)"}`
-        : `${escapeHtml(player.name)} ${data.ch === null ? "(CH N/A)" : "(CH " + data.ch + ")"}`;
+      const isTeamA = (match.teamAPlayerIds || []).includes(player.id);
+      const nameColor = isTeamA ? "#93c5fd" : "#86efac";
+      const nameHtml = `<span style="color:${nameColor};font-weight:600;">${escapeHtml(player.name)}</span>`;
+      const chLabel = data.ch === null ? "(CH N/A)" : `(CH ${data.ch})`;
+      const strokeLabel = isNet ? ` ${data.strokes ? `(${data.strokes})` : "(0)"}` : "";
+      const label = `${nameHtml} <span style="color:#94a3b8;font-size:11px;">${chLabel}${strokeLabel}</span>`;
 
-      let row = `<tr><td>${label}</td>`;
+      let row = `<tr><td style="white-space:nowrap;">${label}</td>`;
       let outTotal = 0, inTotal = 0, total = 0;
 
       holes.forEach(function(hole) {
@@ -4029,8 +4044,8 @@ Max 80 words total.`;
             ${statRow("HCP", "hcp")}
             ${statRow("YDS", "yardage")}
             ${playerRows}
-            <tr class="team-score-row"><td>${escapeHtml(teamAName)} Team Score</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
-            <tr class="team-score-row"><td>${escapeHtml(teamBName)} Team Score</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
+            <tr class="team-score-row"><td><span style="color:#93c5fd;font-weight:600;">${escapeHtml(teamAName)}</span></td>${teamCells(teamAIds, teamBIds, "ta")}</tr>
+            <tr class="team-score-row"><td><span style="color:#86efac;font-weight:600;">${escapeHtml(teamBName)}</span></td>${teamCells(teamBIds, teamAIds, "tb")}</tr>
           </table>
         </div>
       `;
@@ -4589,7 +4604,7 @@ ${closer}`;
       <div class="pulse-meta">${formatFeedTime(latestSwami.createdAt)}</div>
       ${latestSwami.imageUrl ? `
         <div class="feed-media" style="margin-top:10px;">
-          <img src="${escapeAttr(latestSwami.imageUrl)}" alt="Swami meme" style="width:100%;border-radius:10px;display:block;">
+          <img alt="Swami meme" style="width:100%;border-radius:10px;display:block;" id="swami-pulse-img">
           ${latestSwami.imageCaption ? `<div class="feed-media-caption">${escapeHtml(latestSwami.imageCaption)}</div>` : ""}
         </div>` : ""}
     ` : "";
@@ -4612,6 +4627,12 @@ ${closer}`;
       ${renderPulseItem("Latest Match Update", matchHtml, "No match updates yet. The scoreboard is waiting for drama.")}
       ${renderPulseItem("Latest Recap", recapHtml, "No recaps generated yet. Swami needs a little more material.")}
     `;
+
+    // Set image src after innerHTML to avoid base64 data URL escaping issues
+    if (latestSwami?.imageUrl) {
+      const img = document.getElementById("swami-pulse-img");
+      if (img) img.src = latestSwami.imageUrl;
+    }
   }
 
   function renderPulseItem(label, htmlContent, emptyText) {
@@ -6148,6 +6169,7 @@ ${closer}`;
           </div>
           ${splitNames ? `<div class="expense-splits">Split: ${escapeHtml(splitNames)}</div>` : ""}
           ${exp.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">${escapeHtml(exp.note)}</div>` : ""}
+          ${exp.receiptUrl ? `<div style="margin-top:6px;"><img src="${escapeAttr(exp.receiptUrl)}" style="height:48px;border-radius:6px;object-fit:cover;" alt="Receipt"></div>` : ""}
         </div>
       `;
     }).join("");
@@ -6166,6 +6188,13 @@ ${closer}`;
     document.getElementById("expenseAmount").value = "";
     document.getElementById("expenseCategoryCustom").value = "";
     document.getElementById("expenseNote").value = "";
+    expenseReceiptBlob = null;
+    const receiptEmpty = document.getElementById("expenseReceiptEmpty");
+    const receiptPreview = document.getElementById("expenseReceiptPreview");
+    if (receiptEmpty) receiptEmpty.style.display = "block";
+    if (receiptPreview) { receiptPreview.style.display = "none"; receiptPreview.src = ""; }
+    const receiptInput = document.getElementById("expenseReceiptInput");
+    if (receiptInput) receiptInput.value = "";
 
     // Build category chips
     let selectedCategory = EXPENSE_CATEGORIES[0];
@@ -6340,6 +6369,24 @@ ${closer}`;
       updatedAt: new Date().toISOString()
     };
 
+    // Upload receipt photo if selected
+    if (expenseReceiptBlob) {
+      try {
+        const path = `trips/${activeTripId}/receipts/${Date.now()}_receipt.jpg`;
+        const fileRef = storageRef(storage, path);
+        const uploadTask = uploadBytesResumable(fileRef, expenseReceiptBlob);
+        const receiptUrl = await new Promise((resolve, reject) => {
+          uploadTask.on("state_changed", null, reject, async () => {
+            resolve(await getDownloadURL(uploadTask.snapshot.ref));
+          });
+        });
+        expenseData.receiptUrl = receiptUrl;
+        expenseReceiptBlob = null;
+      } catch (e) {
+        console.warn("Receipt upload failed:", e);
+      }
+    }
+
     if (editingExpenseId) {
       await updateDoc(doc(db, "trips", activeTripId, "expenses", editingExpenseId), expenseData);
     } else {
@@ -6497,10 +6544,15 @@ ${closer}`;
     // Build player tag chips
     renderPhotoPlayerChips();
 
-    // Build match dropdown
+    // Build match dropdown with player names for disambiguation
     const matchSel = document.getElementById("photoLinkedMatch");
     matchSel.innerHTML = `<option value="">No match linked</option>` +
-      matches.map(m => `<option value="${escapeAttr(m.id)}">${escapeHtml(m.format || "Match")} — ${escapeHtml(m.course || "")}</option>`).join("");
+      matches.map(m => {
+        const aPlayers = getPlayerNames(m.teamAPlayerIds || []);
+        const bPlayers = getPlayerNames(m.teamBPlayerIds || []);
+        const playerStr = [aPlayers, bPlayers].filter(Boolean).join(" vs ");
+        return `<option value="${escapeAttr(m.id)}">${escapeHtml(formatMatchDate(m.matchDate))} · R${m.round||1} · ${escapeHtml(m.format||"Match")} · ${escapeHtml(m.course||"")}${playerStr ? " · " + playerStr : ""}</option>`;
+      }).join("");
 
     // Build expense dropdown
     const expSel = document.getElementById("photoLinkedExpense");
@@ -6662,8 +6714,44 @@ ${closer}`;
     renderPhotoLibrary();
   }
 
+  let expenseReceiptBlob = null;
+
+  function handleExpenseReceiptSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    expenseReceiptBlob = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById("expenseReceiptEmpty").style.display = "none";
+      const img = document.getElementById("expenseReceiptPreview");
+      img.src = e.target.result;
+      img.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function openScorecardPhotoCapture() {
+    // Open photo upload pre-set to Scorecards category, linked to current match
+    openPhotoUpload();
+    // After screen renders, pre-select Scorecards and link match
+    setTimeout(() => {
+      selectedPhotoCategory = "scorecards";
+      const chipsEl = document.getElementById("photoCategoryChips");
+      if (chipsEl) {
+        chipsEl.innerHTML = PHOTO_CATEGORIES.filter(c => c.id !== "all").map(cat => `
+          <button class="photo-category-chip-btn ${cat.id === "scorecards" ? "selected" : ""}"
+            onclick="selectPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label}</button>
+        `).join("");
+      }
+      const matchSel = document.getElementById("photoLinkedMatch");
+      if (matchSel && activeScoreMatchId) matchSel.value = activeScoreMatchId;
+    }, 50);
+  }
+
   // ── END PHOTO LIBRARY ────────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
+  window.handleExpenseReceiptSelected = handleExpenseReceiptSelected;
+  window.openScorecardPhotoCapture = openScorecardPhotoCapture;
   window.openPhotoLibrary = openPhotoLibrary;
   window.openPhotoUpload = openPhotoUpload;
   window.openPhotoViewer = openPhotoViewer;
