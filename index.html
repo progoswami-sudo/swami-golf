@@ -2498,6 +2498,9 @@ Respond ONLY with valid JSON, nothing else:
       await signInWithCustomToken(auth, data.token);
       console.log("Silent sign-in SUCCESS ✅");
       silentSignInInProgress = false;
+      // onAuthStateChanged already fired and was skipped — manually initialize
+      const user = auth.currentUser;
+      if (user) await initSwamiApp(user);
       return true;
     } catch (e) {
       console.log(`Silent sign-in ERROR: ${e.message}`);
@@ -2654,15 +2657,37 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   // Auth state observer
+  async function initSwamiApp(user) {
+    currentUser = user;
+    setCookie(UID_COOKIE, user.uid);
+    if (user.email) {
+      setCookie(EMAIL_COOKIE, user.email);
+    } else {
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().email) {
+          setCookie(EMAIL_COOKIE, userDoc.data().email);
+        }
+      } catch(e) { /* ignore */ }
+    }
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("appHome").classList.remove("hidden");
+    const pill = document.getElementById("userPill");
+    if (pill) pill.textContent = "👤";
+    document.getElementById("syncStatus").style.display = "none";
+    await initializeTripIfNeeded("pinehurst2026");
+    await initializeTripIfNeeded("testGolfTrip");
+    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library load skipped", e); }
+    try { await loadTrips(); } catch (e) { console.warn("Trip loading skipped", e); }
+    renderTripTiles();
+  }
+
   onAuthStateChanged(auth, async user => {
     console.log(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"} silentInProgress=${silentSignInInProgress}`);
-
-    // If silent sign-in is in progress, ignore intermediate auth state changes
     if (silentSignInInProgress) {
-      console.log("Skipping onAuthStateChanged — silent sign-in in progress");
+      console.log("Skipping — silent sign-in in progress");
       return;
     }
-
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
@@ -2674,38 +2699,7 @@ Respond ONLY with valid JSON, nothing else:
       }
       return;
     }
-
-    currentUser = user;
-
-    // Store UID + email + name in cookies for silent re-auth next session
-    setCookie(UID_COOKIE, user.uid);
-    if (user.email) {
-      setCookie(EMAIL_COOKIE, user.email);
-    } else {
-      // Custom token sign-in doesn't carry email — restore from Firestore user doc
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().email) {
-          setCookie(EMAIL_COOKIE, userDoc.data().email);
-        }
-      } catch(e) { /* ignore */ }
-    }
-
-    // Hide login, show app
-    document.getElementById("loginScreen").classList.add("hidden");
-    document.getElementById("appHome").classList.remove("hidden");
-
-    // User pill — icon only, no name
-    const pill = document.getElementById("userPill");
-    if (pill) pill.textContent = "👤";
-
-    document.getElementById("syncStatus").style.display = "none";
-
-    await initializeTripIfNeeded("pinehurst2026");
-    await initializeTripIfNeeded("testGolfTrip");
-    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library load skipped", e); }
-    try { await loadTrips(); } catch (e) { console.warn("Trip loading skipped", e); }
-    renderTripTiles();
+    await initSwamiApp(user);
   });
 
   function normalizeCourseKey(name) {
