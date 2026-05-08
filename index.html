@@ -2476,6 +2476,8 @@ Respond ONLY with valid JSON, nothing else:
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
   }
 
+  let silentSignInInProgress = false;
+
   async function trySilentSignIn() {
     const uid = getCookie(UID_COOKIE);
     console.log(`UID cookie: ${uid ? uid.slice(0,8)+"..." : "NOT FOUND"}`);
@@ -2483,6 +2485,7 @@ Respond ONLY with valid JSON, nothing else:
     console.log(`All cookies: ${document.cookie.slice(0,100) || "NONE"}`);
     if (!uid) return false;
     try {
+      silentSignInInProgress = true;
       console.log("Calling /api/auth-token...");
       const res = await fetch("/api/auth-token", {
         method: "POST",
@@ -2491,12 +2494,14 @@ Respond ONLY with valid JSON, nothing else:
       });
       const data = await res.json();
       console.log(`auth-token: ${res.status} — ${JSON.stringify(data).slice(0,80)}`);
-      if (!res.ok) return false;
+      if (!res.ok) { silentSignInInProgress = false; return false; }
       await signInWithCustomToken(auth, data.token);
       console.log("Silent sign-in SUCCESS ✅");
+      silentSignInInProgress = false;
       return true;
     } catch (e) {
       console.log(`Silent sign-in ERROR: ${e.message}`);
+      silentSignInInProgress = false;
       return false;
     }
   }
@@ -2650,7 +2655,14 @@ Respond ONLY with valid JSON, nothing else:
 
   // Auth state observer
   onAuthStateChanged(auth, async user => {
-    console.log(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"}`);
+    console.log(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"} silentInProgress=${silentSignInInProgress}`);
+
+    // If silent sign-in is in progress, ignore intermediate auth state changes
+    if (silentSignInInProgress) {
+      console.log("Skipping onAuthStateChanged — silent sign-in in progress");
+      return;
+    }
+
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
