@@ -2039,7 +2039,8 @@
     // "pinehurst-no-2": {
     //   name: "Pinehurst No. 2",
     //   tees: {
-    //     "white": {
+  console.log('📍100');
+
     //       teeName: "White",
     //       holes: [
     //         { hole: 1, par: 4, hcp: 9 }
@@ -2389,6 +2390,7 @@ Respond ONLY with valid JSON, nothing else:
     }
 
     console.log("Meme data:", JSON.stringify(memeData));
+  console.log('📍450');
 
     if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
       try {
@@ -3439,6 +3441,7 @@ Respond ONLY with valid JSON, nothing else:
     if (!latest) return;
 
     const seenKey = `swamiGolf.${activeTripId}.lastNotifiedPostId`;
+  console.log('📍1500');
 
     if (localStorage.getItem(seenKey) === latest.id) return;
 
@@ -3739,6 +3742,7 @@ Upcoming match:
 - ${teamA}: ${teamADesc}
 - ${teamB}: ${teamBDesc}
 - ${historyNote}
+  console.log('📍1800');
 
 Write a Swami pre-match prediction. Structure it exactly like this:
 Line 1: "Swami Prediction: [TeamA] XX% — [TeamB] YY%" (the two percentages must add to 100)
@@ -4039,6 +4043,7 @@ Max 80 words total.`;
     if (match) applyHoleDefaults(match, playerId, holeDetailHoleNum);
     renderHoleDetail();
   }
+  console.log('📍2100');
 
   function renderHoleDetail() {
     const match = matches.find(m => m.id === holeDetailMatchId);
