@@ -2039,7 +2039,6 @@
     // "pinehurst-no-2": {
     //   name: "Pinehurst No. 2",
     //   tees: {
-  console.log('📍100');
 
     //       teeName: "White",
     //       holes: [
@@ -2390,7 +2389,6 @@ Respond ONLY with valid JSON, nothing else:
     }
 
     console.log("Meme data:", JSON.stringify(memeData));
-  console.log('📍450');
 
     if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
       try {
@@ -2587,10 +2585,10 @@ Respond ONLY with valid JSON, nothing else:
 
   function openUserProfile() {
     const emailEl = document.getElementById("userProfileEmail");
-    if (emailEl) emailEl.textContent = currentUser?.email || getCookie(EMAIL_COOKIE) || "";
+    if (emailEl) emailEl.textContent = (currentUser && currentUser.email) || getCookie(EMAIL_COOKIE) || "";
     const nameEl = document.getElementById("userDisplayName");
     if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
-    if (currentUser?.uid) {
+    if ((currentUser && currentUser.uid)) {
       getDoc(doc(db, "users", currentUser.uid)).then(snap => {
         if (snap.exists()) {
           const d = snap.data();
@@ -2608,9 +2606,9 @@ Respond ONLY with valid JSON, nothing else:
   async function saveUserProfile() {
     const name = (document.getElementById("userDisplayName").value || "").trim();
     if (!name) { alert("Please enter your name."); return; }
-    if (!currentUser?.uid) return;
-    const venmo = (document.getElementById("userVenmo")?.value || "").trim().replace(/^@/, "");
-    const paypal = (document.getElementById("userPaypal")?.value || "").trim().replace(/^@/, "");
+    if (!(currentUser && currentUser.uid)) return;
+    const venmo = ((document.getElementById("userVenmo") && document.getElementById("userVenmo").value) || "").trim().replace(/^@/, "");
+    const paypal = ((document.getElementById("userPaypal") && document.getElementById("userPaypal").value) || "").trim().replace(/^@/, "");
     await setDoc(doc(db, "users", currentUser.uid), {
       name, venmo, paypal,
       email: currentUser.email || getCookie(EMAIL_COOKIE) || "",
@@ -2957,10 +2955,10 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   async function loadTrips() {
-    if (!currentUser?.uid) return;
+    if (!(currentUser && currentUser.uid)) return;
 
     const uid = currentUser.uid;
-    const email = currentUser.email?.toLowerCase() || "";
+    const email = (currentUser.email ? currentUser.email.toLowerCase() : "") || "";
 
     // Step 1: Get all trips to check membership
     const allTripsSnap = await getDocs(collection(db, "trips"));
@@ -2990,7 +2988,7 @@ Respond ONLY with valid JSON, nothing else:
       if (!isMember && email) {
         try {
           const inviteSnap = await getDocs(collection(db, "trips", tripId, "invites"));
-          const invite = inviteSnap.docs.find(d => d.data().email?.toLowerCase() === email);
+          const invite = inviteSnap.docs.find(d => (d.data().email ? d.data().email.toLowerCase() : "") === email);
           if (invite) {
             role = invite.data().role || "participant";
             await setDoc(doc(db, "trips", tripId, "members", uid), {
@@ -3076,8 +3074,8 @@ Respond ONLY with valid JSON, nothing else:
   async function diagTrips() {
     const el = document.getElementById("tripLoadDiag");
     if (!el) return;
-    const uid = currentUser?.uid;
-    const email = currentUser?.email;
+    const uid = (currentUser && currentUser.uid);
+    const email = (currentUser && currentUser.email);
     el.innerHTML = `uid: ${uid ? uid.slice(0,12)+"..." : "null"}<br>email: ${email || "null"}<br>`;
     try {
       const snap = await getDocs(collection(db, "trips"));
@@ -3110,13 +3108,13 @@ Respond ONLY with valid JSON, nothing else:
       teamB: "Team B",
       teamAScore: "0",
       teamBScore: "0",
-      createdBy: currentUser?.uid || "",
+      createdBy: (currentUser && currentUser.uid) || "",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
 
     // Auto-add creator as admin
-    if (currentUser?.uid) {
+    if ((currentUser && currentUser.uid)) {
       await setDoc(doc(membersCollection(tripId), currentUser.uid), {
         uid: currentUser.uid,
         email: currentUser.email || "",
@@ -3441,7 +3439,6 @@ Respond ONLY with valid JSON, nothing else:
     if (!latest) return;
 
     const seenKey = `swamiGolf.${activeTripId}.lastNotifiedPostId`;
-  console.log('📍1500');
 
     if (localStorage.getItem(seenKey) === latest.id) return;
 
@@ -3742,7 +3739,6 @@ Upcoming match:
 - ${teamA}: ${teamADesc}
 - ${teamB}: ${teamBDesc}
 - ${historyNote}
-  console.log('📍1800');
 
 Write a Swami pre-match prediction. Structure it exactly like this:
 Line 1: "Swami Prediction: [TeamA] XX% — [TeamB] YY%" (the two percentages must add to 100)
@@ -4043,7 +4039,6 @@ Max 80 words total.`;
     if (match) applyHoleDefaults(match, playerId, holeDetailHoleNum);
     renderHoleDetail();
   }
-  console.log('📍2100');
 
   function renderHoleDetail() {
     const match = matches.find(m => m.id === holeDetailMatchId);
@@ -4217,7 +4212,7 @@ Max 80 words total.`;
     if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
     const pd = holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
     const match = matches.find(m => m.id === holeDetailMatchId);
-    const existing = Number(((match?.holeScores || {})[holeDetailPlayerId] || {})[holeDetailHoleNum]) || 0;
+    const existing = Number((((match && match.holeScores) || {})[holeDetailPlayerId] || {})[holeDetailHoleNum]) || 0;
     const current = pd.score || existing || 0;
     pd.score = Math.max(1, current + delta);
     renderHoleDetail();
@@ -4279,10 +4274,10 @@ Max 80 words total.`;
         updatedAt: new Date().toISOString()
       });
 
-      const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
-      if (pd?.moment && pd.moment.trim()) {
+      const pd = holeDetailData[holeDetailPlayerId] && holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+      if ((pd && pd.moment) && pd.moment.trim()) {
         const player = players.find(p => p.id === holeDetailPlayerId);
-        await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
+        await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${(player && player.name) || "A player"}: ${pd.moment.trim()}`);
       }
 
       renderScoreEntry();
@@ -4479,7 +4474,7 @@ Max 80 words total.`;
         }
         const par = Number(hole.par) || 0;
         const badgeHtml = raw ? scoreBadge(Number(raw), par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
-        const dotHtml = isNet && data.strokeMap[hole.hole] ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
+        const dotHtml = isNet && (data.strokeMap && data.strokeMap[hole.hole]) ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
         row += `<td class="score-tap-cell" data-match-id="${escapeAttr(activeScoreMatchId)}" data-player-id="${escapeAttr(player.id)}" data-hole="${Number(hole.hole)}" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">
           <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${escapeAttr(player.id)}-${hole.hole}">${badgeHtml}</div></div>
         </td>`;
@@ -5042,7 +5037,7 @@ ${closer}`;
 
       // Load user's role for this trip
       currentTripRole = null;
-      if (currentUser?.uid) {
+      if ((currentUser && currentUser.uid)) {
         const memberSnap = await getDoc(doc(membersCollection(tripId), currentUser.uid));
         if (memberSnap.exists()) {
           currentTripRole = memberSnap.data().role || "participant";
@@ -5281,7 +5276,7 @@ ${closer}`;
       const snap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
       if (snap.exists()) {
         const data = snap.data();
-        document.getElementById("playerName").value = data.name || data.email?.split("@")[0] || "";
+        document.getElementById("playerName").value = data.name || (data.email ? data.email.split("@") : [])[0] || "";
       }
     } catch(e) { console.warn("Member lookup failed:", e); }
   }
@@ -5750,7 +5745,7 @@ ${closer}`;
 
       // Reactions
       const reactions = post.reactions || {};
-      const myUid = currentUser?.uid || "anon";
+      const myUid = (currentUser && currentUser.uid) || "anon";
       const myReactions = localReactions[postId] || new Set(
         Object.entries(reactions)
           .filter(([emoji, uids]) => Array.isArray(uids) && uids.includes(myUid))
@@ -5814,7 +5809,7 @@ ${closer}`;
   }
 
   async function toggleReaction(btn, postId, emoji) {
-    if (!currentUser?.uid) return;
+    if (!(currentUser && currentUser.uid)) return;
     const uid = currentUser.uid;
 
     // Optimistic local update
@@ -5827,7 +5822,7 @@ ${closer}`;
     btn.classList.toggle("reacted", adding);
     const countEl = btn.querySelector(".reaction-count");
     const post = feedPosts.find(p => p.id === postId);
-    const current = post?.reactions?.[emoji] || [];
+    const current = (post && post.reactions && post.reactions[emoji]) || [];
     const newList = adding
       ? [...new Set([...current, uid])]
       : current.filter(u => u !== uid);
@@ -6409,7 +6404,7 @@ ${closer}`;
     try {
       const snap = await getDocs(membersCollection());
       // Filter out members who are already players
-      const playerEmails = new Set(players.map(p => p.email?.toLowerCase()).filter(Boolean));
+      const playerEmails = new Set(players.map(p => (p.email ? p.email.toLowerCase() : "")).filter(Boolean));
       snap.docs.forEach(d => {
         const m = d.data();
         if (m.email && playerEmails.has(m.email.toLowerCase())) return; // already a player
@@ -6505,11 +6500,11 @@ ${closer}`;
     } else if (editingPlayerId) {
       const existing = players.find(p => p.id === editingPlayerId);
       // Use the link member picker value if admin changed it
-      const pickerVal = document.getElementById("linkMemberPicker")?.value;
-      linkedUid = pickerVal !== undefined ? (pickerVal || null) : (existing?.linkedUid || null);
-      email = existing?.email || "";
+      const pickerVal = (document.getElementById("linkMemberPicker") && document.getElementById("linkMemberPicker").value);
+      linkedUid = pickerVal !== undefined ? (pickerVal || null) : ((existing && existing.linkedUid) || null);
+      email = (existing && existing.email) || "";
       // If linking to a new member, get their email
-      if (linkedUid && linkedUid !== existing?.linkedUid) {
+      if (linkedUid && linkedUid !== (existing && existing.linkedUid)) {
         try {
           const mSnap = await getDoc(doc(db, "trips", activeTripId, "members", linkedUid));
           if (mSnap.exists()) email = mSnap.data().email || "";
@@ -6551,9 +6546,9 @@ ${closer}`;
       list.innerHTML = `<div class="empty-state">No players yet. Tap "Add New Player" to create one.</div>`;
       return;
     }
-    const myEmail = (currentUser?.email || getCookie(EMAIL_COOKIE) || "").toLowerCase();
+    const myEmail = ((currentUser && currentUser.email) || getCookie(EMAIL_COOKIE) || "").toLowerCase();
     players.sort((a, b) => (a.name || "").localeCompare(b.name || "")).forEach(player => {
-      const isMe = myEmail && player.email?.toLowerCase() === myEmail;
+      const isMe = myEmail && (player.email ? player.email.toLowerCase() : "") === myEmail;
       const div = document.createElement("div");
       div.className = "player-row";
       div.style.cssText = "display:flex;justify-content:space-between;align-items:center;";
@@ -6933,8 +6928,8 @@ ${closer}`;
       const note = encodeURIComponent(`${tripName} settlement`);
       const amount = t.amount.toFixed(2);
       const payInfo = userPaymentInfo[t.toId] || {};
-      const venmoHandle = payInfo.venmo?.trim();
-      const paypalHandle = payInfo.paypal?.trim();
+      const venmoHandle = (payInfo.venmo ? payInfo.venmo.trim() : "");
+      const paypalHandle = (payInfo.paypal ? payInfo.paypal.trim() : "");
 
       const venmoBtn = venmoHandle
         ? `<a href="venmo://paycharge?txn=pay&recipients=${encodeURIComponent(venmoHandle)}&amount=${amount}&note=${note}"
@@ -7203,7 +7198,7 @@ ${closer}`;
     const description = document.getElementById("expenseDescription").value.trim();
     const amount = parseFloat(document.getElementById("expenseAmount").value);
     const paidById = document.getElementById("expensePaidBy").value;
-    const paidByName = players.find(p => p.id === paidById)?.name || "";
+    const paidByName = (players.find(p => p.id === paidById) || {}).name || "";
     const category = getExpenseCategory();
     const note = document.getElementById("expenseNote").value.trim();
     const splits = getExpenseSplits();
@@ -7440,7 +7435,7 @@ ${closer}`;
   function selectPhotoCategory(catId) {
     selectedPhotoCategory = catId;
     document.querySelectorAll(".photo-category-chip-btn").forEach(btn => {
-      btn.classList.toggle("selected", btn.textContent.includes(PHOTO_CATEGORIES.find(c => c.id === catId)?.label || ""));
+      btn.classList.toggle("selected", btn.textContent.includes((PHOTO_CATEGORIES.find(c => c.id === catId) || {}).label || ""));
     });
   }
 
@@ -7489,7 +7484,7 @@ ${closer}`;
     btn.disabled = true;
     btn.textContent = "Saving...";
 
-    let url = editingPhotoId ? (photos.find(p => p.id === editingPhotoId)?.url || "") : "";
+    let url = editingPhotoId ? ((photos.find(p => p.id === editingPhotoId) || {}).url || "") : "";
 
     // Upload new photo if file selected
     if (photoFileBlob) {
@@ -7541,8 +7536,8 @@ ${closer}`;
       const docRef = await addDoc(photosCollection(), photoData);
       // Swami reacts
       const catInfo = PHOTO_CATEGORIES.find(c => c.id === selectedPhotoCategory);
-      const taggedNames = selectedPhotoPlayerIds.map(id => players.find(p => p.id === id)?.name).filter(Boolean);
-      await addSwamiPost("photoAdd", (catInfo?.label || "Photo") + " added" + (taggedNames.length ? " — featuring " + taggedNames.join(", ") : "") + (caption ? ": \"" + caption + "\"" : ""));
+      const taggedNames = selectedPhotoPlayerIds.map(id => (players.find(p => p.id === id) || {}).name).filter(Boolean);
+      await addSwamiPost("photoAdd", ((catInfo && catInfo.label) || "Photo") + " added" + (taggedNames.length ? " — featuring " + taggedNames.join(", ") : "") + (caption ? ": \"" + caption + "\"" : ""));
     }
 
     show("photoLibraryScreen");
@@ -7553,7 +7548,7 @@ ${closer}`;
     if (!editingPhotoId) return;
     if (!confirm("Delete this photo?")) return;
     const photo = photos.find(p => p.id === editingPhotoId);
-    if (photo?.url && photo.url.includes("firebasestorage")) {
+    if ((photo && photo.url) && photo.url.includes("firebasestorage")) {
       try {
         const fileRef = storageRef(storage, photo.url);
         await deleteObject(fileRef);
@@ -7628,11 +7623,11 @@ ${closer}`;
     if (!text) { alert("Please enter some intel first."); return; }
     if (!intelTargetPlayer) return;
 
-    const submitterName = getCookie(NAME_COOKIE) || currentUser?.email?.split("@")[0] || "Anonymous";
+    const submitterName = getCookie(NAME_COOKIE) || ((currentUser && currentUser.email) ? (currentUser && currentUser.email).split('@')[0] : '') || "Anonymous";
 
     await addDoc(swamiIntelCollection(activeTripId, intelTargetPlayer.id), {
       text,
-      submittedBy: currentUser?.uid || "",
+      submittedBy: (currentUser && currentUser.uid) || "",
       submitterName,
       submittedAt: new Date().toISOString()
     });
@@ -7656,7 +7651,7 @@ ${closer}`;
       .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
 
     // Non-admins can only see their own submissions
-    const myUid = currentUser?.uid;
+    const myUid = (currentUser && currentUser.uid);
     if (!isAdmin()) {
       items = items.filter(item => item.submittedBy === myUid);
     }
@@ -7744,7 +7739,7 @@ ${closer}`;
     if (snap.empty) { el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`; return; }
     el.innerHTML = snap.docs.map(d => {
       const m = d.data();
-      const isMe = m.uid === currentUser?.uid;
+      const isMe = m.uid === (currentUser && currentUser.uid);
       const roleColor = m.role === "admin" ? "#93c5fd" : "#86efac";
       const otherRole = m.role === "admin" ? "participant" : "admin";
       return `<div class="player-row" style="display:flex;justify-content:space-between;align-items:center;">
@@ -7796,7 +7791,7 @@ ${closer}`;
 
     // Check if already a member
     const membersSnap = await getDocs(membersCollection());
-    const alreadyMember = membersSnap.docs.some(d => d.data().email?.toLowerCase() === email);
+    const alreadyMember = membersSnap.docs.some(d => (d.data().email ? d.data().email.toLowerCase() : '') === email);
     if (alreadyMember) {
       alert(`${email} is already a member of this trip.`);
       return;
@@ -7805,8 +7800,8 @@ ${closer}`;
     await addDoc(invitesCollection(), {
       email,
       role: selectedInviteRole,
-      invitedBy: currentUser?.uid || "",
-      invitedByEmail: currentUser?.email || "",
+      invitedBy: (currentUser && currentUser.uid) || "",
+      invitedByEmail: (currentUser && currentUser.email) || "",
       createdAt: new Date().toISOString()
     });
 
@@ -7902,17 +7897,17 @@ ${closer}`;
   window.showLoginEmailStep = showLoginEmailStep;
   window.signOutUser = signOutUser;
   window.saveUserProfile = saveUserProfile;
-  document.getElementById("useDifferentEmailBtn")?.addEventListener("click", showLoginEmailStep);
-  document.getElementById("welcomeSignInBtn")?.addEventListener("click", () => {
+  document.getElementById("useDifferentEmailBtn") && document.getElementById("useDifferentEmailBtn").addEventListener("click", showLoginEmailStep);
+  document.getElementById("welcomeSignInBtn") && document.getElementById("welcomeSignInBtn").addEventListener("click", () => {
     const email = getCookie(EMAIL_COOKIE);
     if (email) sendMagicLink(email);
   });
-  document.getElementById("welcomeNotMeBtn")?.addEventListener("click", () => {
+  document.getElementById("welcomeNotMeBtn") && document.getElementById("welcomeNotMeBtn").addEventListener("click", () => {
     deleteCookie(EMAIL_COOKIE);
     deleteCookie(NAME_COOKIE);
     showLoginEmailStep();
   });
-  document.getElementById("loginEmail")?.addEventListener("keydown", e => {
+  document.getElementById("loginEmail") && document.getElementById("loginEmail").addEventListener("keydown", e => {
     if (e.key === "Enter") sendMagicLink();
   });
 
