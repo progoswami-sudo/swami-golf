@@ -1932,9 +1932,12 @@
   window.requestNotifications  = _stub('requestNotifications');
   window.turnOffNotifications  = _stub('turnOffNotifications');
   window.addEventListener('error', function(e) {
-    if (e.filename && e.filename.indexOf('swami-golf') > -1) {
-      document.body.innerHTML = '<div style="background:#0f2442;color:#f87171;padding:20px;font-family:monospace;font-size:12px;">MODULE ERROR: ' + (e.message||'') + ' (line ' + e.lineno + ')</div>';
-    }
+    var msg = (e.message||'unknown') + ' (line ' + e.lineno + ')';
+    console.error('SCRIPT ERROR:', msg);
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#7f1d1d;color:white;padding:10px;font-size:11px;font-family:monospace;z-index:9999;';
+    d.textContent = 'ERROR: ' + msg;
+    document.body.appendChild(d);
   });
 </script>
 <script type="module">
@@ -1969,6 +1972,8 @@
     onSnapshot,
     writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  console.log('📦 Module script started');
 
   const firebaseConfig = {
     apiKey: "AIzaSyCuw-M3ies3M0sDjH1Du1bG2t_rfWzFkdY",
@@ -7877,6 +7882,7 @@ ${closer}`;
     sendMagicLink, showLoginEmailStep, signOutUser, saveUserProfile,
     requestNotifications, turnOffNotifications
   };
+  console.log('✅ window._mod registered');
   (window._q || []).forEach(function(c) {
     if (window._mod[c[0]]) window._mod[c[0]].apply(null, c[1]);
   });
