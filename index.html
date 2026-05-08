@@ -3065,21 +3065,57 @@ Respond ONLY with valid JSON, nothing else:
     const ordered = Object.values(trips).sort((a, b) => {
       const aDefaultIndex = defaultTripIds.indexOf(a.id);
       const bDefaultIndex = defaultTripIds.indexOf(b.id);
-
       if (aDefaultIndex !== -1 || bDefaultIndex !== -1) {
         if (aDefaultIndex === -1) return 1;
         if (bDefaultIndex === -1) return -1;
         return aDefaultIndex - bDefaultIndex;
       }
-
       return (a.name || "").localeCompare(b.name || "");
     });
+
+    if (!ordered.length) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;">
+          <div style="font-size:48px;margin-bottom:16px;">🏌️</div>
+          <div style="font-size:18px;font-weight:600;margin-bottom:8px;">No trips yet</div>
+          <div style="font-size:14px;color:#64748b;margin-bottom:28px;">Create your first golf trip to get started.</div>
+          <button onclick="createTrip()" style="width:auto;padding:14px 32px;font-size:16px;">+ Create Golf Trip</button>
+          <div id="tripLoadDiag" style="margin-top:24px;padding:12px;background:#0f2442;border:1px solid #375984;border-radius:10px;font-size:11px;color:#93c5fd;text-align:left;word-break:break-all;"></div>
+        </div>
+      `;
+      // Run diagnostic
+      diagTrips();
+      return;
+    }
 
     container.innerHTML = ordered.map(trip => `
       <div class="tile trip-tile" data-trip-id="${escapeAttr(trip.id)}" onclick="openTripHome('${escapeAttr(trip.id)}')">
         ${trip.id === "testGolfTrip" ? "🧪" : "🏌️"} ${escapeHtml(trip.name)}
       </div>
     `).join("");
+  }
+
+  async function diagTrips() {
+    const el = document.getElementById("tripLoadDiag");
+    if (!el) return;
+    const uid = currentUser?.uid;
+    const email = currentUser?.email;
+    el.innerHTML = `uid: ${uid ? uid.slice(0,12)+"..." : "null"}<br>email: ${email || "null"}<br>`;
+    try {
+      const snap = await getDocs(collection(db, "trips"));
+      el.innerHTML += `trips in DB: ${snap.docs.length}<br>`;
+      for (const d of snap.docs) {
+        const tripId = d.id;
+        try {
+          const mSnap = await getDoc(doc(db, "trips", tripId, "members", uid));
+          el.innerHTML += `${tripId}: member=${mSnap.exists()} role=${mSnap.exists() ? mSnap.data().role : "n/a"}<br>`;
+        } catch(e) {
+          el.innerHTML += `${tripId}: member read ERROR: ${e.code || e.message}<br>`;
+        }
+      }
+    } catch(e) {
+      el.innerHTML += `trips read ERROR: ${e.code || e.message}`;
+    }
   }
 
   async function createTrip() {
