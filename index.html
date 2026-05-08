@@ -7991,8 +7991,17 @@ ${closer}`;
   window.toggleHoleDetailHazard = toggleHoleDetailHazard;
   window.saveHoleDetail = saveHoleDetail;
   window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
-  // Wire up login buttons inside module (avoids deferred module timing issue)
-  document.getElementById("sendLinkBtn")?.addEventListener("click", () => sendMagicLink());
+  // ── CRITICAL WINDOW EXPORTS (must run even if something else fails) ─────────
+  window.toggleHomeMenu = toggleHomeMenu;
+  window.openUserProfile = openUserProfile;
+  window.goHome = goHome;
+  window.createTrip = createTrip;
+  window.openTripHome = openTripHome;
+  window.goTripHome = goTripHome;
+  window.sendMagicLink = sendMagicLink;
+  window.showLoginEmailStep = showLoginEmailStep;
+  window.signOutUser = signOutUser;
+  window.saveUserProfile = saveUserProfile;
   document.getElementById("useDifferentEmailBtn")?.addEventListener("click", showLoginEmailStep);
   document.getElementById("welcomeSignInBtn")?.addEventListener("click", () => {
     const email = getCookie(EMAIL_COOKIE);
