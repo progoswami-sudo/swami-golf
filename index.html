@@ -2669,11 +2669,14 @@ Respond ONLY with valid JSON, nothing else:
     setCookie(UID_COOKIE, user.uid);
     if (user.email) {
       setCookie(EMAIL_COOKIE, user.email);
-      const linkedPlayer = players.find(p =>
-        p.email?.toLowerCase() === user.email.toLowerCase()
-      );
-      const displayName = linkedPlayer?.nickname || linkedPlayer?.name?.split(" ")[0] || "";
-      if (displayName) setCookie(NAME_COOKIE, displayName);
+    } else {
+      // Custom token sign-in doesn't carry email — restore from Firestore user doc
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().email) {
+          setCookie(EMAIL_COOKIE, userDoc.data().email);
+        }
+      } catch(e) { /* ignore */ }
     }
 
     // Hide login, show app
