@@ -2659,6 +2659,7 @@ Respond ONLY with valid JSON, nothing else:
   // Auth state observer
   async function initSwamiApp(user) {
     currentUser = user;
+    console.log(`initSwamiApp: uid=${user.uid.slice(0,8)} email=${user.email || "null"}`);
     setCookie(UID_COOKIE, user.uid);
     if (user.email) {
       setCookie(EMAIL_COOKIE, user.email);
@@ -2668,17 +2669,28 @@ Respond ONLY with valid JSON, nothing else:
         if (userDoc.exists() && userDoc.data().email) {
           setCookie(EMAIL_COOKIE, userDoc.data().email);
         }
-      } catch(e) { /* ignore */ }
+      } catch(e) { console.log("users read error:", e.code); }
     }
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("appHome").classList.remove("hidden");
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
     document.getElementById("syncStatus").style.display = "none";
-    await initializeTripIfNeeded("pinehurst2026");
-    await initializeTripIfNeeded("testGolfTrip");
-    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library load skipped", e); }
-    try { await loadTrips(); } catch (e) { console.warn("Trip loading skipped", e); }
+
+    try { await initializeTripIfNeeded("pinehurst2026"); console.log("initTrip pinehurst OK"); }
+    catch(e) { console.log("initTrip pinehurst ERROR:", e.code, e.message); }
+
+    try { await initializeTripIfNeeded("testGolfTrip"); console.log("initTrip test OK"); }
+    catch(e) { console.log("initTrip test ERROR:", e.code, e.message); }
+
+    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library skipped"); }
+
+    try {
+      await loadTrips();
+      console.log("loadTrips OK, trips:", Object.keys(trips).join(", "));
+    } catch (e) {
+      console.log("loadTrips ERROR:", e.code, e.message);
+    }
     renderTripTiles();
   }
 
