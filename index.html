@@ -1670,15 +1670,6 @@
       <label class="form-label" for="playerPaypal">PayPal.me Username (optional)</label>
       <input id="playerPaypal" placeholder="e.g. frankmcgolf"/>
 
-      <label class="form-label" for="swamiIntel">Swami Intel</label>
-      <textarea id="swamiIntel" placeholder="Give Swami something to work with. Inside jokes, quirks, superstitions, rivalries, notable moments, anything. The more specific, the better the roasts."></textarea>
-
-      <h4>Strengths</h4>
-      <div id="strengths" class="traits-grid"></div>
-
-      <h4>Weaknesses</h4>
-      <div id="weaknesses" class="traits-grid"></div>
-
       <div id="assignedPlayerStatus" class="assigned-player-box hidden"></div>
       <button id="assignMeButton" onclick="assignMeToCurrentPlayer()" class="backup">Assign Me to This Player</button>
       <button onclick="savePlayer()">Save Player</button>
@@ -1801,6 +1792,34 @@
 
       <button onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
       <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- ── SWAMI INTEL ──────────────────────────────────────────────────────── -->
+  <div id="submitIntelScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openPlayerList()" class="secondary">Back</button>
+      <h2 id="submitIntelTitle">Submit Intel</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:#93c5fd;margin-bottom:12px;line-height:1.5;">
+        Share what you know about this player. Your submission is anonymous to them — only Swami and admins can see who submitted what. The more specific, the funnier the roast.
+      </div>
+      <label class="form-label" for="intelText">Your Intel</label>
+      <textarea id="intelText" placeholder="e.g. Claims a 12 handicap but hasn't broken 90 since the Obama administration. Blames his caddie, the wind, and Mercury retrograde." style="min-height:100px;"></textarea>
+      <button onclick="saveIntel()" style="margin-top:12px;">Submit Intel</button>
+    </div>
+  </div>
+
+  <div id="viewIntelScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openPlayerList()" class="secondary">Back</button>
+      <h2 id="viewIntelTitle">Swami Intel</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Only visible to admins and Swami. Not shown to the player.</div>
+      <div id="viewIntelList"></div>
+      <div id="viewIntelEmpty" class="empty-state" style="display:none;">No intel submitted yet. Let the gathering begin.</div>
     </div>
   </div>
 
@@ -2411,46 +2430,7 @@ Respond ONLY with valid JSON, nothing else:
   }
 
 
-  const strengths = [
-    "Fairway Finder-ish",
-    "Green-Seeking Missiles",
-    "Flop Shot Flair",
-    "Putt Whisperer Energy",
-    "Beer Consistency",
-    "Trash Talk Volume",
-    "Cart Navigation Skills",
-    "Mental Toughness",
-    "Snack Management",
-    "Mulligan Negotiation",
-    "Cart Cooler Logistics",
-    "Approach Shot Optimism",
-    "Gimme Putt Diplomacy",
-    "Post-Round Storytelling",
-    "First Tee Swagger",
-    "Club Twirl Confidence"
-  ];
 
-  const weaknesses = [
-    "3-Putt Specialist",
-    "Slice Machine",
-    "Hook Under Pressure",
-    "Slow Play Offender",
-    "Bunker Magnet",
-    "Ball Disappearance Expert",
-    "Water Hazard Addiction",
-    "Driver Meltdown",
-    "Putting Confidence Issues",
-    "Breakfast Ball Dependency",
-    "Range Hero Syndrome",
-    "Yardage Guessing Disorder",
-    "Cart Path Only Confusion",
-    "Scorecard Math Problems",
-    "Wind Blame Specialist",
-    "Forgotten Wedge Syndrome"
-  ];
-
-  let selectedStrengths = [];
-  let selectedWeaknesses = [];
 
   // ── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -2764,6 +2744,10 @@ Respond ONLY with valid JSON, nothing else:
 
   function invitesCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "invites");
+  }
+
+  function swamiIntelCollection(tripId = activeTripId, playerId) {
+    return collection(db, "trips", tripId, "players", playerId, "intel");
   }
 
   // Current user's role in the active trip
@@ -3391,7 +3375,9 @@ Respond ONLY with valid JSON, nothing else:
       "playerListScreen",
       "playerScreen",
       "userProfileScreen",
-      "membersScreen"
+      "membersScreen",
+      "submitIntelScreen",
+      "viewIntelScreen"
     ].forEach(x => {
       const el = document.getElementById(x);
       if (el) {
@@ -3753,7 +3739,7 @@ Respond ONLY with valid JSON, nothing else:
         `HI ${p.handicapIndex || "N/A"}${ch !== null ? "/CH " + ch : ""}`,
         p.strengths && p.strengths.length ? `strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `weaknesses: ${p.weaknesses.join(", ")}` : null,
-        p.swamiIntel ? `intel: ${p.swamiIntel}` : null
+        null // intel loaded from subcollection
       ].filter(Boolean);
       return parts.join("; ");
     }
@@ -4909,7 +4895,7 @@ Max 80 words total.`;
         `Team: ${p.team || "unassigned"}`,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
-        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
+        null // intel loaded from subcollection
       ].filter(Boolean);
       return parts.join("; ");
     }).join(" | ");
@@ -5480,7 +5466,6 @@ ${closer}`;
           <br>
           <strong>Weaknesses:</strong>
           ${player.weaknesses && player.weaknesses.length ? player.weaknesses.map(escapeHtml).join(", ") : "None selected"}
-          ${player.swamiIntel ? `<br><strong>Swami Intel:</strong> ${escapeHtml(player.swamiIntel)}` : ""}
         </div>
       `;
 
@@ -5832,7 +5817,7 @@ ${closer}`;
         p.gender ? `Gender: ${formatGender(p.gender)}` : null,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
-        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
+        null // intel loaded from subcollection
       ].filter(Boolean);
       return parts.join("; ");
     }).join(" | ");
@@ -6321,17 +6306,7 @@ ${closer}`;
     });
   }
 
-  function toggleTrait(el, value, type) {
-    el.classList.toggle("selected");
 
-    let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
-
-    if (arr.includes(value)) {
-      arr.splice(arr.indexOf(value), 1);
-    } else {
-      arr.push(value);
-    }
-  }
 
   function resetPlayerForm() {
     document.getElementById("playerName").value = "";
@@ -6342,10 +6317,7 @@ ${closer}`;
     document.getElementById("playerEmail").value = "";
     document.getElementById("playerVenmo").value = "";
     document.getElementById("playerPaypal").value = "";
-    document.getElementById("swamiIntel").value = "";
 
-    selectedStrengths = [];
-    selectedWeaknesses = [];
 
     document.querySelectorAll(".trait-card").forEach(card => {
       card.classList.remove("selected");
@@ -6364,10 +6336,7 @@ ${closer}`;
     document.getElementById("playerEmail").value = player.email || "";
     document.getElementById("playerVenmo").value = player.venmo || "";
     document.getElementById("playerPaypal").value = player.paypal || "";
-    document.getElementById("swamiIntel").value = player.swamiIntel || "";
 
-    selectedStrengths = player.strengths || [];
-    selectedWeaknesses = player.weaknesses || [];
 
     document.querySelectorAll("#strengths .trait-card").forEach(card => {
       if (selectedStrengths.includes(card.innerText)) card.classList.add("selected");
@@ -6385,7 +6354,6 @@ ${closer}`;
     const handicapIndex = document.getElementById("handicapIndex").value;
     const gender = document.getElementById("playerGender").value;
     const team = document.getElementById("playerTeam").value;
-    const swamiIntel = document.getElementById("swamiIntel").value.trim();
 
     if (!name.trim()) {
       alert("Please enter a player name.");
@@ -6398,9 +6366,7 @@ ${closer}`;
 
     const player = {
       name, nickname, handicapIndex, gender, team,
-      email, venmo, paypal, swamiIntel,
-      strengths: selectedStrengths,
-      weaknesses: selectedWeaknesses,
+      email, venmo, paypal,
       updatedAt: new Date().toISOString()
     };
 
@@ -6424,36 +6390,45 @@ ${closer}`;
   function renderPlayerList() {
     const list = document.getElementById("playerList");
     if (!list) return;
-
     list.innerHTML = "";
-
     if (players.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          No players yet. Tap “Add New Player” to create one.
-        </div>
-      `;
+      list.innerHTML = `<div class="empty-state">No players yet. Tap "Add New Player" to create one.</div>`;
       return;
     }
-
-    players
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-      .forEach(player => {
-        const div = document.createElement("div");
-        div.className = "player-row";
-        div.onclick = () => openPlayer(player.id);
-
-        div.innerHTML = `
-          <div class="player-name">${escapeHtml(player.name)}</div>
-          <div class="player-detail">
-            ${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}
-            ${player.team ? escapeHtml(player.team) : "No team assigned"}
-            ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}
-          </div>
-        `;
-
-        list.appendChild(div);
-      });
+    const myEmail = (currentUser?.email || getCookie(EMAIL_COOKIE) || "").toLowerCase();
+    players.sort((a, b) => (a.name || "").localeCompare(b.name || "")).forEach(player => {
+      const isMe = myEmail && player.email?.toLowerCase() === myEmail;
+      const div = document.createElement("div");
+      div.className = "player-row";
+      div.style.cssText = "display:flex;justify-content:space-between;align-items:center;";
+      const info = document.createElement("div");
+      info.style.flex = "1";
+      info.style.cursor = "pointer";
+      info.onclick = () => openPlayer(player.id);
+      info.innerHTML = `<div class="player-name">${escapeHtml(player.name)}</div>
+        <div class="player-detail">${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}${player.team ? escapeHtml(player.team) : "No team"}${player.handicapIndex ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}</div>`;
+      div.appendChild(info);
+      const actions = document.createElement("div");
+      actions.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-left:10px;flex-shrink:0;";
+      if (!isMe) {
+        const intelBtn = document.createElement("button");
+        intelBtn.textContent = "🧠 Intel";
+        intelBtn.className = "secondary";
+        intelBtn.style.cssText = "width:auto;padding:6px 12px;margin:0;font-size:12px;";
+        intelBtn.onclick = (e) => { e.stopPropagation(); openSubmitIntel(player); };
+        actions.appendChild(intelBtn);
+      }
+      if (isAdmin()) {
+        const viewBtn = document.createElement("button");
+        viewBtn.textContent = "👁 View";
+        viewBtn.className = "secondary";
+        viewBtn.style.cssText = "width:auto;padding:6px 12px;margin:0;font-size:12px;";
+        viewBtn.onclick = (e) => { e.stopPropagation(); openViewIntel(player); };
+        actions.appendChild(viewBtn);
+      }
+      if (actions.children.length) div.appendChild(actions);
+      list.appendChild(div);
+    });
   }
 
   async function getSingleTripData(tripId) {
@@ -7464,7 +7439,91 @@ ${closer}`;
     }, 50);
   }
 
-  // ── MEMBERS & INVITES ────────────────────────────────────────────────────────
+  // ── SWAMI INTEL ──────────────────────────────────────────────────────────────
+
+  let intelTargetPlayer = null;
+
+  function openSubmitIntel(player) {
+    intelTargetPlayer = player;
+    document.getElementById("submitIntelTitle").textContent = `Intel on ${player.name}`;
+    document.getElementById("intelText").value = "";
+    show("submitIntelScreen");
+  }
+
+  async function saveIntel() {
+    const text = document.getElementById("intelText").value.trim();
+    if (!text) { alert("Please enter some intel first."); return; }
+    if (!intelTargetPlayer) return;
+
+    const submitterName = getCookie(NAME_COOKIE) || currentUser?.email?.split("@")[0] || "Anonymous";
+
+    await addDoc(swamiIntelCollection(activeTripId, intelTargetPlayer.id), {
+      text,
+      submittedBy: currentUser?.uid || "",
+      submitterName,
+      submittedAt: new Date().toISOString()
+    });
+
+    alert(`Intel submitted on ${intelTargetPlayer.name}. Swami is taking notes. 🧠`);
+    openPlayerList();
+  }
+
+  async function openViewIntel(player) {
+    document.getElementById("viewIntelTitle").textContent = `Intel on ${player.name}`;
+    show("viewIntelScreen");
+
+    const list = document.getElementById("viewIntelList");
+    const empty = document.getElementById("viewIntelEmpty");
+    list.innerHTML = `<div style="color:#64748b;font-size:13px;">Loading...</div>`;
+    empty.style.display = "none";
+
+    const snap = await getDocs(swamiIntelCollection(activeTripId, player.id));
+    if (snap.empty) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+
+    const items = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+
+    list.innerHTML = items.map(item => `
+      <div style="padding:12px 0;border-bottom:1px solid #1e3a5f;">
+        <div style="font-size:14px;line-height:1.5;margin-bottom:6px;">${escapeHtml(item.text)}</div>
+        <div style="font-size:11px;color:#475569;">
+          From ${escapeHtml(item.submitterName || "Anonymous")} · ${formatFeedTime(item.submittedAt)}
+          <button onclick="deleteIntel('${escapeAttr(player.id)}','${escapeAttr(item.id)}')"
+            style="margin-left:10px;padding:2px 8px;font-size:11px;width:auto;margin-top:0;background:transparent;color:#f87171;border:1px solid #f87171;border-radius:10px;">
+            Delete
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function deleteIntel(playerId, intelId) {
+    if (!confirm("Delete this intel?")) return;
+    await deleteDoc(doc(db, "trips", activeTripId, "players", playerId, "intel", intelId));
+    const player = players.find(p => p.id === playerId);
+    if (player) openViewIntel(player);
+  }
+
+  // Build Swami context — pull intel from Firestore subcollections
+  async function buildPlayerIntelContext(playerIds) {
+    const intelByPlayer = {};
+    await Promise.all(playerIds.map(async pid => {
+      try {
+        const snap = await getDocs(swamiIntelCollection(activeTripId, pid));
+        if (!snap.empty) {
+          intelByPlayer[pid] = snap.docs.map(d => d.data().text).join("; ");
+        }
+      } catch(e) { /* ignore */ }
+    }));
+    return intelByPlayer;
+  }
+
+  // ── END SWAMI INTEL ───────────────────────────────────────────────────────────
 
   let selectedInviteRole = "participant";
 
@@ -7649,6 +7708,10 @@ ${closer}`;
     if (e.key === "Enter") sendMagicLink();
   });
 
+  window.openSubmitIntel = openSubmitIntel;
+  window.saveIntel = saveIntel;
+  window.openViewIntel = openViewIntel;
+  window.deleteIntel = deleteIntel;
   window.openMemberManager = openMemberManager;
   window.sendInvite = sendInvite;
   window.removeMember = removeMember;
