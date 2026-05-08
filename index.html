@@ -193,25 +193,29 @@
 
     .feed-reactions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-top: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .reaction-btn {
       display: flex;
       align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
+      justify-content: center;
+      gap: 3px;
+      width: auto;
+      min-width: 36px;
+      height: 32px;
+      padding: 0 8px;
       border-radius: 16px;
       border: 1.5px solid #375984;
       background: #0f2442;
-      font-size: 13px;
+      font-size: 16px;
       cursor: pointer;
       touch-action: manipulation;
       user-select: none;
-      transition: background 0.1s, border-color 0.1s;
-      white-space: nowrap;
+      flex-shrink: 0;
+      margin: 0;
     }
 
     .reaction-btn.reacted {
@@ -222,10 +226,9 @@
     .reaction-btn:active { opacity: 0.7; }
 
     .reaction-count {
-      font-size: 12px;
+      font-size: 11px;
       color: #93c5fd;
       font-weight: 600;
-      min-width: 12px;
     }
 
     .feed-author {
@@ -1348,7 +1351,7 @@
         <input type="file" id="expenseReceiptInput" accept="image/*" capture="environment" style="display:none;" onchange="handleExpenseReceiptSelected(event)"/>
       </div>
 
-      <button onclick="saveExpense()">Save Expense</button>
+      <button id="saveExpenseBtn" onclick="saveExpense()">Save Expense</button>
       <button id="deleteExpenseBtn" onclick="deleteExpense()" class="danger hidden" style="margin-top:8px;">Delete Expense</button>
     </div>
   </div>
@@ -5954,9 +5957,12 @@ ${closer}`;
 
   // Low-signal events get much lower Swami frequency
   const LOW_SIGNAL = ["itineraryEdit", "itineraryDelete", "matchEdit", "playerEdit"];
-  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.25 : 0.65;
-  const hasMeme = Math.random() < swamiFrequency;
-    const maxWords = hasMeme ? "1 sentence max." : "1-2 sentences. Sharp, specific, funny.";
+  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.125 : 0.32;
+  // Exit early most of the time
+  if (Math.random() > swamiFrequency) return;
+  // When Swami fires, memes only 20% of the time
+  const hasMeme = Math.random() < 0.20;
+    const maxWords = hasMeme ? "5 words max. Single punchline only." : "1-2 sentences. Sharp, specific, funny.";
 
     const actionPrompts = {
       playerAdd:    `New player joined: ${subject}. ${ctx}\n\nOne-liner. Use their handicap or team. ${variationSeed} ${maxWords}`,
@@ -7213,6 +7219,9 @@ ${closer}`;
     if (!paidById) return alert("Please select who paid.");
     if (!expenseSelectedPlayers.length) return alert("Please select at least one person to split with.");
 
+    const btn = document.getElementById("saveExpenseBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
     const expenseData = {
       description, amount, paidById, paidByName,
       category, note, splits,
@@ -7243,10 +7252,10 @@ ${closer}`;
     } else {
       expenseData.createdAt = new Date().toISOString();
       await addDoc(expensesCollection(), expenseData);
-      // Swami reacts
       await addSwamiPost("expenseAdd", `${paidByName} paid $${amount.toFixed(2)} for ${description}`);
     }
 
+    if (btn) { btn.disabled = false; btn.textContent = "Save Expense"; }
     show("expensesScreen");
     renderExpenses();
   }
