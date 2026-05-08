@@ -4288,6 +4288,7 @@ Max 80 words total.`;
       alert("Error saving: " + e.message);
       if (btn) { btn.disabled = false; btn.textContent = "Save Hole"; }
     }
+  } // end saveHoleDetail
 
   function closeHoleDetail() {
     show("scoreEntryScreen");
@@ -7891,7 +7892,6 @@ ${closer}`;
   });
   window._q = [];
 
-  // ── CRITICAL WINDOW EXPORTS
   console.log('📍 reached window exports');
   window.toggleHomeMenu = toggleHomeMenu;
   window.openUserProfile = openUserProfile;
@@ -8000,7 +8000,6 @@ ${closer}`;
     openTripHome(pendingTripId);
   }
 
-} // end module scope
 </script>
 
 </body>
