@@ -1914,7 +1914,8 @@
   function _stub(name) {
     return function() {
       var a = arguments;
-      if (window._mod && window._mod[name]) { window._mod[name].apply(null, a); }
+      var fn = window._mod && window._mod._resolve && window._mod._resolve(name);
+      if (fn) { fn.apply(null, a); }
       else { window._q.push([name, a]); }
     };
   }
@@ -2666,18 +2667,34 @@ Respond ONLY with valid JSON, nothing else:
     await initSwamiApp(user);
   });
 
-  // Register stubs immediately — before any code that might crash
-  window._mod = {
-    toggleHomeMenu, openUserProfile, goHome, createTrip,
-    openTripHome, goTripHome, toggleTripMenu,
-    sendMagicLink, showLoginEmailStep, signOutUser, saveUserProfile,
-    requestNotifications, turnOffNotifications
-  };
+  // Register stubs with lazy lookup — functions looked up at call time, not registration time
+  // This way it doesn't matter when _mod is registered relative to function definitions
+  function _resolve(name) {
+    var fns = {
+      toggleHomeMenu: toggleHomeMenu,
+      openUserProfile: openUserProfile,
+      goHome: goHome,
+      createTrip: createTrip,
+      openTripHome: openTripHome,
+      goTripHome: goTripHome,
+      toggleTripMenu: toggleTripMenu,
+      sendMagicLink: sendMagicLink,
+      showLoginEmailStep: showLoginEmailStep,
+      signOutUser: signOutUser,
+      saveUserProfile: saveUserProfile,
+      requestNotifications: requestNotifications,
+      turnOffNotifications: turnOffNotifications
+    };
+    return fns[name];
+  }
+  window._mod = { _resolve: _resolve };
+  // Replay queued calls now that functions are available
   (window._q || []).forEach(function(c) {
-    if (window._mod[c[0]]) window._mod[c[0]].apply(null, c[1]);
+    var fn = _resolve(c[0]);
+    if (fn) fn.apply(null, c[1]);
   });
   window._q = [];
-  console.log('✅ _mod registered early');
+  console.log('✅ _mod registered');
 
   function normalizeCourseKey(name) {
     return String(name || "")
