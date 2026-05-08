@@ -5871,13 +5871,24 @@ ${closer}`;
           ${REACTIONS.map(emoji => {
             const count = (reactions[emoji] || []).length;
             const reacted = myReactions.has(emoji);
-            return `<button class="reaction-btn${reacted ? " reacted" : ""}"
-              data-post-id="${escapeAttr(postId)}" data-emoji="${emoji}"
-              onclick="toggleReaction(this,'${escapeAttr(postId)}','${emoji}')">
-              ${emoji}${count ? ` <span class="reaction-count">${count}</span>` : ""}
-            </button>`;
+            const countHtml = count ? ' <span class="reaction-count">' + count + '</span>' : '';
+            return '<button class="reaction-btn' + (reacted ? ' reacted' : '') + '"'
+              + ' data-post-id="' + escapeAttr(postId) + '" data-emoji="' + emoji + '"'
+              + ' onclick="toggleReaction(this,\'' + escapeAttr(postId) + '\',\'' + emoji + '\')">'
+              + emoji + countHtml
+              + '</button>';
           }).join("")}
         </div>`;
+
+      const textClass = (!isExpanded && isLong) ? "feed-text feed-text-collapsed" : "feed-text";
+      const expandBtn = isLong
+        ? '<span class="feed-expand-btn">' + (isExpanded ? "Show less ▲" : "Show more ▼") + '</span>'
+        : "";
+      const mediaHtml = post.imageUrl
+        ? '<div class="feed-media"><img id="' + imgId + '" alt="' + escapeHtml(post.imageCaption || "") + '" style="display:block;width:100%;border-radius:10px;">'
+          + (post.imageCaption ? '<div class="feed-media-caption">' + escapeHtml(post.imageCaption) + '</div>' : '')
+          + '</div>'
+        : "";
 
       div.innerHTML = `
         <div class="feed-post-preview" onclick="togglePostExpand('${escapeAttr(postId)}',this)">
@@ -5885,13 +5896,10 @@ ${closer}`;
             <div class="feed-author" style="${isSwami ? "color:#f0abfc;" : ""}">${escapeHtml(post.author)}</div>
             <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
           </div>
-          <div class="feed-text${!isExpanded && isLong ? " feed-text-collapsed" : ""}">${renderPostText(post)}</div>
-          ${isLong ? `<span class="feed-expand-btn">${isExpanded ? "Show less ▲" : "Show more ▼"}</span>` : ""}
+          <div class="${textClass}">${renderPostText(post)}</div>
+          ${expandBtn}
         </div>
-        ${post.imageUrl ? `<div class="feed-media">
-          <img id="${imgId}" alt="${escapeHtml(post.imageCaption || "")}" style="display:block;width:100%;border-radius:10px;">
-          ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
-        </div>` : ""}
+        ${mediaHtml}
         ${reactionsHtml}
       `;
 
