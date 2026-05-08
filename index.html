@@ -2603,6 +2603,7 @@ Respond ONLY with valid JSON, nothing else:
     }
     show("userProfileScreen");
   }
+  console.log('📍 2600');
 
   async function saveUserProfile() {
     const name = (document.getElementById("userDisplayName").value || "").trim();
@@ -2697,6 +2698,7 @@ Respond ONLY with valid JSON, nothing else:
   function recapsCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "recaps");
   }
+  console.log('📍 2700');
 
   function expensesCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "expenses");
@@ -2797,6 +2799,7 @@ Respond ONLY with valid JSON, nothing else:
           found = true;
         }
       });
+  console.log('📍 2800');
 
       setOtherCourseVisibility(!found);
 
@@ -2899,6 +2902,7 @@ Respond ONLY with valid JSON, nothing else:
       setOtherTeeVisibility(false);
     }
   }
+  console.log('📍 2900');
 
 
   function getSelectedTeeName() {
@@ -3002,6 +3006,7 @@ Respond ONLY with valid JSON, nothing else:
           }
         } catch (e) { /* no access to invites */ }
       }
+  console.log('📍 3000');
 
       // Legacy: no members yet — auto-add as admin
       if (!isMember) {
@@ -3094,6 +3099,7 @@ Respond ONLY with valid JSON, nothing else:
       el.innerHTML += `trips read ERROR: ${e.code || e.message}`;
     }
   }
+  console.log('📍 3100');
 
   async function createTrip() {
     document.getElementById("homeMenu").classList.add("hidden");
@@ -3196,6 +3202,7 @@ Respond ONLY with valid JSON, nothing else:
         loadTeamDropdownIfVisible();
       })
     );
+  console.log('📍 3200');
 
     unsubscribers.push(
       onSnapshot(playersCollection(tripId), snapshot => {
@@ -3295,6 +3302,7 @@ Respond ONLY with valid JSON, nothing else:
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     });
+  console.log('📍 3300');
 
     setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -3392,6 +3400,7 @@ Respond ONLY with valid JSON, nothing else:
       tripMenu.classList.add("hidden");
     }
   }
+  console.log('📍 3400');
 
   document.addEventListener("click", closeOpenMenusOnOutsideClick);
 
