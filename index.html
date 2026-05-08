@@ -1957,6 +1957,12 @@
   });
 </script>
 
+<script>
+// Catch any errors from the module script
+window.addEventListener('error', function(e) {
+  document.body.innerHTML = '<div style="background:#0f2442;color:#f87171;padding:20px;font-family:monospace;white-space:pre-wrap;font-size:12px;">MODULE ERROR:\n' + e.message + '\nFile: ' + e.filename + '\nLine: ' + e.lineno + '</div>';
+});
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import {
