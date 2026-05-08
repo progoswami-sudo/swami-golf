@@ -2500,7 +2500,6 @@ Respond ONLY with valid JSON, nothing else:
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
-  console.log('📍 checkpoint 2500');
 
 
 
@@ -2603,7 +2602,6 @@ Respond ONLY with valid JSON, nothing else:
     }
     show("userProfileScreen");
   }
-  console.log('📍 2600');
 
   async function saveUserProfile() {
     const name = (document.getElementById("userDisplayName").value || "").trim();
@@ -2698,7 +2696,6 @@ Respond ONLY with valid JSON, nothing else:
   function recapsCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "recaps");
   }
-  console.log('📍 2700');
 
   function expensesCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "expenses");
@@ -2799,7 +2796,6 @@ Respond ONLY with valid JSON, nothing else:
           found = true;
         }
       });
-  console.log('📍 2800');
 
       setOtherCourseVisibility(!found);
 
@@ -2902,7 +2898,6 @@ Respond ONLY with valid JSON, nothing else:
       setOtherTeeVisibility(false);
     }
   }
-  console.log('📍 2900');
 
 
   function getSelectedTeeName() {
@@ -3006,7 +3001,6 @@ Respond ONLY with valid JSON, nothing else:
           }
         } catch (e) { /* no access to invites */ }
       }
-  console.log('📍 3000');
 
       // Legacy: no members yet — auto-add as admin
       if (!isMember) {
@@ -3099,7 +3093,6 @@ Respond ONLY with valid JSON, nothing else:
       el.innerHTML += `trips read ERROR: ${e.code || e.message}`;
     }
   }
-  console.log('📍 3100');
 
   async function createTrip() {
     document.getElementById("homeMenu").classList.add("hidden");
@@ -3202,7 +3195,6 @@ Respond ONLY with valid JSON, nothing else:
         loadTeamDropdownIfVisible();
       })
     );
-  console.log('📍 3200');
 
     unsubscribers.push(
       onSnapshot(playersCollection(tripId), snapshot => {
@@ -3302,7 +3294,6 @@ Respond ONLY with valid JSON, nothing else:
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     });
-  console.log('📍 3300');
 
     setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -3400,7 +3391,6 @@ Respond ONLY with valid JSON, nothing else:
       tripMenu.classList.add("hidden");
     }
   }
-  console.log('📍 3400');
 
   document.addEventListener("click", closeOpenMenusOnOutsideClick);
 
@@ -3459,7 +3449,10 @@ Respond ONLY with valid JSON, nothing else:
 
     if (!isTagged && document.visibilityState === "visible") return;
 
-    new Notification(isTagged ? `You were tagged by ${latest.author}` : `${latest.author} posted in Swami Golf`, {
+    const notifTitle = isTagged
+      ? "You were tagged by " + latest.author
+      : latest.author + " posted in Swami Golf";
+    new Notification(notifTitle, {
       body: latest.text || "New trip feed activity"
     });
   }
@@ -3510,7 +3503,6 @@ Respond ONLY with valid JSON, nothing else:
       if (courseOther) courseOther.value = sourceMatch.course || "";
       const teeOther = document.getElementById("matchTeesOther");
       if (teeOther) teeOther.value = sourceMatch.tees || "";
-  console.log('📍 checkpoint 3500');
 
       // Holes / Starting Hole
       const holesEl = document.getElementById("matchNumberOfHoles");
@@ -3850,7 +3842,7 @@ Max 80 words total.`;
     list.innerHTML = rounds.map(round => {
       const isOpen = (!expandedRounds[activeTripId] || expandedRounds[activeTripId][round] !== false);
       const body = grouped[round]
-        .sort((a, b) => `${a.matchDate || ""} ${a.createdAt || ""}`.localeCompare(`${b.matchDate || ""} ${b.createdAt || ""}`))
+        .sort((a, b) => ((a.matchDate||"")+" "+(a.createdAt||"")).localeCompare((b.matchDate||"")+" "+(b.createdAt||"")))
         .map(renderMatchCard)
         .join("");
 
@@ -4507,7 +4499,6 @@ Max 80 words total.`;
       const colCount = holes.length + (holes.length > 9 ? 3 : 2);
       playerRows += `<tr><td colspan="${colCount + 1}" style="padding:0;border-top:3px double #375984;"></td></tr>`;
     }
-  console.log('📍 checkpoint 4500');
 
     teamBPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
     if (teamBPlayers.length) {
@@ -5508,7 +5499,6 @@ ${closer}`;
       list.appendChild(div);
     });
   }
-  console.log('📍 checkpoint 5500');
 
   function renderItinerary() {
     if (document.getElementById("itineraryScreen").classList.contains("hidden")) return;
@@ -6521,7 +6511,6 @@ ${closer}`;
         } catch(e) { /* ignore */ }
       }
     }
-  console.log('📍 checkpoint 6500');
 
     const player = {
       name, nickname, handicapIndex, gender, team,
@@ -6914,7 +6903,7 @@ ${closer}`;
           <div style="font-size:11px;color:#64748b;">paid $${b.paid.toFixed(2)} · owes $${b.owed.toFixed(2)}</div>
         </div>
       </div>
-    `).join("") : `<div class="empty-state">Add expenses to see balances.</div>`;
+    `).join("") : "<div class='empty-state'>Add expenses to see balances.</div>";
 
     // Load Venmo/PayPal from user accounts for each player in settlements
     const userPaymentInfo = {};
@@ -7506,7 +7495,6 @@ ${closer}`;
 
         // Show progress
         document.getElementById("photoUploadProgress").style.display = "block";
-  console.log('📍 checkpoint 7500');
 
         url = await new Promise((resolve, reject) => {
           uploadTask.on("state_changed",
@@ -7768,7 +7756,7 @@ ${closer}`;
             </button>
             <button onclick="removeMember('${escapeAttr(d.id)}')"
               class="danger" style="width:auto;padding:5px 10px;margin:0;font-size:11px;">Remove</button>
-          ` : `<span style="font-size:11px;color:#475569;">(you)</span>`}
+          " : "<span style='font-size:11px;color:#475569;'>(you)</span>"}
         </div>
       </div>`;
     }).join("");
