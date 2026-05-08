@@ -168,66 +168,6 @@
       margin-top: 10px;
     }
 
-    .feed-post-preview {
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .feed-text-collapsed {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: #cbd5e1;
-    }
-
-    .feed-expand-btn {
-      font-size: 12px;
-      color: #60a5fa;
-      cursor: pointer;
-      margin-top: 4px;
-      display: inline-block;
-      touch-action: manipulation;
-      user-select: none;
-    }
-
-    .feed-reactions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    .reaction-btn {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 16px;
-      border: 1.5px solid #375984;
-      background: #0f2442;
-      font-size: 13px;
-      cursor: pointer;
-      touch-action: manipulation;
-      user-select: none;
-      transition: background 0.1s, border-color 0.1s;
-      white-space: nowrap;
-    }
-
-    .reaction-btn.reacted {
-      background: #1e3a5f;
-      border-color: #60a5fa;
-    }
-
-    .reaction-btn:active { opacity: 0.7; }
-
-    .reaction-count {
-      font-size: 12px;
-      color: #93c5fd;
-      font-weight: 600;
-      min-width: 12px;
-    }
-
     .feed-author {
       font-weight: bold;
       font-size: 14px;
@@ -4282,7 +4222,7 @@ Max 80 words total.`;
         ${hazardsHtml}
         ${ballsHtml}
         ${momentHtml}
-        <button id="saveHoleBtn" onclick="saveHoleDetail()" style="margin-top:16px;">Save Hole</button>
+        <button onclick="saveHoleDetail()" style="margin-top:16px;">Save Hole</button>
       </div>
     `;
   }
@@ -4358,47 +4298,43 @@ Max 80 words total.`;
   }
 
   async function saveHoleDetail() {
-    const btn = document.getElementById("saveHoleBtn");
-    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
     const match = matches.find(m => m.id === holeDetailMatchId);
-    if (!match) { if (btn) { btn.disabled = false; btn.textContent = "Save Hole"; } return; }
+    if (!match) return;
 
-    try {
-      // Capture the moment text from textarea (may have changed without oninput firing)
-      const momentEl = document.getElementById("holeMomentText");
-      if (momentEl) {
-        if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
-        if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
-        holeDetailData[holeDetailPlayerId][holeDetailHoleNum].moment = momentEl.value;
-      }
-
-      const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
-      Object.entries(holeDetailData).forEach(([pid, holes]) => {
-        if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
-        Object.entries(holes).forEach(([holeNum, pd]) => {
-          if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
-        });
-      });
-
-      await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
-        holeScores: updatedHoleScores,
-        holeDetail: holeDetailData,
-        updatedAt: new Date().toISOString()
-      });
-
-      const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
-      if (pd?.moment && pd.moment.trim()) {
-        const player = players.find(p => p.id === holeDetailPlayerId);
-        await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
-      }
-
-      renderScoreEntry();
-      closeHoleDetail();
-    } catch(e) {
-      console.error("saveHoleDetail error:", e);
-      alert("Error saving: " + e.message);
-      if (btn) { btn.disabled = false; btn.textContent = "Save Hole"; }
+    // Capture the moment text from textarea (may have changed without oninput firing)
+    const momentEl = document.getElementById("holeMomentText");
+    if (momentEl) {
+      if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+      if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+      holeDetailData[holeDetailPlayerId][holeDetailHoleNum].moment = momentEl.value;
     }
+
+    // Write scores back to holeScores
+    const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
+    Object.entries(holeDetailData).forEach(([pid, holes]) => {
+      if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
+      Object.entries(holes).forEach(([holeNum, pd]) => {
+        if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
+      });
+    });
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
+      holeScores: updatedHoleScores,
+      holeDetail: holeDetailData,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Trigger Swami if a moment was logged
+    const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
+    if (pd?.moment && pd.moment.trim()) {
+      const player = players.find(p => p.id === holeDetailPlayerId);
+      await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
+    }
+
+    // Refresh scorecard
+    renderScoreEntry();
+    closeHoleDetail();
+  }
 
   function closeHoleDetail() {
     show("scoreEntryScreen");
@@ -5009,7 +4945,7 @@ Max 80 words total.`;
     const previewEl = document.getElementById("recapPreview");
     if (previewEl) previewEl.innerHTML = `<div class="empty-state">🧠 Swami is reviewing the evidence...</div>`;
 
-    let body = await callSwami(recapPrompt, 450, true); // useSearch=true for recaps
+    let body = await callSwami(recapPrompt, 450);
     if (!body) body = buildRecapText(type, scopeLabel, relevantMatches); // fallback to templates
 
     const recap = {
@@ -5262,6 +5198,22 @@ ${closer}`;
       swamiItem.appendChild(makeEmptyState("Swami is quiet. This is either peace or he is gathering evidence."));
     }
     pulse.appendChild(swamiItem);
+
+    // Latest Tagged Chat
+    const taggedItem = makePulseItem("Latest Tagged Chat");
+    if (latestTagged) {
+      const d = document.createElement("div");
+      d.className = "pulse-text";
+      d.textContent = `${latestTagged.author}: ${(latestTagged.text || "").slice(0, 200)}`;
+      taggedItem.appendChild(d);
+      const m = document.createElement("div");
+      m.className = "pulse-meta";
+      m.textContent = formatFeedTime(latestTagged.createdAt);
+      taggedItem.appendChild(m);
+    } else {
+      taggedItem.appendChild(makeEmptyState(assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here."));
+    }
+    pulse.appendChild(taggedItem);
 
     // Latest Match Update
     const matchItem = makePulseItem("Latest Match Update");
@@ -5829,16 +5781,8 @@ ${closer}`;
     return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // Track which posts are expanded and local reaction state
-  const expandedPosts = new Set();
-  const localReactions = {}; // postId -> Set of emoji the current user has reacted with
-
-  // Reaction emojis available
-  const REACTIONS = ["🔥", "😂", "💀", "🎯", "👏"];
-
   function renderFeed() {
     const list = document.getElementById("feedList");
-    if (!list) return;
 
     const sortedPosts = [...feedPosts].sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
@@ -5847,114 +5791,38 @@ ${closer}`;
     list.innerHTML = "";
 
     if (sortedPosts.length === 0) {
-      list.innerHTML = `<div class="feed-empty">The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.</div>`;
+      list.innerHTML = `
+        <div class="feed-empty">
+          The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.
+        </div>
+      `;
       return;
     }
 
     sortedPosts.forEach((post, idx) => {
       const div = document.createElement("div");
       div.className = "feed-post";
-      const postId = post.id || `post-${idx}`;
-      const isSwami = post.author === "Swami Says";
-      const isExpanded = expandedPosts.has(postId);
-      const imgId = post.imageUrl ? `feed-img-${postId}` : "";
-      const text = (post.text || "").trim();
-      const isLong = text.length > 120 || text.includes("\n");
-
-      // Reactions
-      const reactions = post.reactions || {};
-      const myUid = currentUser?.uid || "anon";
-      const myReactions = localReactions[postId] || new Set(
-        Object.entries(reactions)
-          .filter(([emoji, uids]) => Array.isArray(uids) && uids.includes(myUid))
-          .map(([emoji]) => emoji)
-      );
-      localReactions[postId] = myReactions;
-
-      const reactionsHtml = `
-        <div class="feed-reactions">
-          ${REACTIONS.map(emoji => {
-            const count = (reactions[emoji] || []).length;
-            const reacted = myReactions.has(emoji);
-            return `<button class="reaction-btn${reacted ? " reacted" : ""}"
-              data-post-id="${escapeAttr(postId)}" data-emoji="${emoji}"
-              onclick="toggleReaction(this,'${escapeAttr(postId)}','${emoji}')">
-              ${emoji}${count ? ` <span class="reaction-count">${count}</span>` : ""}
-            </button>`;
-          }).join("")}
-        </div>`;
+      const imgId = post.imageUrl ? `feed-img-${idx}` : "";
 
       div.innerHTML = `
-        <div class="feed-post-preview" onclick="togglePostExpand('${escapeAttr(postId)}',this)">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <div class="feed-author" style="${isSwami ? "color:#f0abfc;" : ""}">${escapeHtml(post.author)}</div>
-            <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
-          </div>
-          <div class="feed-text${!isExpanded && isLong ? " feed-text-collapsed" : ""}">${renderPostText(post)}</div>
-          ${isLong ? `<span class="feed-expand-btn">${isExpanded ? "Show less ▲" : "Show more ▼"}</span>` : ""}
-        </div>
-        ${post.imageUrl ? `<div class="feed-media">
-          <img id="${imgId}" alt="${escapeHtml(post.imageCaption || "")}" style="display:block;width:100%;border-radius:10px;">
-          ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
-        </div>` : ""}
-        ${reactionsHtml}
+        <div class="feed-author">${escapeHtml(post.author)}</div>
+        <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
+        <div class="feed-text">${renderPostText(post)}</div>
+        ${post.imageUrl ? `
+          <div class="feed-media">
+            <img id="${imgId}" alt="${escapeHtml(post.imageCaption || "Swami media")}" style="display:block;width:100%;border-radius:10px;">
+            ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
+          </div>` : ""}
       `;
 
       list.appendChild(div);
 
+      // Set src after DOM insertion to avoid base64 string misparse in innerHTML
       if (imgId) {
         const img = div.querySelector(`#${imgId}`);
         if (img) img.src = post.imageUrl;
       }
     });
-  }
-
-  function togglePostExpand(postId, headerEl) {
-    if (expandedPosts.has(postId)) {
-      expandedPosts.delete(postId);
-    } else {
-      expandedPosts.add(postId);
-    }
-    renderFeed();
-  }
-
-  async function toggleReaction(btn, postId, emoji) {
-    if (!currentUser?.uid) return;
-    const uid = currentUser.uid;
-
-    // Optimistic local update
-    if (!localReactions[postId]) localReactions[postId] = new Set();
-    const mySet = localReactions[postId];
-    const adding = !mySet.has(emoji);
-    if (adding) mySet.add(emoji); else mySet.delete(emoji);
-
-    // Update button immediately
-    btn.classList.toggle("reacted", adding);
-    const countEl = btn.querySelector(".reaction-count");
-    const post = feedPosts.find(p => p.id === postId);
-    const current = post?.reactions?.[emoji] || [];
-    const newList = adding
-      ? [...new Set([...current, uid])]
-      : current.filter(u => u !== uid);
-    const newCount = newList.length;
-    if (newCount > 0) {
-      if (countEl) countEl.textContent = newCount;
-      else btn.innerHTML += ` <span class="reaction-count">${newCount}</span>`;
-    } else {
-      if (countEl) countEl.remove();
-    }
-
-    // Write to Firestore
-    try {
-      const postRef = doc(db, "trips", activeTripId, "feedPosts", postId);
-      await updateDoc(postRef, {
-        [`reactions.${emoji}`]: newList
-      });
-    } catch(e) {
-      // Revert on failure
-      if (adding) mySet.delete(emoji); else mySet.add(emoji);
-      console.warn("Reaction update failed:", e);
-    }
   }
 
   async function addFeedPost(author, text, type = "user", media = null, taggedPlayerIds = []) {
@@ -6006,21 +5874,22 @@ ${closer}`;
 
   // ─── AI CORE ────────────────────────────────────────────────────────────────
 
-  async function callSwami(prompt, maxTokens = 180, useSearch = false) {
+  async function callSwami(prompt, maxTokens = 180) {
     try {
       const res = await fetch("/api/swami", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, maxTokens, useSearch })
+        body: JSON.stringify({ prompt, maxTokens })
       });
       const data = await res.json();
       if (!res.ok) {
         console.error("Swami API error", res.status, JSON.stringify(data));
         return null;
       }
+      console.log("Swami API ok, text length:", (data.text || "").length);
       return data.text || null;
     } catch (err) {
-      console.error("Swami fetch failed:", err.message);
+      console.error("Swami fetch failed:", err.message, err);
       return null;
     }
   }
@@ -6059,27 +5928,24 @@ ${closer}`;
     const ctx = buildTripContext();
     const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
 
-  // Low-signal events get much lower Swami frequency
-  const LOW_SIGNAL = ["itineraryEdit", "itineraryDelete", "matchEdit", "playerEdit"];
-  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.25 : 0.65;
-  const hasMeme = Math.random() < swamiFrequency;
-    const maxWords = hasMeme ? "1 sentence max." : "1-2 sentences. Sharp, specific, funny.";
+    const hasMeme = Math.random() < 0.65;
+    const maxWords = hasMeme ? "1 sentence max — punchy, no padding." : "1-2 sentences max.";
 
     const actionPrompts = {
-      playerAdd:    `New player joined: ${subject}. ${ctx}\n\nOne-liner. Use their handicap or team. ${variationSeed} ${maxWords}`,
-      playerEdit:   `${subject} just edited their player profile. ${ctx}\n\nOne-liner implying pre-trip gamesmanship. ${variationSeed} ${maxWords}`,
-      itineraryAdd: `Trip event added: "${subject}". ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      itineraryEdit:`Trip event edited: "${subject}". ${ctx}\n\nOne-liner about plans changing. ${variationSeed} ${maxWords}`,
-      itineraryDelete:`Trip event deleted: "${subject}". ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      matchAdd:     `New match: ${subject}. ${ctx}\n\nPre-match one-liner. Reference players or format. ${variationSeed} ${maxWords}`,
-      matchEdit:    `Match edited: ${subject}. ${ctx}\n\nOne-liner implying someone negotiated. ${variationSeed} ${maxWords}`,
-      matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      scoreUpdate:  `Scores: ${subject}. ${ctx}\n\nOne-liner on the drama or momentum. ${variationSeed} ${maxWords}`,
-      userComment:  `${subject}. ${ctx}\n\nOne-liner reaction. ${variationSeed} ${maxWords}`,
-      expenseAdd:   `${subject}. ${ctx}\n\nOne-liner on someone paying for the group. ${variationSeed} ${maxWords}`,
-      momentAdd:    `Hole moment: "${subject}". ${ctx}\n\nOne-liner. 1 sentence only.`,
-      photoAdd:     `Photo added: ${subject}. ${ctx}\n\nOne-liner on documenting the trip. ${variationSeed} ${maxWords}`,
-      teams:        `Teams set: ${subject}. ${ctx}\n\nOne-liner on the matchup. ${variationSeed} ${maxWords}`
+      playerAdd:    `New player joined: ${subject}. ${ctx}\n\nSwami reaction. Use their handicap, nickname, or team if available. ${variationSeed} ${maxWords}`,
+      playerEdit:   `Player edited their profile: ${subject}. ${ctx}\n\nSwami reaction implying suspicious pre-trip gamesmanship. ${variationSeed} ${maxWords}`,
+      itineraryAdd: `New trip event: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      itineraryEdit:`Trip event edited: "${subject}". ${ctx}\n\nSwami reaction about plans changing. ${variationSeed} ${maxWords}`,
+      itineraryDelete:`Trip event deleted: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      matchAdd:     `New match created: ${subject}. ${ctx}\n\nSwami pre-match comment. Reference format, course, or players. ${variationSeed} ${maxWords}`,
+      matchEdit:    `Match edited: ${subject}. ${ctx}\n\nSwami reaction implying negotiation happened. ${variationSeed} ${maxWords}`,
+      matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      scoreUpdate:  `Scores updated: ${subject}. ${ctx}\n\nSwami reaction — momentum, lead changes, who's struggling. ${variationSeed} ${maxWords}`,
+      userComment:  `${subject} posted in the trip feed. ${ctx}\n\nSwami reaction to the post. ${variationSeed} ${maxWords}`,
+      expenseAdd:   `${subject}. ${ctx}\n\nSwami reaction to someone paying for a group expense. Reference the amount or category if specific enough to be funny. ${variationSeed} ${maxWords}`,
+      momentAdd:    `Match moment logged: "${subject}". ${ctx}\n\nSwami reaction. 1 sentence only.`,
+      photoAdd:     `A photo was just added to the golf trip library: ${subject}. ${ctx}\n\nSwami reaction to someone documenting the trip. ${variationSeed} ${maxWords}`,
+      teams:        `Teams set: ${subject}. ${ctx}\n\nSwami reaction to the rivalry. ${variationSeed} ${maxWords}`
     };
 
     const aiPrompt = actionPrompts[action] || `Golf trip update: ${subject}. ${ctx} Swami reaction. ${maxWords}`;
@@ -6667,7 +6533,7 @@ ${closer}`;
       info.style.cursor = "pointer";
       info.onclick = () => openPlayer(player.id);
       info.innerHTML = `<div class="player-name">${escapeHtml(player.name)}</div>
-        <div class="player-detail">${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}${player.team ? escapeHtml(player.team === "A" ? (activeTripData.teamA || "Team A") : player.team === "B" ? (activeTripData.teamB || "Team B") : player.team) : "No team"}${player.handicapIndex ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}</div>`;
+        <div class="player-detail">${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}${player.team ? escapeHtml(player.team) : "No team"}${player.handicapIndex ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}</div>`;
       div.appendChild(info);
       const actions = document.createElement("div");
       actions.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-left:10px;flex-shrink:0;";
@@ -8067,8 +7933,6 @@ ${closer}`;
   window.openItineraryEditor = openItineraryEditor;
   window.saveItineraryEvent = saveItineraryEvent;
   window.deleteItineraryEvent = deleteItineraryEvent;
-  window.toggleReaction = toggleReaction;
-  window.togglePostExpand = togglePostExpand;
   window.postUserComment = postUserComment;
   window.savePlayer = savePlayer;
   window.exportData = exportData;
@@ -8083,7 +7947,6 @@ ${closer}`;
     openTripHome(pendingTripId);
   }
 
-} // end module scope
 </script>
 
 </body>
