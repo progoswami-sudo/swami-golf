@@ -1160,7 +1160,7 @@
     <div class="sync-status" id="syncStatus">Connecting to Swami...</div>
 
     <div id="tripTiles"></div>
-  </div>
+  </div><!-- end appHome -->
 
   <div id="tripHome" class="hidden">
     <div>
@@ -1782,7 +1782,9 @@
       <button onclick="sendInvite()" style="margin-top:12px;">Send Invite</button>
       <div id="pendingInvitesList" style="margin-top:16px;"></div>
     </div>
-  </div>
+  </div><!-- end membersScreen -->
+
+  <div id="userProfileScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goHome()" class="secondary">Back</button>
       <h2>My Account</h2>
@@ -3015,17 +3017,34 @@ Respond ONLY with valid JSON, nothing else:
           }
         }
 
-        // Legacy: creator always has access (for existing trips without members collection)
-        if (!isMember && data.createdBy === uid) {
-          isMember = true;
-          // Auto-add as admin for legacy trips
-          await setDoc(doc(membersCollection(tripId), uid), {
-            uid,
-            email: currentUser.email || "",
-            name: getCookie(NAME_COOKIE) || "",
-            role: "admin",
-            joinedAt: new Date().toISOString()
-          });
+        // Legacy: if trip has no members at all, grant access to creator OR
+        // any authenticated user (for existing trips before roles were added)
+        if (!isMember) {
+          const allMembersSnap = await getDocs(membersCollection(tripId));
+          if (allMembersSnap.empty) {
+            // No members collection yet — old trip, grant access to current user
+            // and auto-add them as admin
+            isMember = true;
+            if (uid) {
+              await setDoc(doc(membersCollection(tripId), uid), {
+                uid,
+                email: currentUser.email || "",
+                name: getCookie(NAME_COOKIE) || "",
+                role: "admin",
+                joinedAt: new Date().toISOString()
+              });
+            }
+          } else if (data.createdBy === uid) {
+            // Has members but current user isn't one — check if they're creator
+            isMember = true;
+            await setDoc(doc(membersCollection(tripId), uid), {
+              uid,
+              email: currentUser.email || "",
+              name: getCookie(NAME_COOKIE) || "",
+              role: "admin",
+              joinedAt: new Date().toISOString()
+            });
+          }
         }
       }
 
