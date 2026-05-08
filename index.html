@@ -1914,9 +1914,7 @@
   function _stub(name) {
     return function() {
       var a = arguments;
-      var fn = window._mod && window._mod._resolve && window._mod._resolve(name);
-      if (fn) { fn.apply(null, a); }
-      else { window._q.push([name, a]); }
+      window._q.push([name, Array.prototype.slice.call(a)]);
     };
   }
   window.toggleHomeMenu     = _stub('toggleHomeMenu');
@@ -2666,35 +2664,7 @@ Respond ONLY with valid JSON, nothing else:
     }
     await initSwamiApp(user);
   });
-
-  // Register stubs with lazy lookup — functions looked up at call time, not registration time
-  // This way it doesn't matter when _mod is registered relative to function definitions
-  function _resolve(name) {
-    var fns = {
-      toggleHomeMenu: toggleHomeMenu,
-      openUserProfile: openUserProfile,
-      goHome: goHome,
-      createTrip: createTrip,
-      openTripHome: openTripHome,
-      goTripHome: goTripHome,
-      toggleTripMenu: toggleTripMenu,
-      sendMagicLink: sendMagicLink,
-      showLoginEmailStep: showLoginEmailStep,
-      signOutUser: signOutUser,
-      saveUserProfile: saveUserProfile,
-      requestNotifications: requestNotifications,
-      turnOffNotifications: turnOffNotifications
-    };
-    return fns[name];
-  }
-  window._mod = { _resolve: _resolve };
-  // Replay queued calls now that functions are available
-  (window._q || []).forEach(function(c) {
-    var fn = _resolve(c[0]);
-    if (fn) fn.apply(null, c[1]);
-  });
-  window._q = [];
-  console.log('✅ _mod registered');
+  console.log('📍 past onAuthStateChanged');
 
   function normalizeCourseKey(name) {
     return String(name || "")
@@ -7922,6 +7892,7 @@ ${closer}`;
   window._q = [];
 
   // ── CRITICAL WINDOW EXPORTS
+  console.log('📍 reached window exports');
   window.toggleHomeMenu = toggleHomeMenu;
   window.openUserProfile = openUserProfile;
   window.goHome = goHome;
