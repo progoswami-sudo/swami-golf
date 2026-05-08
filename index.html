@@ -2979,93 +2979,83 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   async function loadTrips() {
-    const snap = await getDocs(collection(db, "trips"));
-    const uid = currentUser?.uid;
-    const email = currentUser?.email?.toLowerCase();
+    if (!currentUser?.uid) return;
 
-    // Clear trips and only add ones the user is a member of
+    const uid = currentUser.uid;
+    const email = currentUser.email?.toLowerCase() || "";
+
+    // Step 1: Get all trips to check membership
+    const allTripsSnap = await getDocs(collection(db, "trips"));
+
     const accessibleTrips = {};
 
-    await Promise.all(snap.docs.map(async docSnap => {
+    await Promise.all(allTripsSnap.docs.map(async docSnap => {
       const data = docSnap.data() || {};
       const tripId = docSnap.id;
-
-      // Check membership
       let isMember = false;
+      let role = "participant";
 
-      if (uid) {
-        // Check if user is in members collection
-        const memberSnap = await getDoc(doc(membersCollection(tripId), uid));
+      try {
+        // Try to read our own member document
+        // This works because rules allow writing your own member doc
+        // We use a try/catch since non-members get a permission denied error
+        const memberSnap = await getDoc(doc(db, "trips", tripId, "members", uid));
         if (memberSnap.exists()) {
           isMember = true;
-        } else if (email) {
-          // Check pending invite by email
-          const inviteSnap = await getDocs(invitesCollection(tripId));
+          role = memberSnap.data().role || "participant";
+        }
+      } catch (e) {
+        // Permission denied — not a member (expected for private trips)
+      }
+
+      // Check pending invite by email if not already a member
+      if (!isMember && email) {
+        try {
+          const inviteSnap = await getDocs(collection(db, "trips", tripId, "invites"));
           const invite = inviteSnap.docs.find(d => d.data().email?.toLowerCase() === email);
           if (invite) {
-            // Auto-accept invite — add as member
-            await setDoc(doc(membersCollection(tripId), uid), {
-              uid,
-              email: currentUser.email,
-              name: getCookie(NAME_COOKIE) || "",
-              role: invite.data().role || "participant",
-              joinedAt: new Date().toISOString(),
+            role = invite.data().role || "participant";
+            await setDoc(doc(db, "trips", tripId, "members", uid), {
+              uid, email: currentUser.email, name: getCookie(NAME_COOKIE) || "",
+              role, joinedAt: new Date().toISOString(),
               invitedBy: invite.data().invitedBy || ""
             });
-            await deleteDoc(doc(invitesCollection(tripId), invite.id));
+            await deleteDoc(doc(db, "trips", tripId, "invites", invite.id));
             isMember = true;
           }
-        }
+        } catch (e) { /* no access to invites */ }
+      }
 
-        // Legacy: if trip has no members at all, grant access to creator OR
-        // any authenticated user (for existing trips before roles were added)
-        if (!isMember) {
-          const allMembersSnap = await getDocs(membersCollection(tripId));
+      // Legacy: no members yet — auto-add as admin
+      if (!isMember) {
+        try {
+          const allMembersSnap = await getDocs(collection(db, "trips", tripId, "members"));
           if (allMembersSnap.empty) {
-            // No members collection yet — old trip, grant access to current user
-            // and auto-add them as admin
-            isMember = true;
-            if (uid) {
-              await setDoc(doc(membersCollection(tripId), uid), {
-                uid,
-                email: currentUser.email || "",
-                name: getCookie(NAME_COOKIE) || "",
-                role: "admin",
-                joinedAt: new Date().toISOString()
-              });
-            }
-          } else if (data.createdBy === uid) {
-            // Has members but current user isn't one — check if they're creator
-            isMember = true;
-            await setDoc(doc(membersCollection(tripId), uid), {
-              uid,
-              email: currentUser.email || "",
-              name: getCookie(NAME_COOKIE) || "",
-              role: "admin",
-              joinedAt: new Date().toISOString()
+            role = "admin";
+            await setDoc(doc(db, "trips", tripId, "members", uid), {
+              uid, email: currentUser.email || "", name: getCookie(NAME_COOKIE) || "",
+              role: "admin", joinedAt: new Date().toISOString()
             });
+            isMember = true;
           }
-        }
+        } catch (e) { /* no access */ }
       }
 
       if (isMember) {
         accessibleTrips[tripId] = {
           id: tripId,
-          name: data.name || (trips[tripId] && trips[tripId].name) || "Golf Trip",
+          name: data.name || "Golf Trip",
           defaultTeamA: data.teamA || "Team A",
           defaultTeamB: data.teamB || "Team B",
-          custom: !defaultTripIds.includes(tripId)
+          custom: !defaultTripIds.includes(tripId),
+          role
         };
       }
     }));
 
-    // Merge accessible trips into trips object
+    // Replace trips with only accessible ones
+    Object.keys(trips).forEach(id => { if (!accessibleTrips[id]) delete trips[id]; });
     Object.assign(trips, accessibleTrips);
-
-    // Remove trips user doesn't have access to
-    Object.keys(trips).forEach(id => {
-      if (!accessibleTrips[id]) delete trips[id];
-    });
   }
 
   function renderTripTiles() {
