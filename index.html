@@ -1236,7 +1236,7 @@
             <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
             <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
             <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
-            <div class="home-menu-item" onclick="openExpenses()">Expenses</div>
+            <div class="home-menu-item" onclick="openTab()">The Tab</div>
             <div class="home-menu-item" onclick="openPhotoLibrary()">Photos</div>
             <div class="home-menu-item" onclick="openPlayerList()">Players</div>
             <div class="home-menu-item" onclick="openMemberManager()">Members &amp; Invites</div>
@@ -1287,7 +1287,7 @@
   <!-- ── EXPENSES ──────────────────────────────────────────────────────── -->
   <div id="expensesScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <button onclick="openTab()" class="secondary">Back</button>
       <h2>Expenses</h2>
       <button onclick="openExpenseEditor()" style="width:auto;padding:8px 14px;margin:0;font-size:14px;">+ Add</button>
     </div>
@@ -1298,15 +1298,93 @@
       <div class="feed-title" style="margin-bottom:10px;">Balances</div>
       <div id="expenseBalances"></div>
     </div>
-    <div class="card">
-      <div class="feed-title" style="margin-bottom:10px;">Settlement Plan</div>
-      <div id="expenseSettlement"></div>
-      <div id="expenseSettledSection" style="display:none;">
-        <div class="feed-title" style="margin-top:16px;margin-bottom:10px;color:#64748b;font-size:14px;">✅ Settled</div>
-        <div id="expenseSettled"></div>
+    <div id="expenseList"></div>
+  </div>
+
+  <!-- ── THE TAB HUB ─────────────────────────────────────────────────────── -->
+  <div id="tabScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>The Tab</h2>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="tile" onclick="openExpenses()" style="display:flex;align-items:center;gap:14px;padding:20px;">
+        <span style="font-size:32px;">🧾</span>
+        <div>
+          <div style="font-weight:700;font-size:16px;">Expenses</div>
+          <div style="font-size:13px;color:#93c5fd;margin-top:2px;">Track shared costs & who paid</div>
+        </div>
+      </div>
+      <div class="tile" onclick="openWagers()" style="display:flex;align-items:center;gap:14px;padding:20px;">
+        <span style="font-size:32px;">🎲</span>
+        <div>
+          <div style="font-weight:700;font-size:16px;">Wagers</div>
+          <div style="font-size:13px;color:#93c5fd;margin-top:2px;">Side bets, skins, and grudge matches</div>
+        </div>
+      </div>
+      <div class="tile" onclick="openSettlement()" style="display:flex;align-items:center;gap:14px;padding:20px;">
+        <span style="font-size:32px;">💰</span>
+        <div>
+          <div style="font-weight:700;font-size:16px;">Settlement</div>
+          <div style="font-size:13px;color:#93c5fd;margin-top:2px;">Who owes who — pay up</div>
+        </div>
       </div>
     </div>
-    <div id="expenseList"></div>
+  </div>
+
+  <!-- ── WAGERS LIST ─────────────────────────────────────────────────────── -->
+  <div id="wagersScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openTab()" class="secondary">Back</button>
+      <h2>Wagers</h2>
+      <button onclick="openWagerEditor()" style="width:auto;padding:8px 14px;margin:0;font-size:14px;">+ Add</button>
+    </div>
+    <div id="wagerList" style="padding:12px;"></div>
+  </div>
+
+  <!-- ── WAGER EDITOR ────────────────────────────────────────────────────── -->
+  <div id="wagerEditorScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openWagers()" class="secondary">Back</button>
+      <h2 id="wagerEditorTitle">Add Wager</h2>
+    </div>
+    <div class="card">
+      <label class="form-label" for="wagerName">Wager Name</label>
+      <input id="wagerName" placeholder="e.g. Closest to pin on 7, Back 9 press"/>
+
+      <label class="form-label" for="wagerDate" style="margin-top:12px;">Date</label>
+      <input id="wagerDate" type="date"/>
+
+      <label class="form-label" style="margin-top:12px;">Winner(s)</label>
+      <div id="wagerWinnerList" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+
+      <label class="form-label" style="margin-top:12px;">Loser(s)</label>
+      <div id="wagerLoserList" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+
+      <label class="form-label" for="wagerAmount" style="margin-top:12px;">Amount each loser owes each winner ($)</label>
+      <input id="wagerAmount" type="number" inputmode="decimal" placeholder="0.00" min="0" step="0.01"/>
+
+      <label class="form-label" for="wagerNotes" style="margin-top:12px;">Notes (optional)</label>
+      <input id="wagerNotes" placeholder="Context, terms, bragging rights..."/>
+
+      <button id="saveWagerBtn" onclick="saveWager()" style="margin-top:16px;">Save Wager</button>
+    </div>
+  </div>
+
+  <!-- ── SETTLEMENT ─────────────────────────────────────────────────────── -->
+  <div id="settlementScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openTab()" class="secondary">Back</button>
+      <h2>Settlement</h2>
+    </div>
+    <div class="card">
+      <div class="feed-title" style="margin-bottom:10px;">Settlement Plan</div>
+      <div id="settlementPlan"></div>
+      <div id="settlementSettledSection" style="display:none;">
+        <div class="feed-title" style="margin-top:16px;margin-bottom:10px;color:#64748b;font-size:14px;">✅ Settled</div>
+        <div id="settlementSettled"></div>
+      </div>
+    </div>
   </div>
 
   <div id="expenseEditorScreen" class="hidden secondary-screen">
@@ -1933,6 +2011,7 @@
   window.saveUserProfile    = _stub('saveUserProfile');
   window.requestNotifications  = _stub('requestNotifications');
   window.turnOffNotifications  = _stub('turnOffNotifications');
+  window.openTab               = _stub('openTab');
   window.addEventListener('error', function(e) {
     var msg = (e.message||'unknown') + ' (line ' + e.lineno + ' col ' + e.colno + ')';
     console.error('SCRIPT ERROR:', msg);
@@ -3278,6 +3357,13 @@ Respond ONLY with valid JSON, nothing else:
     );
 
     unsubscribers.push(
+      onSnapshot(wagersCollection(tripId), snapshot => {
+        wagers = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        renderWagerList();
+      })
+    );
+
+    unsubscribers.push(
       onSnapshot(photosCollection(tripId), snapshot => {
         photos = snapshot.docs.map(docSnap => ({
           id: docSnap.id,
@@ -3344,6 +3430,10 @@ Respond ONLY with valid JSON, nothing else:
       "teamScreen",
       "expensesScreen",
       "expenseEditorScreen",
+      "tabScreen",
+      "wagersScreen",
+      "wagerEditorScreen",
+      "settlementScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -7866,8 +7956,323 @@ ${closer}`;
     await deleteDoc(doc(db, "trips", activeTripId, "payments", paymentId));
   }
 
+  window.openTab = openTab;
+  window.openWagers = openWagers;
+  window.openWagerEditor = openWagerEditor;
+  window.saveWager = saveWager;
+  window.openSettlement = openSettlement;
   window.markPaymentPaid = markPaymentPaid;
   window.unmarkPaymentPaid = unmarkPaymentPaid;
+
+  // ── THE TAB ────────────────────────────────────────────────────────────────
+
+  function openTab() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+    show("tabScreen");
+  }
+
+  // ── WAGERS ─────────────────────────────────────────────────────────────────
+
+  let wagers = [];
+  let editingWagerId = null;
+
+  function wagersCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "wagers");
+  }
+
+  function openWagers() {
+    show("wagersScreen");
+    renderWagerList();
+  }
+
+  function renderWagerList() {
+    const el = document.getElementById("wagerList");
+    if (!el) return;
+    if (!wagers.length) {
+      el.innerHTML = '<div class="empty-state">No wagers yet. Tap + Add to record a side bet.</div>';
+      return;
+    }
+    el.innerHTML = wagers
+      .slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+      .map(w => {
+        const winners = (w.winners || []).join(", ");
+        const losers  = (w.losers  || []).join(", ");
+        const amt = Number(w.amount || 0).toFixed(2);
+        return '<div class="card" style="margin-bottom:10px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+            '<div style="flex:1;">' +
+              '<div style="font-weight:700;font-size:15px;">' + escapeHtml(w.name) + '</div>' +
+              '<div style="font-size:12px;color:#93c5fd;margin-top:3px;">' + (w.date || "") + '</div>' +
+              '<div style="font-size:13px;margin-top:6px;">🏆 ' + escapeHtml(winners) + '</div>' +
+              '<div style="font-size:13px;color:#f87171;">💸 ' + escapeHtml(losers) + ' owes $' + amt + ' each</div>' +
+              (w.notes ? '<div style="font-size:12px;color:#64748b;margin-top:4px;">' + escapeHtml(w.notes) + '</div>' : '') +
+            '</div>' +
+            '<button onclick="openWagerEditor(\'' + escapeAttr(w.id) + '\')" class="secondary" style="width:auto;padding:6px 12px;margin:0;font-size:12px;flex-shrink:0;">Edit</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+  }
+
+  function openWagerEditor(wagerId) {
+    editingWagerId = wagerId || null;
+    document.getElementById("wagerEditorTitle").textContent = wagerId ? "Edit Wager" : "Add Wager";
+    document.getElementById("wagerDate").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("wagerName").value = "";
+    document.getElementById("wagerAmount").value = "";
+    document.getElementById("wagerNotes").value = "";
+
+    // Render player checkboxes for winners and losers
+    renderWagerPlayerPicker("wagerWinnerList", []);
+    renderWagerPlayerPicker("wagerLoserList", []);
+
+    if (wagerId) {
+      const w = wagers.find(x => x.id === wagerId);
+      if (w) {
+        document.getElementById("wagerName").value = w.name || "";
+        document.getElementById("wagerDate").value = w.date || "";
+        document.getElementById("wagerAmount").value = w.amount || "";
+        document.getElementById("wagerNotes").value = w.notes || "";
+        renderWagerPlayerPicker("wagerWinnerList", w.winnerIds || []);
+        renderWagerPlayerPicker("wagerLoserList",  w.loserIds  || []);
+      }
+    }
+    show("wagerEditorScreen");
+  }
+
+  function renderWagerPlayerPicker(containerId, selectedIds) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = players
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      .map(p => {
+        const checked = selectedIds.includes(p.id) ? "checked" : "";
+        return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;cursor:pointer;">' +
+          '<input type="checkbox" value="' + escapeAttr(p.id) + '" ' + checked + ' style="width:18px;height:18px;">' +
+          escapeHtml(p.name) + (p.nickname ? ' "' + escapeHtml(p.nickname) + '"' : '') +
+        '</label>';
+      }).join("");
+  }
+
+  function getWagerSelectedIds(containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return [];
+    return Array.from(el.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+  }
+
+  async function saveWager() {
+    const name   = document.getElementById("wagerName").value.trim();
+    const date   = document.getElementById("wagerDate").value;
+    const amount = parseFloat(document.getElementById("wagerAmount").value);
+    const notes  = document.getElementById("wagerNotes").value.trim();
+
+    const winnerIds = getWagerSelectedIds("wagerWinnerList");
+    const loserIds  = getWagerSelectedIds("wagerLoserList");
+
+    if (!name)               return alert("Please enter a wager name.");
+    if (!winnerIds.length)   return alert("Please select at least one winner.");
+    if (!loserIds.length)    return alert("Please select at least one loser.");
+    if (!amount || amount <= 0) return alert("Please enter a valid amount.");
+
+    // Check no overlap
+    const overlap = winnerIds.filter(id => loserIds.includes(id));
+    if (overlap.length) return alert("A player can't be both winner and loser.");
+
+    const winnerNames = winnerIds.map(id => (players.find(p => p.id === id) || {}).name || id);
+    const loserNames  = loserIds.map( id => (players.find(p => p.id === id) || {}).name || id);
+
+    const btn = document.getElementById("saveWagerBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+    const data = {
+      name, date, amount, notes,
+      winnerIds, loserIds,
+      winners: winnerNames,
+      losers:  loserNames,
+      createdBy: (currentUser && currentUser.uid) || "",
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      if (editingWagerId) {
+        await updateDoc(doc(db, "trips", activeTripId, "wagers", editingWagerId), data);
+      } else {
+        await addDoc(wagersCollection(), { ...data, createdAt: new Date().toISOString() });
+      }
+      editingWagerId = null;
+      openWagers();
+    } catch(e) {
+      alert("Error saving wager: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Save Wager"; }
+    }
+  }
+
+  // ── SETTLEMENT ──────────────────────────────────────────────────────────────
+
+  function openSettlement() {
+    show("settlementScreen");
+    renderSettlement();
+  }
+
+  function renderSettlement() {
+    const planEl    = document.getElementById("settlementPlan");
+    const settledEl = document.getElementById("settlementSettled");
+    const sectionEl = document.getElementById("settlementSettledSection");
+    if (!planEl) return;
+
+    // Build net balances from expenses + wagers
+    const net = {}; // uid/name -> net amount (positive = owed money, negative = owes money)
+    const getKey = (id, name) => id || name;
+
+    // From expenses
+    expenses.forEach(exp => {
+      const payerId = exp.paidById;
+      const amt = Number(exp.amount || 0);
+      if (payerId) net[payerId] = (net[payerId] || 0) + amt;
+      Object.entries(exp.splits || {}).forEach(([pid, share]) => {
+        net[pid] = (net[pid] || 0) - Number(share || 0);
+      });
+    });
+
+    // From wagers: each loser owes each winner `amount`
+    wagers.forEach(w => {
+      const amt = Number(w.amount || 0);
+      (w.winnerIds || []).forEach(wid => {
+        (w.loserIds || []).forEach(lid => {
+          net[wid] = (net[wid] || 0) + amt;
+          net[lid] = (net[lid] || 0) - amt;
+        });
+      });
+    });
+
+    // Subtract recorded payments
+    payments.forEach(pmt => {
+      const amt = Number(pmt.amount || 0);
+      net[pmt.fromId] = (net[pmt.fromId] || 0) + amt;
+      net[pmt.toId]   = (net[pmt.toId]   || 0) - amt;
+    });
+
+    // Build name lookup
+    const nameFor = id => {
+      const p = players.find(x => x.id === id);
+      if (p) return p.name;
+      // Check wager names
+      for (const w of wagers) {
+        const idx = (w.winnerIds || []).indexOf(id);
+        if (idx >= 0) return w.winners[idx] || id;
+        const idx2 = (w.loserIds || []).indexOf(id);
+        if (idx2 >= 0) return w.losers[idx2] || id;
+      }
+      return id;
+    };
+
+    // Minimum transactions settlement algorithm
+    const creditors = [], debtors = [];
+    Object.entries(net).forEach(([id, bal]) => {
+      if (bal > 0.005)  creditors.push({ id, bal });
+      if (bal < -0.005) debtors.push({ id, bal: -bal });
+    });
+    creditors.sort((a, b) => b.bal - a.bal);
+    debtors.sort((a, b) => b.bal - a.bal);
+
+    const settlements = [];
+    let ci = 0, di = 0;
+    while (ci < creditors.length && di < debtors.length) {
+      const amt = Math.min(creditors[ci].bal, debtors[di].bal);
+      if (amt > 0.005) {
+        settlements.push({
+          fromId: debtors[di].id,
+          from: nameFor(debtors[di].id),
+          toId: creditors[ci].id,
+          to: nameFor(creditors[ci].id),
+          amount: amt
+        });
+      }
+      creditors[ci].bal -= amt;
+      debtors[di].bal   -= amt;
+      if (creditors[ci].bal < 0.005) ci++;
+      if (debtors[di].bal   < 0.005) di++;
+    }
+
+    if (!settlements.length) {
+      planEl.innerHTML = '<div class="empty-state" style="font-size:13px;">' +
+        ((expenses.length || wagers.length) ? "✅ All settled up!" : "No expenses or wagers yet.") +
+        '</div>';
+    } else {
+      const tripName = ((activeTripData && activeTripData.name) || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
+      const note = encodeURIComponent(tripName + " settlement");
+
+      planEl.innerHTML = settlements.map(t => {
+        const toPlayer  = players.find(p => p.id === t.toId);
+        const amt = t.amount.toFixed(2);
+
+        // Look up Venmo/PayPal from users collection (stored in memory if loaded)
+        const payInfo = window._payInfo && window._payInfo[t.toId];
+        const venmoHandle  = (payInfo && payInfo.venmo || "").trim();
+        const paypalHandle = (payInfo && payInfo.paypal || "").trim();
+
+        const venmoBtn = venmoHandle
+          ? '<a href="venmo://paycharge?txn=pay&recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amt + '&note=' + note + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#008CFF;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">Venmo</a>'
+          : "";
+        const paypalBtn = paypalHandle
+          ? '<a href="https://paypal.me/' + encodeURIComponent(paypalHandle) + '/' + amt + '" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#003087;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">PayPal</a>'
+          : "";
+
+        return '<div class="settlement-row" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<span style="color:#f87171;font-weight:600;">' + escapeHtml(t.from) + '</span>' +
+            '<span style="color:#64748b;">pays</span>' +
+            '<span class="settlement-amount">$' + amt + '</span>' +
+            '<span style="color:#64748b;">to</span>' +
+            '<span style="color:#4ade80;font-weight:600;">' + escapeHtml(t.to) + '</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+            venmoBtn + paypalBtn +
+            '<button onclick="markPaymentPaid(\'' + escapeAttr(t.fromId) + '\',\'' + escapeAttr(t.toId) + '\',\'' + escapeAttr(t.from) + '\',\'' + escapeAttr(t.to) + '\',' + t.amount + ')" style="padding:7px 12px;background:transparent;color:#86efac;border-radius:20px;font-size:12px;font-weight:600;width:auto;margin:0;border:1.5px solid #166534;">✓ Mark Paid</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    // Settled section
+    if (payments.length && settledEl && sectionEl) {
+      sectionEl.style.display = "block";
+      settledEl.innerHTML = payments
+        .slice().sort((a, b) => new Date(b.settledAt || 0) - new Date(a.settledAt || 0))
+        .map(pmt => '<div class="settlement-row" style="opacity:0.65;justify-content:space-between;">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+            '<span style="color:#94a3b8;">' + escapeHtml(pmt.from) + '</span>' +
+            '<span style="color:#475569;font-size:12px;">paid $' + Number(pmt.amount).toFixed(2) + ' to</span>' +
+            '<span style="color:#94a3b8;">' + escapeHtml(pmt.to) + '</span>' +
+            '<span style="font-size:11px;color:#475569;">' + formatFeedTime(pmt.settledAt) + '</span>' +
+          '</div>' +
+          '<button onclick="unmarkPaymentPaid(\'' + escapeAttr(pmt.id) + '\')" style="padding:5px 10px;background:transparent;color:#475569;border-radius:16px;font-size:11px;width:auto;margin:0;border:1px solid #334155;">Undo</button>' +
+        '</div>'
+        ).join("");
+    } else if (sectionEl) {
+      sectionEl.style.display = "none";
+    }
+
+    // Load payment info for Venmo/PayPal lookups
+    loadPayInfoForSettlement(settlements.map(s => s.toId));
+  }
+
+  async function loadPayInfoForSettlement(uids) {
+    if (!uids.length) return;
+    window._payInfo = window._payInfo || {};
+    await Promise.all([...new Set(uids)].map(async uid => {
+      if (window._payInfo[uid]) return;
+      try {
+        const snap = await getDoc(doc(db, "users", uid));
+        if (snap.exists()) window._payInfo[uid] = snap.data();
+      } catch(e) { /* ignore */ }
+    }));
+    // Re-render with payment info now available
+    renderSettlement();
+  }
+
+  // ── END TAB MODULE ──────────────────────────────────────────────────────────
   window.openExpenses = openExpenses;
   window.openExpenseEditor = openExpenseEditor;
   window.saveExpense = saveExpense;
