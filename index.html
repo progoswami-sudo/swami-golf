@@ -2500,6 +2500,7 @@ Respond ONLY with valid JSON, nothing else:
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
+  console.log('📍 checkpoint 2500');
 
 
 
@@ -3500,6 +3501,7 @@ Respond ONLY with valid JSON, nothing else:
       if (courseOther) courseOther.value = sourceMatch.course || "";
       const teeOther = document.getElementById("matchTeesOther");
       if (teeOther) teeOther.value = sourceMatch.tees || "";
+  console.log('📍 checkpoint 3500');
 
       // Holes / Starting Hole
       const holesEl = document.getElementById("matchNumberOfHoles");
@@ -4496,6 +4498,7 @@ Max 80 words total.`;
       const colCount = holes.length + (holes.length > 9 ? 3 : 2);
       playerRows += `<tr><td colspan="${colCount + 1}" style="padding:0;border-top:3px double #375984;"></td></tr>`;
     }
+  console.log('📍 checkpoint 4500');
 
     teamBPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
     if (teamBPlayers.length) {
@@ -5496,6 +5499,7 @@ ${closer}`;
       list.appendChild(div);
     });
   }
+  console.log('📍 checkpoint 5500');
 
   function renderItinerary() {
     if (document.getElementById("itineraryScreen").classList.contains("hidden")) return;
@@ -6508,6 +6512,7 @@ ${closer}`;
         } catch(e) { /* ignore */ }
       }
     }
+  console.log('📍 checkpoint 6500');
 
     const player = {
       name, nickname, handicapIndex, gender, team,
@@ -7492,6 +7497,7 @@ ${closer}`;
 
         // Show progress
         document.getElementById("photoUploadProgress").style.display = "block";
+  console.log('📍 checkpoint 7500');
 
         url = await new Promise((resolve, reject) => {
           uploadTask.on("state_changed",
