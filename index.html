@@ -2009,6 +2009,11 @@
   let currentUser = null;
   let activeTripData = {};
   let players = [];
+
+  // Feed UI state
+  const expandedPosts = new Set();
+  const localReactions = {};
+  const REACTIONS = ["🔥", "😂", "💀", "🎯", "👏"];
   let itineraryEvents = [];
   let feedPosts = [];
   let matches = [];
@@ -2732,31 +2737,27 @@ Respond ONLY with valid JSON, nothing else:
     } else {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().email) {
-          setCookie(EMAIL_COOKIE, userDoc.data().email);
-        }
+        if (userDoc.exists() && userDoc.data().email) setCookie(EMAIL_COOKIE, userDoc.data().email);
       } catch(e) { console.log("users read error:", e.code); }
     }
+
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("appHome").classList.remove("hidden");
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
     document.getElementById("syncStatus").style.display = "none";
 
-    try { await initializeTripIfNeeded("pinehurst2026"); console.log("initTrip pinehurst OK"); }
-    catch(e) { console.log("initTrip pinehurst ERROR:", e.code, e.message); }
-
-    try { await initializeTripIfNeeded("testGolfTrip"); console.log("initTrip test OK"); }
-    catch(e) { console.log("initTrip test ERROR:", e.code, e.message); }
-
-    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library skipped"); }
+    try { await initializeTripIfNeeded("pinehurst2026"); } catch(e) { console.log("initTrip pinehurst ERROR:", e.code); }
+    try { await initializeTripIfNeeded("testGolfTrip"); } catch(e) { console.log("initTrip test ERROR:", e.code); }
+    try { await loadCourseLibrary(); } catch(e) { console.warn("Course library skipped"); }
 
     try {
       await loadTrips();
-      console.log("loadTrips OK, trips:", Object.keys(trips).join(", "));
-    } catch (e) {
+      console.log("loadTrips OK, count:", Object.keys(trips).length);
+    } catch(e) {
       console.log("loadTrips ERROR:", e.code, e.message);
     }
+
     renderTripTiles();
   }
 
@@ -5830,12 +5831,6 @@ ${closer}`;
   }
 
   // Track which posts are expanded and local reaction state
-  const expandedPosts = new Set();
-  const localReactions = {}; // postId -> Set of emoji the current user has reacted with
-
-  // Reaction emojis available
-  const REACTIONS = ["🔥", "😂", "💀", "🎯", "👏"];
-
   function renderFeed() {
     const list = document.getElementById("feedList");
     if (!list) return;
