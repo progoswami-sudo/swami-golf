@@ -1972,7 +1972,6 @@
     signInWithEmailLink,
     isSignInWithEmailLink,
     sendSignInLinkToEmail,
-    signInWithCustomToken,
     onAuthStateChanged,
     linkWithCredential,
     EmailAuthProvider
@@ -2546,69 +2545,30 @@ Respond ONLY with valid JSON, nothing else:
 
   let silentSignInInProgress = false;
 
-  async function trySilentSignIn() {
-    const uid = getCookie(UID_COOKIE);
-    console.log(`UID cookie: ${uid ? uid.slice(0,8)+"..." : "NOT FOUND"}`);
-    console.log(`Email cookie: ${getCookie(EMAIL_COOKIE) || "NOT FOUND"}`);
-    console.log(`All cookies: ${document.cookie.slice(0,100) || "NONE"}`);
-    if (!uid) return false;
-    try {
-      silentSignInInProgress = true;
-      console.log("Calling /api/auth-token...");
-      const res = await fetch("/api/auth-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid })
-      });
-      const data = await res.json();
-      console.log(`auth-token: ${res.status} — ${JSON.stringify(data).slice(0,80)}`);
-      if (!res.ok) { silentSignInInProgress = false; return false; }
-      await signInWithCustomToken(auth, data.token);
-      console.log("Silent sign-in SUCCESS ✅");
-      silentSignInInProgress = false;
-      // onAuthStateChanged already fired and was skipped — manually initialize
-      const user = auth.currentUser;
-      if (user) await initSwamiApp(user);
-      return true;
-    } catch (e) {
-      console.log(`Silent sign-in ERROR: ${e.message}`);
-      silentSignInInProgress = false;
-      return false;
-    }
-  }
-
   function showWelcomeBackStep(email, displayName) {
     document.getElementById("loginWelcomeStep").classList.remove("hidden");
     document.getElementById("loginEmailStep").classList.add("hidden");
     document.getElementById("loginSentStep").classList.add("hidden");
     document.getElementById("loginWelcomeName").textContent =
-      displayName ? `Welcome back, ${displayName}!` : "Welcome back!";
+      displayName ? "Welcome back, " + displayName + "!" : "Welcome back!";
     document.getElementById("loginWelcomeEmail").textContent = email;
   }
 
   async function sendMagicLink(emailOverride) {
     const email = emailOverride || document.getElementById("loginEmail").value.trim();
-    if (!email || !email.includes("@")) {
-      showLoginError("Please enter a valid email address.");
-      return;
-    }
+    if (!email || !email.includes("@")) { showLoginError("Please enter a valid email address."); return; }
     const btn = document.getElementById("sendLinkBtn");
     const wBtn = document.getElementById("welcomeSignInBtn");
     if (btn) { btn.disabled = true; btn.textContent = "Sending..."; }
     if (wBtn) { wBtn.disabled = true; wBtn.textContent = "Sending..."; }
-
     try {
-      const actionCodeSettings = { url: APP_URL, handleCodeInApp: true };
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      await sendSignInLinkToEmail(auth, email, { url: APP_URL, handleCodeInApp: true });
       localStorage.setItem(EMAIL_KEY, email);
-      // Show sent confirmation
       document.getElementById("loginWelcomeStep").classList.add("hidden");
       document.getElementById("loginEmailStep").classList.add("hidden");
       document.getElementById("loginSentStep").classList.remove("hidden");
-      document.getElementById("loginSentMessage").textContent =
-        `We sent a sign-in link to ${email}. Tap it to continue.`;
+      document.getElementById("loginSentMessage").textContent = "We sent a sign-in link to " + email + ". Tap it to continue.";
     } catch (err) {
-      console.error("Send magic link error:", err);
       showLoginError("Failed to send link: " + (err.message || err.code));
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = "Send Sign-In Link"; }
@@ -2662,120 +2622,59 @@ Respond ONLY with valid JSON, nothing else:
     const name = (document.getElementById("userDisplayName").value || "").trim();
     if (!name) { alert("Please enter your name."); return; }
     if (!currentUser?.uid) return;
-
     const venmo = (document.getElementById("userVenmo")?.value || "").trim().replace(/^@/, "");
     const paypal = (document.getElementById("userPaypal")?.value || "").trim().replace(/^@/, "");
-
     await setDoc(doc(db, "users", currentUser.uid), {
       name, venmo, paypal,
       email: currentUser.email || getCookie(EMAIL_COOKIE) || "",
       updatedAt: new Date().toISOString()
     }, { merge: true });
-
     setCookie(NAME_COOKIE, name);
-    const pill = document.getElementById("userPill");
-    if (pill) pill.textContent = "👤";
     goHome();
   }
 
   // Handle magic link on page load
   if (isSignInWithEmailLink(auth, window.location.href)) {
     let email = localStorage.getItem(EMAIL_KEY) || getCookie(EMAIL_COOKIE);
-    if (!email) {
-      email = window.prompt("Please enter your email to confirm sign-in:");
-    }
+    if (!email) email = window.prompt("Please enter your email to confirm sign-in:");
     if (email) {
       signInWithEmailLink(auth, email, window.location.href)
         .then(result => {
           localStorage.removeItem(EMAIL_KEY);
           window.history.replaceState({}, document.title, window.location.pathname);
           currentUser = result.user;
+          setCookie(EMAIL_COOKIE, email);
         })
-        .catch(err => {
-          console.error("Magic link sign-in failed:", err);
-          showLoginError("Sign-in failed: " + (err.message || err.code));
-        });
+        .catch(err => showLoginError("Sign-in failed: " + (err.message || err.code)));
     }
   } else {
-    // Try silent sign-in with stored UID before showing login
-    const uid = getCookie(UID_COOKIE);
-    console.log(`Page load — isSignInLink: false, UID: ${uid ? "found" : "not found"}`);
-    if (uid) {
-      // Show a brief loading state while we attempt silent sign-in
-      document.getElementById("loginScreen").classList.remove("hidden");
-      document.getElementById("loginWelcomeStep").classList.add("hidden");
-      document.getElementById("loginEmailStep").classList.add("hidden");
-      document.getElementById("loginSentStep").classList.add("hidden");
-      // Show a loading indicator
-      const statusEl = document.getElementById("loginStatus");
-      if (statusEl) {
-        statusEl.style.display = "block";
-        statusEl.style.color = "#93c5fd";
-        statusEl.textContent = "⏳ Signing you in...";
-      }
-      trySilentSignIn().then(success => {
-        if (!success) {
-          if (statusEl) statusEl.style.display = "none";
-          const savedEmail = getCookie(EMAIL_COOKIE);
-          if (savedEmail) {
-            showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
-          } else {
-            showLoginEmailStep();
-          }
-        }
-      });
-    }
+    // Show welcome-back if we know their email
+    const savedEmail = getCookie(EMAIL_COOKIE);
+    if (savedEmail) showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
+    // Firebase Auth restores session automatically via onAuthStateChanged
   }
 
-  // Auth state observer
   async function initSwamiApp(user) {
     currentUser = user;
-    console.log(`initSwamiApp: uid=${user.uid.slice(0,8)} email=${user.email || "null"}`);
+    if (user.email) setCookie(EMAIL_COOKIE, user.email);
     setCookie(UID_COOKIE, user.uid);
-    if (user.email) {
-      setCookie(EMAIL_COOKIE, user.email);
-    } else {
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().email) setCookie(EMAIL_COOKIE, userDoc.data().email);
-      } catch(e) { console.log("users read error:", e.code); }
-    }
-
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("appHome").classList.remove("hidden");
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
     document.getElementById("syncStatus").style.display = "none";
-
-    try { await initializeTripIfNeeded("pinehurst2026"); } catch(e) { console.log("initTrip pinehurst ERROR:", e.code); }
-    try { await initializeTripIfNeeded("testGolfTrip"); } catch(e) { console.log("initTrip test ERROR:", e.code); }
-    try { await loadCourseLibrary(); } catch(e) { console.warn("Course library skipped"); }
-
-    try {
-      await loadTrips();
-      console.log("loadTrips OK, count:", Object.keys(trips).length);
-    } catch(e) {
-      console.log("loadTrips ERROR:", e.code, e.message);
-    }
-
+    try { await loadCourseLibrary(); } catch(e) { /* skip */ }
+    try { await loadTrips(); } catch(e) { console.log("loadTrips error:", e.code); }
     renderTripTiles();
   }
 
   onAuthStateChanged(auth, async user => {
-    console.log(`onAuthStateChanged: user=${user ? user.uid.slice(0,8) : "null"} silentInProgress=${silentSignInInProgress}`);
-    if (silentSignInInProgress) {
-      console.log("Skipping — silent sign-in in progress");
-      return;
-    }
     if (!user) {
       document.getElementById("loginScreen").classList.remove("hidden");
       document.getElementById("appHome").classList.add("hidden");
       const savedEmail = getCookie(EMAIL_COOKIE);
-      if (savedEmail && !getCookie(UID_COOKIE)) {
-        showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
-      } else if (!getCookie(UID_COOKIE)) {
-        showLoginEmailStep();
-      }
+      if (savedEmail) showWelcomeBackStep(savedEmail, getCookie(NAME_COOKIE));
+      else showLoginEmailStep();
       return;
     }
     await initSwamiApp(user);
