@@ -3790,7 +3790,7 @@ Respond ONLY with valid JSON, nothing else:
     playerList.forEach(player => {
       const option = document.createElement("option");
       option.value = player.id;
-      option.textContent = `${player.name}${player.handicapIndex ? ` (HI ${player.handicapIndex})` : ""}`;
+      option.textContent = player.name + (player.handicapIndex ? " (HI " + player.handicapIndex + ")" : "");
       select.appendChild(option);
     });
   }
@@ -3822,7 +3822,7 @@ Respond ONLY with valid JSON, nothing else:
     function describePlayer(p) {
       const ch = calculateCourseHandicap(p.handicapIndex, tee);
       const parts = [
-        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        p.name + (p.nickname ? ' "' + p.nickname + '"' : ''),
         `HI ${p.handicapIndex || "N/A"}${ch !== null ? "/CH " + ch : ""}`,
         p.strengths && p.strengths.length ? `strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `weaknesses: ${p.weaknesses.join(", ")}` : null,
@@ -4571,7 +4571,7 @@ Max 80 words total.`;
     function buildPlayerRow(player) {
       const data = strokeData[player.id];
       const chLabel = data.ch === null ? "(CH N/A)" : `(CH ${data.ch})`;
-      const strokeLabel = isNet ? ` ${data.strokes ? `(${data.strokes})` : "(0)"}` : "";
+      const strokeLabel = isNet ? " " + (data.strokes ? "(" + data.strokes + ")" : "(0)") : "";
       const label = `${escapeHtml(player.name)} <span style="color:#94a3b8;font-size:11px;">${chLabel}${strokeLabel}</span>`;
 
       let row = `<tr><td style="white-space:nowrap;">${label}</td>`;
@@ -4801,7 +4801,7 @@ Max 80 words total.`;
     const settings = match.valueSettings || {};
     const keys = Object.keys(settings);
     if (keys.length === 0) return "";
-    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Point System")}:</strong> ${keys.map(key => `${escapeHtml(key)}: ${escapeHtml(settings[key])}`).join(" • ")}</div>`;
+    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Point System")}:</strong> ${keys.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ")}</div>`;
   }
 
   function toggleMatchMenu(matchId) { document.getElementById(`matchMenu-${matchId}`).classList.toggle("hidden"); }
@@ -4980,7 +4980,7 @@ Max 80 words total.`;
 
     const playerSummaries = players.map(p => {
       const parts = [
-        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        p.name + (p.nickname ? ' "' + p.nickname + '"' : ''),
         `HI: ${p.handicapIndex || "N/A"}`,
         `Team: ${p.team || "unassigned"}`,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
@@ -6036,7 +6036,7 @@ ${closer}`;
     const teamBScore = activeTripData.teamBScore || "0";
     const playerList = players.map(p => {
       const parts = [
-        `${p.name}${p.nickname ? ` "${p.nickname}"` : ""}`,
+        p.name + (p.nickname ? ' "' + p.nickname + '"' : ''),
         `HI: ${p.handicapIndex || "N/A"}`,
         `Team: ${p.team || "unassigned"}`,
         p.gender ? `Gender: ${formatGender(p.gender)}` : null,
@@ -6669,8 +6669,11 @@ ${closer}`;
       info.style.flex = "1";
       info.style.cursor = "pointer";
       info.onclick = () => openPlayer(player.id);
-      info.innerHTML = `<div class="player-name">${escapeHtml(player.name)}</div>
-        <div class="player-detail">${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}${player.team ? escapeHtml(player.team === "A" ? (activeTripData.teamA || "Team A") : player.team === "B" ? (activeTripData.teamB || "Team B") : player.team) : "No team"}${player.handicapIndex ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}</div>`;
+      const nickPart = player.nickname ? '"' + escapeHtml(player.nickname) + '" &bull; ' : "";
+      const teamName = player.team === "A" ? (activeTripData.teamA || "Team A") : player.team === "B" ? (activeTripData.teamB || "Team B") : (player.team || "No team");
+      const hiPart = player.handicapIndex ? " &bull; HI: " + escapeHtml(player.handicapIndex) : "";
+      info.innerHTML = "<div class=\"player-name\">" + escapeHtml(player.name) + "</div>"
+        + "<div class=\"player-detail\">" + nickPart + escapeHtml(teamName) + hiPart + "</div>";
       div.appendChild(info);
       const actions = document.createElement("div");
       actions.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-left:10px;flex-shrink:0;";
@@ -7123,7 +7126,7 @@ ${closer}`;
             </div>
             <div class="expense-amount">$${Number(exp.amount||0).toFixed(2)}</div>
           </div>
-          ${splitNames ? `<div class="expense-splits">Split: ${escapeHtml(splitNames)}</div>` : ""}
+          ${splitNames ? "<div class=\"expense-splits\">Split: " + escapeHtml(splitNames) + "</div>" : ""}
           ${exp.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">${escapeHtml(exp.note)}</div>` : ""}
           ${exp.receiptUrl ? `<div style="margin-top:6px;"><img src="${escapeAttr(exp.receiptUrl)}" style="height:48px;border-radius:6px;object-fit:cover;" alt="Receipt"></div>` : ""}
         </div>
@@ -7262,7 +7265,7 @@ ${closer}`;
     const el = document.getElementById("customSplitTotal");
     if (el) {
       const diff = amount - total;
-      el.textContent = `Total assigned: $${total.toFixed(2)} of $${amount.toFixed(2)}${Math.abs(diff) > 0.01 ? ` (${diff > 0 ? "+" : ""}$${diff.toFixed(2)} remaining)` : " ✅"}`;
+      el.textContent = "Total assigned: $" + total.toFixed(2) + " of $" + amount.toFixed(2) + (Math.abs(diff) > 0.01 ? " (" + (diff > 0 ? "+" : "") + "$" + diff.toFixed(2) + " remaining)" : " ✅");
       el.style.color = Math.abs(diff) > 0.01 ? "#f87171" : "#4ade80";
     }
   }
@@ -7403,7 +7406,7 @@ ${closer}`;
     el.innerHTML = PHOTO_CATEGORIES.map(cat => {
       const count = cat.id === "all" ? photos.length : photos.filter(p => p.category === cat.id).length;
       return `<button class="photo-category-tab ${activePhotoCategory === cat.id ? "active" : ""}"
-        onclick="setPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label} ${count ? `<span style="font-size:11px;opacity:0.7;">(${count})</span>` : ""}</button>`;
+        onclick="setPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label} ${count ? '<span style="font-size:11px;opacity:0.7;">('+ count +')</span>' : ""}</button>`;
     }).join("");
   }
 
@@ -7459,7 +7462,7 @@ ${closer}`;
       <div class="photo-viewer-meta">
         ${photo.caption ? `<div class="photo-viewer-caption">${escapeHtml(photo.caption)}</div>` : ""}
         <div style="font-size:12px;color:#64748b;margin-bottom:8px;">${formatFeedTime(photo.createdAt)}</div>
-        ${taggedPlayers.length ? `<div class="photo-viewer-tags">${taggedPlayers.map(n => `<span class="photo-viewer-tag">👤 ${escapeHtml(n)}</span>`).join("")}</div>` : ""}
+        ${taggedPlayers.length ? "<div class=\"photo-viewer-tags\">" + taggedPlayers.map(n => "<span class=\"photo-viewer-tag\">👤 " + escapeHtml(n) + "</span>").join("") + "</div>" : ""}
         ${linkedMatch ? `<div style="margin-top:8px;font-size:13px;color:#93c5fd;">🏌️ ${escapeHtml(linkedMatch.format || "Match")} at ${escapeHtml(linkedMatch.course || "")}</div>` : ""}
         ${linkedExpense ? `<div style="margin-top:4px;font-size:13px;color:#93c5fd;">🧾 ${escapeHtml(linkedExpense.description || "Expense")} — $${Number(linkedExpense.amount || 0).toFixed(2)}</div>` : ""}
       </div>
@@ -7647,7 +7650,7 @@ ${closer}`;
       // Swami reacts
       const catInfo = PHOTO_CATEGORIES.find(c => c.id === selectedPhotoCategory);
       const taggedNames = selectedPhotoPlayerIds.map(id => players.find(p => p.id === id)?.name).filter(Boolean);
-      await addSwamiPost("photoAdd", `${catInfo?.label || "Photo"} added${taggedNames.length ? " — featuring " + taggedNames.join(", ") : ""}${caption ? `: "${caption}"` : ""}`);
+      await addSwamiPost("photoAdd", (catInfo?.label || "Photo") + " added" + (taggedNames.length ? " — featuring " + taggedNames.join(", ") : "") + (caption ? ": \"" + caption + "\"" : ""));
     }
 
     show("photoLibraryScreen");
