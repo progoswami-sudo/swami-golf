@@ -1176,6 +1176,7 @@
             <div class="home-menu-item" onclick="openExpenses()">Expenses</div>
             <div class="home-menu-item" onclick="openPhotoLibrary()">Photos</div>
             <div class="home-menu-item" onclick="openPlayerList()">Players</div>
+            <div class="home-menu-item" onclick="openMemberManager()">Members &amp; Invites</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
             </div>
@@ -1760,9 +1761,30 @@
     <div id="photoViewerContent"></div>
   </div>
 
-  <div id="userProfileScreen" class="hidden secondary-screen">
+  <div id="membersScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="show('appHome')" class="secondary">Back</button>
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2>Members &amp; Invites</h2>
+    </div>
+    <div class="card">
+      <div class="feed-title" style="margin-bottom:10px;">Current Members</div>
+      <div id="membersList"></div>
+    </div>
+    <div class="card" id="inviteCard">
+      <div class="feed-title" style="margin-bottom:10px;">Invite Someone</div>
+      <label class="form-label" for="inviteEmail">Email Address</label>
+      <input id="inviteEmail" type="email" inputmode="email" placeholder="their@email.com"/>
+      <label class="form-label" style="margin-top:12px;">Role</label>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button id="inviteRoleAdmin" onclick="selectInviteRole('admin')" class="secondary" style="flex:1;margin:0;padding:10px;">Admin</button>
+        <button id="inviteRoleParticipant" onclick="selectInviteRole('participant')" style="flex:1;margin:0;padding:10px;">Participant</button>
+      </div>
+      <button onclick="sendInvite()" style="margin-top:12px;">Send Invite</button>
+      <div id="pendingInvitesList" style="margin-top:16px;"></div>
+    </div>
+  </div>
+    <div class="sticky-page-header">
+      <button onclick="goHome()" class="secondary">Back</button>
       <h2>My Account</h2>
     </div>
     <div class="card">
@@ -1774,9 +1796,6 @@
       <label class="form-label" for="userDisplayName">Your Name</label>
       <input id="userDisplayName" placeholder="First and last name" style="margin-bottom:8px;"/>
       <div style="font-size:12px;color:#64748b;margin-bottom:16px;">This name is used as your player identity across all golf trips.</div>
-
-      <label class="form-label" for="userNickname">Nickname (optional)</label>
-      <input id="userNickname" placeholder="What the group calls you"/>
 
       <button onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
       <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
@@ -2545,19 +2564,14 @@ Respond ONLY with valid JSON, nothing else:
     const emailEl = document.getElementById("userProfileEmail");
     if (emailEl) emailEl.textContent = currentUser?.email || "";
 
-    // Load saved profile data
     const nameEl = document.getElementById("userDisplayName");
-    const nickEl = document.getElementById("userNickname");
     if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
-    if (nickEl) nickEl.value = getCookie("swamiGolfNickname") || "";
 
-    // Load from Firestore if available
     if (currentUser?.uid) {
       getDoc(doc(db, "users", currentUser.uid)).then(snap => {
         if (snap.exists()) {
           const data = snap.data();
           if (nameEl && data.name) nameEl.value = data.name;
-          if (nickEl && data.nickname) nickEl.value = data.nickname;
         }
       }).catch(() => {});
     }
@@ -2565,28 +2579,22 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   async function saveUserProfile() {
-    const name     = (document.getElementById("userDisplayName").value || "").trim();
-    const nickname = (document.getElementById("userNickname").value || "").trim();
-
+    const name = (document.getElementById("userDisplayName").value || "").trim();
     if (!name) { alert("Please enter your name."); return; }
     if (!currentUser?.uid) return;
 
-    // Save to Firestore users collection
     await setDoc(doc(db, "users", currentUser.uid), {
-      name, nickname,
+      name,
       email: currentUser.email || "",
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Update cookies
-    setCookie(NAME_COOKIE, nickname || name.split(" ")[0]);
-    setCookie("swamiGolfNickname", nickname);
+    setCookie(NAME_COOKIE, name);
 
-    // Update user pill
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
 
-    show("appHome");
+    goHome();
   }
 
   // Handle magic link on page load
@@ -2670,14 +2678,9 @@ Respond ONLY with valid JSON, nothing else:
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("appHome").classList.remove("hidden");
 
-    // Update user pill
+    // User pill — icon only, no name
     const pill = document.getElementById("userPill");
-    if (pill) {
-      const savedN = getCookie(NAME_COOKIE);
-      pill.textContent = savedN ? "👤 " + savedN
-        : user.email ? "👤 " + user.email.split("@")[0]
-        : "👤 Guest";
-    }
+    if (pill) pill.textContent = "👤";
 
     document.getElementById("syncStatus").style.display = "none";
 
@@ -2731,6 +2734,17 @@ Respond ONLY with valid JSON, nothing else:
   function photosCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "photos");
   }
+
+  function membersCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "members");
+  }
+
+  function invitesCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "invites");
+  }
+
+  // Current user's role in the active trip
+  let currentTripRole = null; // "admin" | "participant" | null
 
   async function loadCourseLibrary() {
     const urls = typeof COURSE_LIBRARY_URLS !== "undefined" ? COURSE_LIBRARY_URLS : ["./pinehurst-course-library.json"];
@@ -2964,16 +2978,74 @@ Respond ONLY with valid JSON, nothing else:
 
   async function loadTrips() {
     const snap = await getDocs(collection(db, "trips"));
-    snap.docs.forEach(docSnap => {
+    const uid = currentUser?.uid;
+    const email = currentUser?.email?.toLowerCase();
+
+    // Clear trips and only add ones the user is a member of
+    const accessibleTrips = {};
+
+    await Promise.all(snap.docs.map(async docSnap => {
       const data = docSnap.data() || {};
       const tripId = docSnap.id;
-      trips[tripId] = {
-        id: tripId,
-        name: data.name || (trips[tripId] && trips[tripId].name) || "Golf Trip",
-        defaultTeamA: data.teamA || (trips[tripId] && trips[tripId].defaultTeamA) || "Team A",
-        defaultTeamB: data.teamB || (trips[tripId] && trips[tripId].defaultTeamB) || "Team B",
-        custom: !defaultTripIds.includes(tripId)
-      };
+
+      // Check membership
+      let isMember = false;
+
+      if (uid) {
+        // Check if user is in members collection
+        const memberSnap = await getDoc(doc(membersCollection(tripId), uid));
+        if (memberSnap.exists()) {
+          isMember = true;
+        } else if (email) {
+          // Check pending invite by email
+          const inviteSnap = await getDocs(invitesCollection(tripId));
+          const invite = inviteSnap.docs.find(d => d.data().email?.toLowerCase() === email);
+          if (invite) {
+            // Auto-accept invite — add as member
+            await setDoc(doc(membersCollection(tripId), uid), {
+              uid,
+              email: currentUser.email,
+              name: getCookie(NAME_COOKIE) || "",
+              role: invite.data().role || "participant",
+              joinedAt: new Date().toISOString(),
+              invitedBy: invite.data().invitedBy || ""
+            });
+            await deleteDoc(doc(invitesCollection(tripId), invite.id));
+            isMember = true;
+          }
+        }
+
+        // Legacy: creator always has access (for existing trips without members collection)
+        if (!isMember && data.createdBy === uid) {
+          isMember = true;
+          // Auto-add as admin for legacy trips
+          await setDoc(doc(membersCollection(tripId), uid), {
+            uid,
+            email: currentUser.email || "",
+            name: getCookie(NAME_COOKIE) || "",
+            role: "admin",
+            joinedAt: new Date().toISOString()
+          });
+        }
+      }
+
+      if (isMember) {
+        accessibleTrips[tripId] = {
+          id: tripId,
+          name: data.name || (trips[tripId] && trips[tripId].name) || "Golf Trip",
+          defaultTeamA: data.teamA || "Team A",
+          defaultTeamB: data.teamB || "Team B",
+          custom: !defaultTripIds.includes(tripId)
+        };
+      }
+    }));
+
+    // Merge accessible trips into trips object
+    Object.assign(trips, accessibleTrips);
+
+    // Remove trips user doesn't have access to
+    Object.keys(trips).forEach(id => {
+      if (!accessibleTrips[id]) delete trips[id];
     });
   }
 
@@ -3004,7 +3076,6 @@ Respond ONLY with valid JSON, nothing else:
   async function createTrip() {
     document.getElementById("homeMenu").classList.add("hidden");
     const name = prompt("Name your new golf trip:");
-
     if (!name || !name.trim()) return;
 
     const tripId = `trip-${Date.now()}`;
@@ -3016,9 +3087,21 @@ Respond ONLY with valid JSON, nothing else:
       teamB: "Team B",
       teamAScore: "0",
       teamBScore: "0",
+      createdBy: currentUser?.uid || "",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
+
+    // Auto-add creator as admin
+    if (currentUser?.uid) {
+      await setDoc(doc(membersCollection(tripId), currentUser.uid), {
+        uid: currentUser.uid,
+        email: currentUser.email || "",
+        name: getCookie(NAME_COOKIE) || "",
+        role: "admin",
+        joinedAt: new Date().toISOString()
+      });
+    }
 
     trips[tripId] = {
       id: tripId,
@@ -3241,7 +3324,8 @@ Respond ONLY with valid JSON, nothing else:
       "photoViewerScreen",
       "playerListScreen",
       "playerScreen",
-      "userProfileScreen"
+      "userProfileScreen",
+      "membersScreen"
     ].forEach(x => {
       const el = document.getElementById(x);
       if (el) {
@@ -3661,6 +3745,7 @@ Max 80 words total.`;
   }
 
   async function saveMatch() {
+    if (!requireAdmin("add or edit matches")) return;
     const matchDate = document.getElementById("matchDate").value;
     const course = getSelectedCourseName();
     const tees = getSelectedTeeName();
@@ -4589,6 +4674,7 @@ Max 80 words total.`;
   function formatMatchDate(dateString) { return dateString ? formatDisplayDate(dateString) : "Date TBD"; }
 
   async function deleteMatch(matchId) {
+    if (!requireAdmin("delete matches")) return;
     if (!confirm("Delete this match?")) return;
     const match = matches.find(item => item.id === matchId);
     await deleteDoc(doc(db, "trips", activeTripId, "matches", matchId));
@@ -4918,16 +5004,37 @@ ${closer}`;
   async function openTripHome(tripId = activeTripId) {
     try {
       activeTripId = tripId;
-      document.getElementById("syncStatus").innerText = "Opening trip...";
+      document.getElementById("syncStatus").style.display = "none";
+
+      // Load user's role for this trip
+      currentTripRole = null;
+      if (currentUser?.uid) {
+        const memberSnap = await getDoc(doc(membersCollection(tripId), currentUser.uid));
+        if (memberSnap.exists()) {
+          currentTripRole = memberSnap.data().role || "participant";
+        }
+      }
+
       await initializeTripIfNeeded(activeTripId);
       subscribeToTrip(activeTripId);
       show("tripHome");
       renderSwamiPulse();
     } catch (error) {
       console.error("Unable to open trip:", error);
-      document.getElementById("syncStatus").innerText = "Could not open trip. Check Firebase rules / connection.";
-      alert("Could not open this trip. Please check Firebase rules, internet connection, or browser console.");
+      alert("Could not open this trip. Check your connection.");
     }
+  }
+
+  function isAdmin() {
+    return currentTripRole === "admin";
+  }
+
+  function requireAdmin(action = "do this") {
+    if (!isAdmin()) {
+      alert(`Only trip admins can ${action}. Contact your trip admin.`);
+      return false;
+    }
+    return true;
   }
 
   function renderTripHeader() {
@@ -6206,6 +6313,7 @@ ${closer}`;
   }
 
   async function savePlayer() {
+    if (!requireAdmin("add or edit players")) return;
     const name = document.getElementById("playerName").value;
     const nickname = document.getElementById("nickname").value;
     const handicapIndex = document.getElementById("handicapIndex").value;
@@ -7290,7 +7398,124 @@ ${closer}`;
     }, 50);
   }
 
-  // ── END PHOTO LIBRARY ────────────────────────────────────────────────────────
+  // ── MEMBERS & INVITES ────────────────────────────────────────────────────────
+
+  let selectedInviteRole = "participant";
+
+  function selectInviteRole(role) {
+    selectedInviteRole = role;
+    const adminBtn = document.getElementById("inviteRoleAdmin");
+    const partBtn  = document.getElementById("inviteRoleParticipant");
+    if (adminBtn) adminBtn.className = role === "admin" ? "secondary" : "secondary";
+    if (partBtn)  partBtn.className  = role === "participant" ? "" : "secondary";
+    // Visual highlight
+    if (adminBtn) adminBtn.style.background = role === "admin" ? "#1d4ed8" : "";
+    if (partBtn)  partBtn.style.background  = role === "participant" ? "#1d4ed8" : "";
+  }
+
+  async function openMemberManager() {
+    const menu = document.getElementById("tripMenu");
+    if (menu) menu.classList.add("hidden");
+
+    if (!requireAdmin("manage trip members")) return;
+
+    selectedInviteRole = "participant";
+    selectInviteRole("participant");
+    document.getElementById("inviteEmail").value = "";
+
+    show("membersScreen");
+    await renderMembersList();
+    await renderPendingInvites();
+  }
+
+  async function renderMembersList() {
+    const el = document.getElementById("membersList");
+    if (!el) return;
+    el.innerHTML = `<div class="empty-state" style="font-size:13px;">Loading...</div>`;
+
+    const snap = await getDocs(membersCollection());
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`;
+      return;
+    }
+
+    el.innerHTML = snap.docs.map(d => {
+      const m = d.data();
+      const isMe = m.uid === currentUser?.uid;
+      const roleColor = m.role === "admin" ? "#93c5fd" : "#86efac";
+      return `<div class="player-row" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:600;">${escapeHtml(m.name || m.email || "Unknown")}</div>
+          <div style="font-size:12px;color:#64748b;">${escapeHtml(m.email || "")}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:${roleColor};font-weight:600;">${m.role === "admin" ? "Admin" : "Participant"}</span>
+          ${!isMe ? `<button onclick="removeMember('${escapeAttr(d.id)}')" class="danger" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Remove</button>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  async function renderPendingInvites() {
+    const el = document.getElementById("pendingInvitesList");
+    if (!el) return;
+
+    const snap = await getDocs(invitesCollection());
+    if (snap.empty) { el.innerHTML = ""; return; }
+
+    el.innerHTML = `<div class="feed-title" style="font-size:13px;margin-bottom:8px;">Pending Invites</div>` +
+      snap.docs.map(d => {
+        const inv = d.data();
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e3a5f;">
+          <div>
+            <div style="font-size:14px;">${escapeHtml(inv.email)}</div>
+            <div style="font-size:12px;color:#64748b;">${inv.role === "admin" ? "Admin" : "Participant"} · Invited ${formatFeedTime(inv.createdAt)}</div>
+          </div>
+          <button onclick="cancelInvite('${escapeAttr(d.id)}')" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Cancel</button>
+        </div>`;
+      }).join("");
+  }
+
+  async function sendInvite() {
+    const email = document.getElementById("inviteEmail").value.trim().toLowerCase();
+    if (!email || !email.includes("@")) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    // Check if already a member
+    const membersSnap = await getDocs(membersCollection());
+    const alreadyMember = membersSnap.docs.some(d => d.data().email?.toLowerCase() === email);
+    if (alreadyMember) {
+      alert(`${email} is already a member of this trip.`);
+      return;
+    }
+
+    await addDoc(invitesCollection(), {
+      email,
+      role: selectedInviteRole,
+      invitedBy: currentUser?.uid || "",
+      invitedByEmail: currentUser?.email || "",
+      createdAt: new Date().toISOString()
+    });
+
+    document.getElementById("inviteEmail").value = "";
+    await renderPendingInvites();
+    alert(`Invite sent to ${email}. They'll join automatically when they sign in.`);
+  }
+
+  async function removeMember(uid) {
+    if (!confirm("Remove this member from the trip?")) return;
+    await deleteDoc(doc(membersCollection(), uid));
+    await renderMembersList();
+  }
+
+  async function cancelInvite(inviteId) {
+    await deleteDoc(doc(invitesCollection(), inviteId));
+    await renderPendingInvites();
+  }
+
+  // ── END MEMBERS MODULE ────────────────────────────────────────────────────────
   window.promptEditTeamNameFromRoster = promptEditTeamNameFromRoster;
   window.editCurrentPhoto = function() { openPhotoUpload(currentViewingPhotoId); };
   window.goBackFromPhotoUpload = goBackFromPhotoUpload;
@@ -7358,6 +7583,11 @@ ${closer}`;
     if (e.key === "Enter") sendMagicLink();
   });
 
+  window.openMemberManager = openMemberManager;
+  window.sendInvite = sendInvite;
+  window.removeMember = removeMember;
+  window.cancelInvite = cancelInvite;
+  window.selectInviteRole = selectInviteRole;
   window.saveUserProfile = saveUserProfile;
   window.sendMagicLink = sendMagicLink;
   window.showLoginEmailStep = showLoginEmailStep;
