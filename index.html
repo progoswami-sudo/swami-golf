@@ -1173,7 +1173,7 @@
         <div style="font-size:36px;margin-bottom:12px;">👋</div>
         <h3 id="loginWelcomeName" style="margin:0 0 6px;"></h3>
         <p id="loginWelcomeEmail" style="font-size:13px;color:#64748b;margin:0 0 20px;"></p>
-        <button id="welcomeSignInBtn" onclick="sendMagicLink()">Send Sign-In Link</button>
+        <button id="welcomeSignInBtn">Send Sign-In Link</button>
         <button id="welcomeNotMeBtn" class="secondary" style="margin-top:8px;">Not me — use different email</button>
       </div>
 
@@ -1183,7 +1183,7 @@
         <input id="loginEmail" type="email" inputmode="email" autocomplete="email"
           placeholder="you@example.com"
           style="margin-bottom:12px;"/>
-        <button id="sendLinkBtn" onclick="sendMagicLink()">Send Sign-In Link</button>
+        <button id="sendLinkBtn">Send Sign-In Link</button>
         <p style="font-size:12px;color:#64748b;text-align:center;margin-top:12px;">
           We'll email you a magic link. No password needed.
         </p>
@@ -1932,12 +1932,11 @@
   window.requestNotifications  = _stub('requestNotifications');
   window.turnOffNotifications  = _stub('turnOffNotifications');
   window.addEventListener('error', function(e) {
-    var msg = (e.message||'unknown') + ' (line ' + e.lineno + ' col ' + e.colno + ')';
+    var msg = (e.message||'unknown') + ' (line ' + e.lineno + ')';
     console.error('SCRIPT ERROR:', msg);
-    // Show visible error bar
     var d = document.createElement('div');
-    d.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7f1d1d;color:white;padding:12px;font-size:12px;font-family:monospace;z-index:9999;word-break:break-all;';
-    d.textContent = 'JS ERROR: ' + msg;
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#7f1d1d;color:white;padding:10px;font-size:11px;font-family:monospace;z-index:9999;';
+    d.textContent = 'ERROR: ' + msg;
     document.body.appendChild(d);
   });
 </script>
@@ -5946,7 +5945,6 @@ ${closer}`;
     return `Trip: ${tripName}. Teams: ${teamA} (${teamAScore} pts) vs ${teamB} (${teamBScore} pts). Players: ${playerList || "none yet"}. Recent feed: ${recentFeed || "none"}.${allMoments ? " Match moments: " + allMoments : ""}`;
   }
 
-
   async function addSwamiPost(action, subject) {
     const ctx = buildTripContext();
     const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
@@ -6451,7 +6449,6 @@ ${closer}`;
     }
   }
 
-
   async function deletePlayerWithCheck() {
     if (!editingPlayerId) return;
     if (!requireAdmin("delete players")) return;
@@ -6945,7 +6942,6 @@ ${closer}`;
             style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#003087;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;touch-action:manipulation;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M20.1 7.2c.1-.7.1-1.4 0-2-.6-3.2-3.4-4.2-6.7-4.2H5.8c-.5 0-.9.4-1 .8L2 19.4c-.1.4.2.7.6.7h4.2l1.1-6.7v.2c.1-.5.5-.8 1-.8h2c4 0 7.1-1.6 8-6.3v-.3z"/><path d="M20.1 7.2c-.9 4.7-4 6.3-8 6.3h-2c-.5 0-.9.4-1 .8l-1.4 8.7c0 .3.2.6.5.6H12c.4 0 .8-.3.9-.7l.1-.3.7-4.3.1-.3c.1-.4.5-.7.9-.7h.6c3.7 0 6.5-1.5 7.4-5.8.4-1.7.2-3.2-.6-4.3z"/></svg>
             PayPal</a>` : "";
-
 
       const noPaymentMsg = (!venmoHandle && !paypalHandle)
         ? `<span style="font-size:11px;color:#475569;">Ask ${escapeHtml(t.to)} to add Venmo/PayPal to their profile</span>` : "";
@@ -7442,7 +7438,6 @@ ${closer}`;
       btn.classList.toggle("selected", btn.textContent.includes((PHOTO_CATEGORIES.find(c => c.id === catId) || {}).label || ""));
     });
   }
-
 
   function renderPhotoPlayerChips() {
     const el = document.getElementById("photoTaggedPlayers");
@@ -7988,7 +7983,6 @@ ${closer}`;
   window.savePlayer = savePlayer;
   window.exportData = exportData;
   window.importData = importData;
-
 
 
   window.__swamiAppReady = true;
