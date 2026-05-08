@@ -1632,9 +1632,29 @@
   </div>
 
   <div id="playerScreen" class="hidden secondary-screen">
-    <h2 id="playerScreenTitle">Player Profile</h2>
-
+    <div class="sticky-page-header">
+      <button onclick="openPlayerList()" class="secondary">Back</button>
+      <h2 id="playerScreenTitle">Add Player</h2>
+    </div>
     <div class="card">
+
+      <!-- Source selector: Member or Manual (only shown when adding new) -->
+      <div id="playerSourceRow" style="margin-bottom:16px;">
+        <label class="form-label">Add from</label>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button id="srcMemberBtn" onclick="setPlayerSource('member')" style="flex:1;margin:0;padding:10px;">Trip Member</button>
+          <button id="srcManualBtn" onclick="setPlayerSource('manual')" class="secondary" style="flex:1;margin:0;padding:10px;">Manual Entry</button>
+        </div>
+      </div>
+
+      <!-- Member picker (shown when source = member) -->
+      <div id="memberPickerRow" style="display:none;margin-bottom:12px;">
+        <label class="form-label">Select Member</label>
+        <select id="memberPicker" onchange="onMemberPickerChange()" style="margin-top:6px;">
+          <option value="">— Choose a member —</option>
+        </select>
+      </div>
+
       <label class="form-label" for="playerName">Name</label>
       <input id="playerName" placeholder="First and last name"/>
 
@@ -1658,22 +1678,19 @@
 
       <label class="form-label" for="playerTeam">Team</label>
       <select id="playerTeam">
-        <option value="">Assign to Team</option>
+        <option value="">No team assigned</option>
       </select>
 
-      <label class="form-label" for="playerEmail">Email Address</label>
-      <input id="playerEmail" type="email" placeholder="Links this player to their account"/>
+      <div id="linkMemberRow" style="display:none;margin-bottom:8px;">
+        <label class="form-label">Link to Trip Member (optional)</label>
+        <select id="linkMemberPicker" style="margin-top:6px;">
+          <option value="">— Not linked to a member —</option>
+        </select>
+        <div style="font-size:11px;color:#64748b;margin-top:4px;">Links this player profile to a member's account for tagging and notifications.</div>
+      </div>
 
-      <label class="form-label" for="playerVenmo">Venmo Username (optional)</label>
-      <input id="playerVenmo" placeholder="e.g. frank-mcgolf (no @)"/>
-
-      <label class="form-label" for="playerPaypal">PayPal.me Username (optional)</label>
-      <input id="playerPaypal" placeholder="e.g. frankmcgolf"/>
-
-      <div id="assignedPlayerStatus" class="assigned-player-box hidden"></div>
-      <button id="assignMeButton" onclick="assignMeToCurrentPlayer()" class="backup">Assign Me to This Player</button>
-      <button onclick="savePlayer()">Save Player</button>
-      <button onclick="openPlayerList()" class="secondary">Back to Player List</button>
+      <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
+      <button id="deletePlayerBtn" onclick="deletePlayerWithCheck()" class="danger hidden" style="margin-top:8px;">Delete Player</button>
     </div>
   </div>
 
@@ -1788,9 +1805,15 @@
 
       <label class="form-label" for="userDisplayName">Your Name</label>
       <input id="userDisplayName" placeholder="First and last name" style="margin-bottom:8px;"/>
-      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">This name is used as your player identity across all golf trips.</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Used as your player identity across all golf trips.</div>
 
-      <button onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
+      <label class="form-label" for="userVenmo">Venmo Username (optional)</label>
+      <input id="userVenmo" placeholder="e.g. frank-mcgolf (no @)" style="margin-bottom:8px;"/>
+
+      <label class="form-label" for="userPaypal">PayPal.me Username (optional)</label>
+      <input id="userPaypal" placeholder="e.g. frankmcgolf"/>
+
+      <button id="saveUserProfileBtn" onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
       <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
     </div>
   </div>
@@ -2552,16 +2575,18 @@ Respond ONLY with valid JSON, nothing else:
 
   function openUserProfile() {
     const emailEl = document.getElementById("userProfileEmail");
-    if (emailEl) emailEl.textContent = currentUser?.email || "";
-
+    if (emailEl) emailEl.textContent = currentUser?.email || getCookie(EMAIL_COOKIE) || "";
     const nameEl = document.getElementById("userDisplayName");
     if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
-
     if (currentUser?.uid) {
       getDoc(doc(db, "users", currentUser.uid)).then(snap => {
         if (snap.exists()) {
-          const data = snap.data();
-          if (nameEl && data.name) nameEl.value = data.name;
+          const d = snap.data();
+          if (nameEl && d.name) nameEl.value = d.name;
+          const venmoEl = document.getElementById("userVenmo");
+          const paypalEl = document.getElementById("userPaypal");
+          if (venmoEl) venmoEl.value = d.venmo || "";
+          if (paypalEl) paypalEl.value = d.paypal || "";
         }
       }).catch(() => {});
     }
@@ -2573,17 +2598,18 @@ Respond ONLY with valid JSON, nothing else:
     if (!name) { alert("Please enter your name."); return; }
     if (!currentUser?.uid) return;
 
+    const venmo = (document.getElementById("userVenmo")?.value || "").trim().replace(/^@/, "");
+    const paypal = (document.getElementById("userPaypal")?.value || "").trim().replace(/^@/, "");
+
     await setDoc(doc(db, "users", currentUser.uid), {
-      name,
-      email: currentUser.email || "",
+      name, venmo, paypal,
+      email: currentUser.email || getCookie(EMAIL_COOKIE) || "",
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
     setCookie(NAME_COOKIE, name);
-
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
-
     goHome();
   }
 
@@ -4175,8 +4201,7 @@ Max 80 words total.`;
     const momentText = pd.moment || "";
     const momentHtml = `
       <div class="hole-detail-section-title">Hole Moment (Swami Material)</div>
-      <textarea id="holeMomentText" placeholder="What happened on this hole? Swami is watching…" style="min-height:70px;"
-        oninput="setHoleDetailField('moment',this.value)">${escapeHtml(momentText)}</textarea>`;
+      <textarea id="holeMomentText" placeholder="What happened on this hole? Swami is watching…" style="min-height:70px;">${escapeHtml(momentText)}</textarea>`;
 
     document.getElementById("holeDetailContent").innerHTML = `
       ${infoBar}
@@ -5280,21 +5305,88 @@ ${closer}`;
     show("teamRosterScreen");
   }
 
+  let playerSource = "manual"; // "member" or "manual"
+
+  function setPlayerSource(src) {
+    playerSource = src;
+    const memberRow = document.getElementById("memberPickerRow");
+    const nameInput = document.getElementById("playerName");
+    const emailNote = document.getElementById("playerEmailNote");
+    const srcMemberBtn = document.getElementById("srcMemberBtn");
+    const srcManualBtn = document.getElementById("srcManualBtn");
+
+    if (src === "member") {
+      srcMemberBtn.className = "";
+      srcManualBtn.className = "secondary";
+      memberRow.style.display = "block";
+      nameInput.readOnly = true;
+      nameInput.style.opacity = "0.6";
+    } else {
+      srcMemberBtn.className = "secondary";
+      srcManualBtn.className = "";
+      memberRow.style.display = "none";
+      nameInput.readOnly = false;
+      nameInput.style.opacity = "1";
+      nameInput.value = "";
+      document.getElementById("memberPicker").value = "";
+    }
+  }
+
+  async function onMemberPickerChange() {
+    const uid = document.getElementById("memberPicker").value;
+    if (!uid) { document.getElementById("playerName").value = ""; return; }
+    // Look up member name from members collection
+    try {
+      const snap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("playerName").value = data.name || data.email?.split("@")[0] || "";
+      }
+    } catch(e) { console.warn("Member lookup failed:", e); }
+  }
+
   function openPlayer(playerId = null) {
+    if (!isAdmin()) { alert("Only admins can manage players."); return; }
     editingPlayerId = playerId;
     show("playerScreen");
-    renderTraits();
     loadTeamDropdown();
+    populateLinkMemberPicker();
+
+    const sourceRow = document.getElementById("playerSourceRow");
+    const deleteBtn = document.getElementById("deletePlayerBtn");
+    const linkRow   = document.getElementById("linkMemberRow");
 
     if (playerId === null) {
-      document.getElementById("playerScreenTitle").innerText = "Add Player";
+      document.getElementById("playerScreenTitle").textContent = "Add Player";
+      sourceRow.style.display = "block";
+      if (linkRow) linkRow.style.display = "none";
+      deleteBtn.classList.add("hidden");
       resetPlayerForm();
+      setPlayerSource("manual");
+      populateMemberPicker();
     } else {
-      document.getElementById("playerScreenTitle").innerText = "Edit Player";
+      document.getElementById("playerScreenTitle").textContent = "Edit Player";
+      sourceRow.style.display = "none";
+      if (linkRow) linkRow.style.display = "block";
+      deleteBtn.classList.remove("hidden");
       loadPlayerForEdit(playerId);
     }
+  }
 
-    updateAssignedPlayerStatus();
+  async function populateLinkMemberPicker() {
+    const picker = document.getElementById("linkMemberPicker");
+    if (!picker) return;
+    picker.innerHTML = `<option value="">— Not linked to a member —</option>`;
+    try {
+      const snap = await getDocs(membersCollection());
+      snap.docs.forEach(d => {
+        const m = d.data();
+        const opt = document.createElement("option");
+        opt.value = d.id;
+        opt.textContent = `${m.name || m.email || d.id}`;
+        picker.appendChild(opt);
+      });
+    } catch(e) { /* ignore */ }
   }
 
   function assignMeToCurrentPlayer() {
@@ -5401,16 +5493,15 @@ ${closer}`;
     document.getElementById("teamBInput").value = activeTripData.teamB || "";
   }
 
-  function loadTeamDropdown() {
-    const teamA = activeTripData.teamA || "Team A";
-    const teamB = activeTripData.teamB || "Team B";
-
+  function loadTeamDropdown(selectedValue = "") {
+    const teamA = (activeTripData && activeTripData.teamA) || "Team A";
+    const teamB = (activeTripData && activeTripData.teamB) || "Team B";
     const select = document.getElementById("playerTeam");
-
+    if (!select) return;
     select.innerHTML = `
-      <option value="">Assign to Team</option>
-      <option value="${escapeAttr(teamA)}">${teamA}</option>
-      <option value="${escapeAttr(teamB)}">${teamB}</option>
+      <option value="">No team assigned</option>
+      <option value="A" ${selectedValue === "A" ? "selected" : ""}>${escapeHtml(teamA)}</option>
+      <option value="B" ${selectedValue === "B" ? "selected" : ""}>${escapeHtml(teamB)}</option>
     `;
   }
 
@@ -6282,31 +6373,22 @@ ${closer}`;
     return "Not entered";
   }
 
-  function renderTraits() {
-    const s = document.getElementById("strengths");
-    const w = document.getElementById("weaknesses");
-
-    s.innerHTML = "";
-    w.innerHTML = "";
-
-    strengths.forEach(x => {
-      const div = document.createElement("div");
-      div.className = "trait-card";
-      div.innerText = x;
-      div.onclick = () => toggleTrait(div, x, "strength");
-      s.appendChild(div);
-    });
-
-    weaknesses.forEach(x => {
-      const div = document.createElement("div");
-      div.className = "trait-card";
-      div.innerText = x;
-      div.onclick = () => toggleTrait(div, x, "weakness");
-      w.appendChild(div);
-    });
+  async function populateMemberPicker() {
+    const sel = document.getElementById("memberPicker");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— Choose a member —</option>`;
+    try {
+      const snap = await getDocs(membersCollection());
+      // Filter out members who are already players
+      const playerEmails = new Set(players.map(p => p.email?.toLowerCase()).filter(Boolean));
+      snap.docs.forEach(d => {
+        const m = d.data();
+        if (m.email && playerEmails.has(m.email.toLowerCase())) return; // already a player
+        const label = m.name ? `${m.name} (${m.email || "no email"})` : (m.email || d.id);
+        sel.innerHTML += `<option value="${escapeAttr(d.id)}">${escapeHtml(label)}</option>`;
+      });
+    } catch(e) { console.warn("populateMemberPicker failed:", e); }
   }
-
-
 
   function resetPlayerForm() {
     document.getElementById("playerName").value = "";
@@ -6314,74 +6396,119 @@ ${closer}`;
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
-    document.getElementById("playerEmail").value = "";
-    document.getElementById("playerVenmo").value = "";
-    document.getElementById("playerPaypal").value = "";
-
-
-    document.querySelectorAll(".trait-card").forEach(card => {
-      card.classList.remove("selected");
-    });
+    const nameInput = document.getElementById("playerName");
+    if (nameInput) { nameInput.readOnly = false; nameInput.style.opacity = "1"; }
   }
 
   function loadPlayerForEdit(playerId) {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
-
     document.getElementById("playerName").value = player.name || "";
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
-    document.getElementById("playerTeam").value = player.team || "";
-    document.getElementById("playerEmail").value = player.email || "";
-    document.getElementById("playerVenmo").value = player.venmo || "";
-    document.getElementById("playerPaypal").value = player.paypal || "";
+    loadTeamDropdown(player.team || "");
+    // Name is readonly for member-linked players
+    const nameInput = document.getElementById("playerName");
+    if (nameInput && player.linkedUid) {
+      nameInput.readOnly = true;
+      nameInput.style.opacity = "0.6";
+    } else if (nameInput) {
+      nameInput.readOnly = false;
+      nameInput.style.opacity = "1";
+    }
+    // Set link member picker
+    const picker = document.getElementById("linkMemberPicker");
+    if (picker && player.linkedUid) {
+      // Will be set after populateLinkMemberPicker finishes
+      setTimeout(() => { if (picker) picker.value = player.linkedUid || ""; }, 300);
+    }
+  }
 
+  async function deletePlayerWithCheck() {
+    if (!editingPlayerId) return;
+    if (!requireAdmin("delete players")) return;
+    const player = players.find(p => p.id === editingPlayerId);
+    if (!player) return;
 
-    document.querySelectorAll("#strengths .trait-card").forEach(card => {
-      if (selectedStrengths.includes(card.innerText)) card.classList.add("selected");
-    });
+    // Check if player is in any match
+    const inMatch = matches.some(m =>
+      (m.teamAPlayerIds || []).includes(editingPlayerId) ||
+      (m.teamBPlayerIds || []).includes(editingPlayerId)
+    );
+    if (inMatch) {
+      alert(`${player.name} is part of an existing match. Delete the match first before removing this player.`);
+      return;
+    }
 
-    document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
-      if (selectedWeaknesses.includes(card.innerText)) card.classList.add("selected");
-    });
+    if (!confirm(`Delete ${player.name}? This cannot be undone.`)) return;
+    await deleteDoc(doc(db, "trips", activeTripId, "players", editingPlayerId));
+    openPlayerList();
   }
 
   async function savePlayer() {
     if (!requireAdmin("add or edit players")) return;
-    const name = document.getElementById("playerName").value;
-    const nickname = document.getElementById("nickname").value;
-    const handicapIndex = document.getElementById("handicapIndex").value;
+    const name = document.getElementById("playerName").value.trim();
+    const nickname = document.getElementById("nickname").value.trim();
+    const handicapIndex = document.getElementById("handicapIndex").value.trim();
     const gender = document.getElementById("playerGender").value;
     const team = document.getElementById("playerTeam").value;
 
-    if (!name.trim()) {
-      alert("Please enter a player name.");
-      return;
-    }
+    if (!name) { alert("Please enter a player name."); return; }
 
-    const venmo = document.getElementById("playerVenmo").value.trim().replace(/^@/, "");
-    const paypal = document.getElementById("playerPaypal").value.trim().replace(/^@/, "");
-    const email = (document.getElementById("playerEmail").value || "").trim().toLowerCase();
+    const btn = document.getElementById("savePlayerBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+    let linkedUid = null;
+    let email = "";
+
+    if (!editingPlayerId && playerSource === "member") {
+      linkedUid = document.getElementById("memberPicker").value;
+      if (!linkedUid) {
+        alert("Please select a member.");
+        if (btn) { btn.disabled = false; btn.textContent = "Save Player"; }
+        return;
+      }
+      try {
+        const mSnap = await getDoc(doc(db, "trips", activeTripId, "members", linkedUid));
+        if (mSnap.exists()) email = mSnap.data().email || "";
+      } catch(e) { /* ignore */ }
+    } else if (editingPlayerId) {
+      const existing = players.find(p => p.id === editingPlayerId);
+      // Use the link member picker value if admin changed it
+      const pickerVal = document.getElementById("linkMemberPicker")?.value;
+      linkedUid = pickerVal !== undefined ? (pickerVal || null) : (existing?.linkedUid || null);
+      email = existing?.email || "";
+      // If linking to a new member, get their email
+      if (linkedUid && linkedUid !== existing?.linkedUid) {
+        try {
+          const mSnap = await getDoc(doc(db, "trips", activeTripId, "members", linkedUid));
+          if (mSnap.exists()) email = mSnap.data().email || "";
+        } catch(e) { /* ignore */ }
+      }
+    }
 
     const player = {
       name, nickname, handicapIndex, gender, team,
-      email, venmo, paypal,
+      email, linkedUid: linkedUid || null,
+      type: linkedUid ? "member" : "manual",
       updatedAt: new Date().toISOString()
     };
 
     const wasEditing = Boolean(editingPlayerId);
-
-    if (editingPlayerId) {
-      await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), player);
-    } else {
-      await addDoc(playersCollection(), {
-        ...player,
-        createdAt: new Date().toISOString()
-      });
+    try {
+      if (editingPlayerId) {
+        await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), player);
+      } else {
+        await addDoc(playersCollection(), { ...player, createdAt: new Date().toISOString() });
+      }
+      await addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
+    } catch(e) {
+      console.error("savePlayer error:", e);
+      alert("Error saving player: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Save Player"; }
     }
-
-    await addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
 
     editingPlayerId = null;
     openPlayerList();
@@ -6732,7 +6859,7 @@ ${closer}`;
     return transactions;
   }
 
-  function renderExpenseBalances() {
+  async function renderExpenseBalances() {
     const balEl = document.getElementById("expenseBalances");
     const setEl = document.getElementById("expenseSettlement");
     if (!balEl || !setEl) return;
@@ -6751,17 +6878,31 @@ ${closer}`;
       </div>
     `).join("") : `<div class="empty-state">Add expenses to see balances.</div>`;
 
-    // Find already-settled payments to show in settled section
+    // Load Venmo/PayPal from user accounts for each player in settlements
+    const userPaymentInfo = {};
+    await Promise.all(players.map(async p => {
+      if (!p.linkedUid && !p.email) return;
+      try {
+        // Try linkedUid first, then search by email
+        if (p.linkedUid) {
+          const snap = await getDoc(doc(db, "users", p.linkedUid));
+          if (snap.exists()) {
+            userPaymentInfo[p.id] = { venmo: snap.data().venmo || "", paypal: snap.data().paypal || "" };
+          }
+        }
+      } catch(e) { /* ignore */ }
+    }));
+
     const settledSection = document.getElementById("expenseSettledSection");
     const settledEl = document.getElementById("expenseSettled");
 
     setEl.innerHTML = settlements.length ? settlements.map(t => {
-      const toPlayer = players.find(p => p.id === t.toId);
       const tripName = (activeTripData.name || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
       const note = encodeURIComponent(`${tripName} settlement`);
       const amount = t.amount.toFixed(2);
-      const venmoHandle = toPlayer?.venmo?.trim();
-      const paypalHandle = toPlayer?.paypal?.trim();
+      const payInfo = userPaymentInfo[t.toId] || {};
+      const venmoHandle = payInfo.venmo?.trim();
+      const paypalHandle = payInfo.paypal?.trim();
 
       const venmoBtn = venmoHandle
         ? `<a href="venmo://paycharge?txn=pay&recipients=${encodeURIComponent(venmoHandle)}&amount=${amount}&note=${note}"
@@ -7478,25 +7619,35 @@ ${closer}`;
     empty.style.display = "none";
 
     const snap = await getDocs(swamiIntelCollection(activeTripId, player.id));
-    if (snap.empty) {
-      list.innerHTML = "";
-      empty.style.display = "block";
-      return;
+
+    let items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+
+    // Non-admins can only see their own submissions
+    const myUid = currentUser?.uid;
+    if (!isAdmin()) {
+      items = items.filter(item => item.submittedBy === myUid);
     }
 
-    const items = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+    if (!items.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+      empty.textContent = isAdmin()
+        ? "No intel submitted yet."
+        : "You haven't submitted any intel on this player yet.";
+      return;
+    }
 
     list.innerHTML = items.map(item => `
       <div style="padding:12px 0;border-bottom:1px solid #1e3a5f;">
         <div style="font-size:14px;line-height:1.5;margin-bottom:6px;">${escapeHtml(item.text)}</div>
-        <div style="font-size:11px;color:#475569;">
-          From ${escapeHtml(item.submitterName || "Anonymous")} · ${formatFeedTime(item.submittedAt)}
-          <button onclick="deleteIntel('${escapeAttr(player.id)}','${escapeAttr(item.id)}')"
-            style="margin-left:10px;padding:2px 8px;font-size:11px;width:auto;margin-top:0;background:transparent;color:#f87171;border:1px solid #f87171;border-radius:10px;">
+        <div style="font-size:11px;color:#475569;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ${isAdmin() ? `<span>From ${escapeHtml(item.submitterName || "Anonymous")}</span> ·` : ""}
+          <span>${formatFeedTime(item.submittedAt)}</span>
+          ${isAdmin() ? `<button onclick="deleteIntel('${escapeAttr(player.id)}','${escapeAttr(item.id)}')"
+            style="padding:2px 8px;font-size:11px;width:auto;margin:0;background:transparent;color:#f87171;border:1px solid #f87171;border-radius:10px;">
             Delete
-          </button>
+          </button>` : ""}
         </div>
       </div>
     `).join("");
@@ -7557,28 +7708,36 @@ ${closer}`;
     const el = document.getElementById("membersList");
     if (!el) return;
     el.innerHTML = `<div class="empty-state" style="font-size:13px;">Loading...</div>`;
-
     const snap = await getDocs(membersCollection());
-    if (snap.empty) {
-      el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`;
-      return;
-    }
-
+    if (snap.empty) { el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`; return; }
     el.innerHTML = snap.docs.map(d => {
       const m = d.data();
       const isMe = m.uid === currentUser?.uid;
       const roleColor = m.role === "admin" ? "#93c5fd" : "#86efac";
+      const otherRole = m.role === "admin" ? "participant" : "admin";
       return `<div class="player-row" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-weight:600;">${escapeHtml(m.name || m.email || "Unknown")}</div>
           <div style="font-size:12px;color:#64748b;">${escapeHtml(m.email || "")}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <span style="font-size:12px;color:${roleColor};font-weight:600;">${m.role === "admin" ? "Admin" : "Participant"}</span>
-          ${!isMe ? `<button onclick="removeMember('${escapeAttr(d.id)}')" class="danger" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Remove</button>` : ""}
+          ${!isMe ? `
+            <button onclick="changeMemberRole('${escapeAttr(d.id)}','${otherRole}')"
+              class="secondary" style="width:auto;padding:5px 10px;margin:0;font-size:11px;">
+              → ${otherRole === "admin" ? "Admin" : "Participant"}
+            </button>
+            <button onclick="removeMember('${escapeAttr(d.id)}')"
+              class="danger" style="width:auto;padding:5px 10px;margin:0;font-size:11px;">Remove</button>
+          ` : `<span style="font-size:11px;color:#475569;">(you)</span>`}
         </div>
       </div>`;
     }).join("");
+  }
+
+  async function changeMemberRole(uid, newRole) {
+    await updateDoc(doc(membersCollection(), uid), { role: newRole });
+    await renderMembersList();
   }
 
   async function renderPendingInvites() {
@@ -7712,6 +7871,11 @@ ${closer}`;
   window.saveIntel = saveIntel;
   window.openViewIntel = openViewIntel;
   window.deleteIntel = deleteIntel;
+  window.populateLinkMemberPicker = populateLinkMemberPicker;
+  window.changeMemberRole = changeMemberRole;
+  window.setPlayerSource = setPlayerSource;
+  window.onMemberPickerChange = onMemberPickerChange;
+  window.deletePlayerWithCheck = deletePlayerWithCheck;
   window.openMemberManager = openMemberManager;
   window.sendInvite = sendInvite;
   window.removeMember = removeMember;
