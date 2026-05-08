@@ -168,66 +168,6 @@
       margin-top: 10px;
     }
 
-    .feed-post-preview {
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .feed-text-collapsed {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: #cbd5e1;
-    }
-
-    .feed-expand-btn {
-      font-size: 12px;
-      color: #60a5fa;
-      cursor: pointer;
-      margin-top: 4px;
-      display: inline-block;
-      touch-action: manipulation;
-      user-select: none;
-    }
-
-    .feed-reactions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    .reaction-btn {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 16px;
-      border: 1.5px solid #375984;
-      background: #0f2442;
-      font-size: 13px;
-      cursor: pointer;
-      touch-action: manipulation;
-      user-select: none;
-      transition: background 0.1s, border-color 0.1s;
-      white-space: nowrap;
-    }
-
-    .reaction-btn.reacted {
-      background: #1e3a5f;
-      border-color: #60a5fa;
-    }
-
-    .reaction-btn:active { opacity: 0.7; }
-
-    .reaction-count {
-      font-size: 12px;
-      color: #93c5fd;
-      font-weight: 600;
-      min-width: 12px;
-    }
-
     .feed-author {
       font-weight: bold;
       font-size: 14px;
@@ -1692,29 +1632,9 @@
   </div>
 
   <div id="playerScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header">
-      <button onclick="openPlayerList()" class="secondary">Back</button>
-      <h2 id="playerScreenTitle">Add Player</h2>
-    </div>
+    <h2 id="playerScreenTitle">Player Profile</h2>
+
     <div class="card">
-
-      <!-- Source selector: Member or Manual (only shown when adding new) -->
-      <div id="playerSourceRow" style="margin-bottom:16px;">
-        <label class="form-label">Add from</label>
-        <div style="display:flex;gap:8px;margin-top:6px;">
-          <button id="srcMemberBtn" onclick="setPlayerSource('member')" style="flex:1;margin:0;padding:10px;">Trip Member</button>
-          <button id="srcManualBtn" onclick="setPlayerSource('manual')" class="secondary" style="flex:1;margin:0;padding:10px;">Manual Entry</button>
-        </div>
-      </div>
-
-      <!-- Member picker (shown when source = member) -->
-      <div id="memberPickerRow" style="display:none;margin-bottom:12px;">
-        <label class="form-label">Select Member</label>
-        <select id="memberPicker" onchange="onMemberPickerChange()" style="margin-top:6px;">
-          <option value="">— Choose a member —</option>
-        </select>
-      </div>
-
       <label class="form-label" for="playerName">Name</label>
       <input id="playerName" placeholder="First and last name"/>
 
@@ -1738,19 +1658,31 @@
 
       <label class="form-label" for="playerTeam">Team</label>
       <select id="playerTeam">
-        <option value="">No team assigned</option>
+        <option value="">Assign to Team</option>
       </select>
 
-      <div id="linkMemberRow" style="display:none;margin-bottom:8px;">
-        <label class="form-label">Link to Trip Member (optional)</label>
-        <select id="linkMemberPicker" style="margin-top:6px;">
-          <option value="">— Not linked to a member —</option>
-        </select>
-        <div style="font-size:11px;color:#64748b;margin-top:4px;">Links this player profile to a member's account for tagging and notifications.</div>
-      </div>
+      <label class="form-label" for="playerEmail">Email Address</label>
+      <input id="playerEmail" type="email" placeholder="Links this player to their account"/>
 
-      <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
-      <button id="deletePlayerBtn" onclick="deletePlayerWithCheck()" class="danger hidden" style="margin-top:8px;">Delete Player</button>
+      <label class="form-label" for="playerVenmo">Venmo Username (optional)</label>
+      <input id="playerVenmo" placeholder="e.g. frank-mcgolf (no @)"/>
+
+      <label class="form-label" for="playerPaypal">PayPal.me Username (optional)</label>
+      <input id="playerPaypal" placeholder="e.g. frankmcgolf"/>
+
+      <label class="form-label" for="swamiIntel">Swami Intel</label>
+      <textarea id="swamiIntel" placeholder="Give Swami something to work with. Inside jokes, quirks, superstitions, rivalries, notable moments, anything. The more specific, the better the roasts."></textarea>
+
+      <h4>Strengths</h4>
+      <div id="strengths" class="traits-grid"></div>
+
+      <h4>Weaknesses</h4>
+      <div id="weaknesses" class="traits-grid"></div>
+
+      <div id="assignedPlayerStatus" class="assigned-player-box hidden"></div>
+      <button id="assignMeButton" onclick="assignMeToCurrentPlayer()" class="backup">Assign Me to This Player</button>
+      <button onclick="savePlayer()">Save Player</button>
+      <button onclick="openPlayerList()" class="secondary">Back to Player List</button>
     </div>
   </div>
 
@@ -1865,44 +1797,10 @@
 
       <label class="form-label" for="userDisplayName">Your Name</label>
       <input id="userDisplayName" placeholder="First and last name" style="margin-bottom:8px;"/>
-      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Used as your player identity across all golf trips.</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">This name is used as your player identity across all golf trips.</div>
 
-      <label class="form-label" for="userVenmo">Venmo Username (optional)</label>
-      <input id="userVenmo" placeholder="e.g. frank-mcgolf (no @)" style="margin-bottom:8px;"/>
-
-      <label class="form-label" for="userPaypal">PayPal.me Username (optional)</label>
-      <input id="userPaypal" placeholder="e.g. frankmcgolf"/>
-
-      <button id="saveUserProfileBtn" onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
+      <button onclick="saveUserProfile()" style="margin-top:16px;">Save</button>
       <button onclick="signOutUser()" class="danger" style="margin-top:8px;">Sign Out</button>
-    </div>
-  </div>
-
-  <!-- ── SWAMI INTEL ──────────────────────────────────────────────────────── -->
-  <div id="submitIntelScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header">
-      <button onclick="openPlayerList()" class="secondary">Back</button>
-      <h2 id="submitIntelTitle">Submit Intel</h2>
-    </div>
-    <div class="card">
-      <div style="font-size:13px;color:#93c5fd;margin-bottom:12px;line-height:1.5;">
-        Share what you know about this player. Your submission is anonymous to them — only Swami and admins can see who submitted what. The more specific, the funnier the roast.
-      </div>
-      <label class="form-label" for="intelText">Your Intel</label>
-      <textarea id="intelText" placeholder="e.g. Claims a 12 handicap but hasn't broken 90 since the Obama administration. Blames his caddie, the wind, and Mercury retrograde." style="min-height:100px;"></textarea>
-      <button onclick="saveIntel()" style="margin-top:12px;">Submit Intel</button>
-    </div>
-  </div>
-
-  <div id="viewIntelScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header">
-      <button onclick="openPlayerList()" class="secondary">Back</button>
-      <h2 id="viewIntelTitle">Swami Intel</h2>
-    </div>
-    <div class="card">
-      <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Only visible to admins and Swami. Not shown to the player.</div>
-      <div id="viewIntelList"></div>
-      <div id="viewIntelEmpty" class="empty-state" style="display:none;">No intel submitted yet. Let the gathering begin.</div>
     </div>
   </div>
 
@@ -2009,11 +1907,6 @@
   let currentUser = null;
   let activeTripData = {};
   let players = [];
-
-  // Feed UI state
-  const expandedPosts = new Set();
-  const localReactions = {};
-  const REACTIONS = ["🔥", "😂", "💀", "🎯", "👏"];
   let itineraryEvents = [];
   let feedPosts = [];
   let matches = [];
@@ -2518,7 +2411,46 @@ Respond ONLY with valid JSON, nothing else:
   }
 
 
+  const strengths = [
+    "Fairway Finder-ish",
+    "Green-Seeking Missiles",
+    "Flop Shot Flair",
+    "Putt Whisperer Energy",
+    "Beer Consistency",
+    "Trash Talk Volume",
+    "Cart Navigation Skills",
+    "Mental Toughness",
+    "Snack Management",
+    "Mulligan Negotiation",
+    "Cart Cooler Logistics",
+    "Approach Shot Optimism",
+    "Gimme Putt Diplomacy",
+    "Post-Round Storytelling",
+    "First Tee Swagger",
+    "Club Twirl Confidence"
+  ];
 
+  const weaknesses = [
+    "3-Putt Specialist",
+    "Slice Machine",
+    "Hook Under Pressure",
+    "Slow Play Offender",
+    "Bunker Magnet",
+    "Ball Disappearance Expert",
+    "Water Hazard Addiction",
+    "Driver Meltdown",
+    "Putting Confidence Issues",
+    "Breakfast Ball Dependency",
+    "Range Hero Syndrome",
+    "Yardage Guessing Disorder",
+    "Cart Path Only Confusion",
+    "Scorecard Math Problems",
+    "Wind Blame Specialist",
+    "Forgotten Wedge Syndrome"
+  ];
+
+  let selectedStrengths = [];
+  let selectedWeaknesses = [];
 
   // ── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -2640,18 +2572,16 @@ Respond ONLY with valid JSON, nothing else:
 
   function openUserProfile() {
     const emailEl = document.getElementById("userProfileEmail");
-    if (emailEl) emailEl.textContent = currentUser?.email || getCookie(EMAIL_COOKIE) || "";
+    if (emailEl) emailEl.textContent = currentUser?.email || "";
+
     const nameEl = document.getElementById("userDisplayName");
     if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
+
     if (currentUser?.uid) {
       getDoc(doc(db, "users", currentUser.uid)).then(snap => {
         if (snap.exists()) {
-          const d = snap.data();
-          if (nameEl && d.name) nameEl.value = d.name;
-          const venmoEl = document.getElementById("userVenmo");
-          const paypalEl = document.getElementById("userPaypal");
-          if (venmoEl) venmoEl.value = d.venmo || "";
-          if (paypalEl) paypalEl.value = d.paypal || "";
+          const data = snap.data();
+          if (nameEl && data.name) nameEl.value = data.name;
         }
       }).catch(() => {});
     }
@@ -2663,18 +2593,17 @@ Respond ONLY with valid JSON, nothing else:
     if (!name) { alert("Please enter your name."); return; }
     if (!currentUser?.uid) return;
 
-    const venmo = (document.getElementById("userVenmo")?.value || "").trim().replace(/^@/, "");
-    const paypal = (document.getElementById("userPaypal")?.value || "").trim().replace(/^@/, "");
-
     await setDoc(doc(db, "users", currentUser.uid), {
-      name, venmo, paypal,
-      email: currentUser.email || getCookie(EMAIL_COOKIE) || "",
+      name,
+      email: currentUser.email || "",
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
     setCookie(NAME_COOKIE, name);
+
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
+
     goHome();
   }
 
@@ -2737,27 +2666,31 @@ Respond ONLY with valid JSON, nothing else:
     } else {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().email) setCookie(EMAIL_COOKIE, userDoc.data().email);
+        if (userDoc.exists() && userDoc.data().email) {
+          setCookie(EMAIL_COOKIE, userDoc.data().email);
+        }
       } catch(e) { console.log("users read error:", e.code); }
     }
-
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("appHome").classList.remove("hidden");
     const pill = document.getElementById("userPill");
     if (pill) pill.textContent = "👤";
     document.getElementById("syncStatus").style.display = "none";
 
-    try { await initializeTripIfNeeded("pinehurst2026"); } catch(e) { console.log("initTrip pinehurst ERROR:", e.code); }
-    try { await initializeTripIfNeeded("testGolfTrip"); } catch(e) { console.log("initTrip test ERROR:", e.code); }
-    try { await loadCourseLibrary(); } catch(e) { console.warn("Course library skipped"); }
+    try { await initializeTripIfNeeded("pinehurst2026"); console.log("initTrip pinehurst OK"); }
+    catch(e) { console.log("initTrip pinehurst ERROR:", e.code, e.message); }
+
+    try { await initializeTripIfNeeded("testGolfTrip"); console.log("initTrip test OK"); }
+    catch(e) { console.log("initTrip test ERROR:", e.code, e.message); }
+
+    try { await loadCourseLibrary(); } catch (e) { console.warn("Course library skipped"); }
 
     try {
       await loadTrips();
-      console.log("loadTrips OK, count:", Object.keys(trips).length);
-    } catch(e) {
+      console.log("loadTrips OK, trips:", Object.keys(trips).join(", "));
+    } catch (e) {
       console.log("loadTrips ERROR:", e.code, e.message);
     }
-
     renderTripTiles();
   }
 
@@ -2831,10 +2764,6 @@ Respond ONLY with valid JSON, nothing else:
 
   function invitesCollection(tripId = activeTripId) {
     return collection(db, "trips", tripId, "invites");
-  }
-
-  function swamiIntelCollection(tripId = activeTripId, playerId) {
-    return collection(db, "trips", tripId, "players", playerId, "intel");
   }
 
   // Current user's role in the active trip
@@ -3462,9 +3391,7 @@ Respond ONLY with valid JSON, nothing else:
       "playerListScreen",
       "playerScreen",
       "userProfileScreen",
-      "membersScreen",
-      "submitIntelScreen",
-      "viewIntelScreen"
+      "membersScreen"
     ].forEach(x => {
       const el = document.getElementById(x);
       if (el) {
@@ -3826,7 +3753,7 @@ Respond ONLY with valid JSON, nothing else:
         `HI ${p.handicapIndex || "N/A"}${ch !== null ? "/CH " + ch : ""}`,
         p.strengths && p.strengths.length ? `strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `weaknesses: ${p.weaknesses.join(", ")}` : null,
-        null // intel loaded from subcollection
+        p.swamiIntel ? `intel: ${p.swamiIntel}` : null
       ].filter(Boolean);
       return parts.join("; ");
     }
@@ -4262,7 +4189,8 @@ Max 80 words total.`;
     const momentText = pd.moment || "";
     const momentHtml = `
       <div class="hole-detail-section-title">Hole Moment (Swami Material)</div>
-      <textarea id="holeMomentText" placeholder="What happened on this hole? Swami is watching…" style="min-height:70px;">${escapeHtml(momentText)}</textarea>`;
+      <textarea id="holeMomentText" placeholder="What happened on this hole? Swami is watching…" style="min-height:70px;"
+        oninput="setHoleDetailField('moment',this.value)">${escapeHtml(momentText)}</textarea>`;
 
     document.getElementById("holeDetailContent").innerHTML = `
       ${infoBar}
@@ -4283,7 +4211,7 @@ Max 80 words total.`;
         ${hazardsHtml}
         ${ballsHtml}
         ${momentHtml}
-        <button id="saveHoleBtn" onclick="saveHoleDetail()" style="margin-top:16px;">Save Hole</button>
+        <button onclick="saveHoleDetail()" style="margin-top:16px;">Save Hole</button>
       </div>
     `;
   }
@@ -4359,47 +4287,43 @@ Max 80 words total.`;
   }
 
   async function saveHoleDetail() {
-    const btn = document.getElementById("saveHoleBtn");
-    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
     const match = matches.find(m => m.id === holeDetailMatchId);
-    if (!match) { if (btn) { btn.disabled = false; btn.textContent = "Save Hole"; } return; }
+    if (!match) return;
 
-    try {
-      // Capture the moment text from textarea (may have changed without oninput firing)
-      const momentEl = document.getElementById("holeMomentText");
-      if (momentEl) {
-        if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
-        if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
-        holeDetailData[holeDetailPlayerId][holeDetailHoleNum].moment = momentEl.value;
-      }
-
-      const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
-      Object.entries(holeDetailData).forEach(([pid, holes]) => {
-        if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
-        Object.entries(holes).forEach(([holeNum, pd]) => {
-          if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
-        });
-      });
-
-      await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
-        holeScores: updatedHoleScores,
-        holeDetail: holeDetailData,
-        updatedAt: new Date().toISOString()
-      });
-
-      const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
-      if (pd?.moment && pd.moment.trim()) {
-        const player = players.find(p => p.id === holeDetailPlayerId);
-        await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
-      }
-
-      renderScoreEntry();
-      closeHoleDetail();
-    } catch(e) {
-      console.error("saveHoleDetail error:", e);
-      alert("Error saving: " + e.message);
-      if (btn) { btn.disabled = false; btn.textContent = "Save Hole"; }
+    // Capture the moment text from textarea (may have changed without oninput firing)
+    const momentEl = document.getElementById("holeMomentText");
+    if (momentEl) {
+      if (!holeDetailData[holeDetailPlayerId]) holeDetailData[holeDetailPlayerId] = {};
+      if (!holeDetailData[holeDetailPlayerId][holeDetailHoleNum]) holeDetailData[holeDetailPlayerId][holeDetailHoleNum] = {};
+      holeDetailData[holeDetailPlayerId][holeDetailHoleNum].moment = momentEl.value;
     }
+
+    // Write scores back to holeScores
+    const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
+    Object.entries(holeDetailData).forEach(([pid, holes]) => {
+      if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
+      Object.entries(holes).forEach(([holeNum, pd]) => {
+        if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
+      });
+    });
+
+    await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
+      holeScores: updatedHoleScores,
+      holeDetail: holeDetailData,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Trigger Swami if a moment was logged
+    const pd = holeDetailData[holeDetailPlayerId]?.[holeDetailHoleNum];
+    if (pd?.moment && pd.moment.trim()) {
+      const player = players.find(p => p.id === holeDetailPlayerId);
+      await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${player?.name || "A player"}: ${pd.moment.trim()}`);
+    }
+
+    // Refresh scorecard
+    renderScoreEntry();
+    closeHoleDetail();
+  }
 
   function closeHoleDetail() {
     show("scoreEntryScreen");
@@ -4985,7 +4909,7 @@ Max 80 words total.`;
         `Team: ${p.team || "unassigned"}`,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
-        null // intel loaded from subcollection
+        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
       ].filter(Boolean);
       return parts.join("; ");
     }).join(" | ");
@@ -5010,7 +4934,7 @@ Max 80 words total.`;
     const previewEl = document.getElementById("recapPreview");
     if (previewEl) previewEl.innerHTML = `<div class="empty-state">🧠 Swami is reviewing the evidence...</div>`;
 
-    let body = await callSwami(recapPrompt, 450, true); // useSearch=true for recaps
+    let body = await callSwami(recapPrompt, 450);
     if (!body) body = buildRecapText(type, scopeLabel, relevantMatches); // fallback to templates
 
     const recap = {
@@ -5264,6 +5188,22 @@ ${closer}`;
     }
     pulse.appendChild(swamiItem);
 
+    // Latest Tagged Chat
+    const taggedItem = makePulseItem("Latest Tagged Chat");
+    if (latestTagged) {
+      const d = document.createElement("div");
+      d.className = "pulse-text";
+      d.textContent = `${latestTagged.author}: ${(latestTagged.text || "").slice(0, 200)}`;
+      taggedItem.appendChild(d);
+      const m = document.createElement("div");
+      m.className = "pulse-meta";
+      m.textContent = formatFeedTime(latestTagged.createdAt);
+      taggedItem.appendChild(m);
+    } else {
+      taggedItem.appendChild(makeEmptyState(assignedId ? "No one has tagged you yet." : "Assign yourself to a player to see your tagged messages here."));
+    }
+    pulse.appendChild(taggedItem);
+
     // Latest Match Update
     const matchItem = makePulseItem("Latest Match Update");
     if (latestMatch) {
@@ -5354,88 +5294,21 @@ ${closer}`;
     show("teamRosterScreen");
   }
 
-  let playerSource = "manual"; // "member" or "manual"
-
-  function setPlayerSource(src) {
-    playerSource = src;
-    const memberRow = document.getElementById("memberPickerRow");
-    const nameInput = document.getElementById("playerName");
-    const emailNote = document.getElementById("playerEmailNote");
-    const srcMemberBtn = document.getElementById("srcMemberBtn");
-    const srcManualBtn = document.getElementById("srcManualBtn");
-
-    if (src === "member") {
-      srcMemberBtn.className = "";
-      srcManualBtn.className = "secondary";
-      memberRow.style.display = "block";
-      nameInput.readOnly = true;
-      nameInput.style.opacity = "0.6";
-    } else {
-      srcMemberBtn.className = "secondary";
-      srcManualBtn.className = "";
-      memberRow.style.display = "none";
-      nameInput.readOnly = false;
-      nameInput.style.opacity = "1";
-      nameInput.value = "";
-      document.getElementById("memberPicker").value = "";
-    }
-  }
-
-  async function onMemberPickerChange() {
-    const uid = document.getElementById("memberPicker").value;
-    if (!uid) { document.getElementById("playerName").value = ""; return; }
-    // Look up member name from members collection
-    try {
-      const snap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("playerName").value = data.name || data.email?.split("@")[0] || "";
-      }
-    } catch(e) { console.warn("Member lookup failed:", e); }
-  }
-
   function openPlayer(playerId = null) {
-    if (!isAdmin()) { alert("Only admins can manage players."); return; }
     editingPlayerId = playerId;
     show("playerScreen");
+    renderTraits();
     loadTeamDropdown();
-    populateLinkMemberPicker();
-
-    const sourceRow = document.getElementById("playerSourceRow");
-    const deleteBtn = document.getElementById("deletePlayerBtn");
-    const linkRow   = document.getElementById("linkMemberRow");
 
     if (playerId === null) {
-      document.getElementById("playerScreenTitle").textContent = "Add Player";
-      sourceRow.style.display = "block";
-      if (linkRow) linkRow.style.display = "none";
-      deleteBtn.classList.add("hidden");
+      document.getElementById("playerScreenTitle").innerText = "Add Player";
       resetPlayerForm();
-      setPlayerSource("manual");
-      populateMemberPicker();
     } else {
-      document.getElementById("playerScreenTitle").textContent = "Edit Player";
-      sourceRow.style.display = "none";
-      if (linkRow) linkRow.style.display = "block";
-      deleteBtn.classList.remove("hidden");
+      document.getElementById("playerScreenTitle").innerText = "Edit Player";
       loadPlayerForEdit(playerId);
     }
-  }
 
-  async function populateLinkMemberPicker() {
-    const picker = document.getElementById("linkMemberPicker");
-    if (!picker) return;
-    picker.innerHTML = `<option value="">— Not linked to a member —</option>`;
-    try {
-      const snap = await getDocs(membersCollection());
-      snap.docs.forEach(d => {
-        const m = d.data();
-        const opt = document.createElement("option");
-        opt.value = d.id;
-        opt.textContent = `${m.name || m.email || d.id}`;
-        picker.appendChild(opt);
-      });
-    } catch(e) { /* ignore */ }
+    updateAssignedPlayerStatus();
   }
 
   function assignMeToCurrentPlayer() {
@@ -5542,15 +5415,16 @@ ${closer}`;
     document.getElementById("teamBInput").value = activeTripData.teamB || "";
   }
 
-  function loadTeamDropdown(selectedValue = "") {
-    const teamA = (activeTripData && activeTripData.teamA) || "Team A";
-    const teamB = (activeTripData && activeTripData.teamB) || "Team B";
+  function loadTeamDropdown() {
+    const teamA = activeTripData.teamA || "Team A";
+    const teamB = activeTripData.teamB || "Team B";
+
     const select = document.getElementById("playerTeam");
-    if (!select) return;
+
     select.innerHTML = `
-      <option value="">No team assigned</option>
-      <option value="A" ${selectedValue === "A" ? "selected" : ""}>${escapeHtml(teamA)}</option>
-      <option value="B" ${selectedValue === "B" ? "selected" : ""}>${escapeHtml(teamB)}</option>
+      <option value="">Assign to Team</option>
+      <option value="${escapeAttr(teamA)}">${teamA}</option>
+      <option value="${escapeAttr(teamB)}">${teamB}</option>
     `;
   }
 
@@ -5606,6 +5480,7 @@ ${closer}`;
           <br>
           <strong>Weaknesses:</strong>
           ${player.weaknesses && player.weaknesses.length ? player.weaknesses.map(escapeHtml).join(", ") : "None selected"}
+          ${player.swamiIntel ? `<br><strong>Swami Intel:</strong> ${escapeHtml(player.swamiIntel)}` : ""}
         </div>
       `;
 
@@ -5830,10 +5705,8 @@ ${closer}`;
     return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // Track which posts are expanded and local reaction state
   function renderFeed() {
     const list = document.getElementById("feedList");
-    if (!list) return;
 
     const sortedPosts = [...feedPosts].sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
@@ -5842,122 +5715,38 @@ ${closer}`;
     list.innerHTML = "";
 
     if (sortedPosts.length === 0) {
-      list.innerHTML = `<div class="feed-empty">The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.</div>`;
+      list.innerHTML = `
+        <div class="feed-empty">
+          The feed is quiet. No chirps, no excuses, no suspiciously improved handicaps... yet.
+        </div>
+      `;
       return;
     }
 
     sortedPosts.forEach((post, idx) => {
       const div = document.createElement("div");
       div.className = "feed-post";
-      const postId = post.id || `post-${idx}`;
-      const isSwami = post.author === "Swami Says";
-      const isExpanded = expandedPosts.has(postId);
-      const imgId = post.imageUrl ? `feed-img-${postId}` : "";
-      const text = (post.text || "").trim();
-      const isLong = text.length > 120 || text.includes("\n");
-
-      // Reactions
-      const reactions = post.reactions || {};
-      const myUid = currentUser?.uid || "anon";
-      const myReactions = localReactions[postId] || new Set(
-        Object.entries(reactions)
-          .filter(([emoji, uids]) => Array.isArray(uids) && uids.includes(myUid))
-          .map(([emoji]) => emoji)
-      );
-      localReactions[postId] = myReactions;
-
-      const reactionsHtml = `
-        <div class="feed-reactions">
-          ${REACTIONS.map(emoji => {
-            const count = (reactions[emoji] || []).length;
-            const reacted = myReactions.has(emoji);
-            const countHtml = count ? ' <span class="reaction-count">' + count + '</span>' : '';
-            return '<button class="reaction-btn' + (reacted ? ' reacted' : '') + '"'
-              + ' data-post-id="' + escapeAttr(postId) + '" data-emoji="' + emoji + '"'
-              + ' onclick="toggleReaction(this,\'' + escapeAttr(postId) + '\',\'' + emoji + '\')">'
-              + emoji + countHtml
-              + '</button>';
-          }).join("")}
-        </div>`;
-
-      const textClass = (!isExpanded && isLong) ? "feed-text feed-text-collapsed" : "feed-text";
-      const expandBtn = isLong
-        ? '<span class="feed-expand-btn">' + (isExpanded ? "Show less ▲" : "Show more ▼") + '</span>'
-        : "";
-      const mediaHtml = post.imageUrl
-        ? '<div class="feed-media"><img id="' + imgId + '" alt="' + escapeHtml(post.imageCaption || "") + '" style="display:block;width:100%;border-radius:10px;">'
-          + (post.imageCaption ? '<div class="feed-media-caption">' + escapeHtml(post.imageCaption) + '</div>' : '')
-          + '</div>'
-        : "";
+      const imgId = post.imageUrl ? `feed-img-${idx}` : "";
 
       div.innerHTML = `
-        <div class="feed-post-preview" onclick="togglePostExpand('${escapeAttr(postId)}',this)">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <div class="feed-author" style="${isSwami ? "color:#f0abfc;" : ""}">${escapeHtml(post.author)}</div>
-            <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
-          </div>
-          <div class="${textClass}">${renderPostText(post)}</div>
-          ${expandBtn}
-        </div>
-        ${mediaHtml}
-        ${reactionsHtml}
+        <div class="feed-author">${escapeHtml(post.author)}</div>
+        <div class="feed-time">${formatFeedTime(post.createdAt)}</div>
+        <div class="feed-text">${renderPostText(post)}</div>
+        ${post.imageUrl ? `
+          <div class="feed-media">
+            <img id="${imgId}" alt="${escapeHtml(post.imageCaption || "Swami media")}" style="display:block;width:100%;border-radius:10px;">
+            ${post.imageCaption ? `<div class="feed-media-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
+          </div>` : ""}
       `;
 
       list.appendChild(div);
 
+      // Set src after DOM insertion to avoid base64 string misparse in innerHTML
       if (imgId) {
         const img = div.querySelector(`#${imgId}`);
         if (img) img.src = post.imageUrl;
       }
     });
-  }
-
-  function togglePostExpand(postId, headerEl) {
-    if (expandedPosts.has(postId)) {
-      expandedPosts.delete(postId);
-    } else {
-      expandedPosts.add(postId);
-    }
-    renderFeed();
-  }
-
-  async function toggleReaction(btn, postId, emoji) {
-    if (!currentUser?.uid) return;
-    const uid = currentUser.uid;
-
-    // Optimistic local update
-    if (!localReactions[postId]) localReactions[postId] = new Set();
-    const mySet = localReactions[postId];
-    const adding = !mySet.has(emoji);
-    if (adding) mySet.add(emoji); else mySet.delete(emoji);
-
-    // Update button immediately
-    btn.classList.toggle("reacted", adding);
-    const countEl = btn.querySelector(".reaction-count");
-    const post = feedPosts.find(p => p.id === postId);
-    const current = post?.reactions?.[emoji] || [];
-    const newList = adding
-      ? [...new Set([...current, uid])]
-      : current.filter(u => u !== uid);
-    const newCount = newList.length;
-    if (newCount > 0) {
-      if (countEl) countEl.textContent = newCount;
-      else btn.innerHTML += ` <span class="reaction-count">${newCount}</span>`;
-    } else {
-      if (countEl) countEl.remove();
-    }
-
-    // Write to Firestore
-    try {
-      const postRef = doc(db, "trips", activeTripId, "feedPosts", postId);
-      await updateDoc(postRef, {
-        [`reactions.${emoji}`]: newList
-      });
-    } catch(e) {
-      // Revert on failure
-      if (adding) mySet.delete(emoji); else mySet.add(emoji);
-      console.warn("Reaction update failed:", e);
-    }
   }
 
   async function addFeedPost(author, text, type = "user", media = null, taggedPlayerIds = []) {
@@ -6009,21 +5798,22 @@ ${closer}`;
 
   // ─── AI CORE ────────────────────────────────────────────────────────────────
 
-  async function callSwami(prompt, maxTokens = 180, useSearch = false) {
+  async function callSwami(prompt, maxTokens = 180) {
     try {
       const res = await fetch("/api/swami", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, maxTokens, useSearch })
+        body: JSON.stringify({ prompt, maxTokens })
       });
       const data = await res.json();
       if (!res.ok) {
         console.error("Swami API error", res.status, JSON.stringify(data));
         return null;
       }
+      console.log("Swami API ok, text length:", (data.text || "").length);
       return data.text || null;
     } catch (err) {
-      console.error("Swami fetch failed:", err.message);
+      console.error("Swami fetch failed:", err.message, err);
       return null;
     }
   }
@@ -6042,7 +5832,7 @@ ${closer}`;
         p.gender ? `Gender: ${formatGender(p.gender)}` : null,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
-        null // intel loaded from subcollection
+        p.swamiIntel ? `Intel: ${p.swamiIntel}` : null
       ].filter(Boolean);
       return parts.join("; ");
     }).join(" | ");
@@ -6062,27 +5852,24 @@ ${closer}`;
     const ctx = buildTripContext();
     const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
 
-  // Low-signal events get much lower Swami frequency
-  const LOW_SIGNAL = ["itineraryEdit", "itineraryDelete", "matchEdit", "playerEdit"];
-  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.25 : 0.65;
-  const hasMeme = Math.random() < swamiFrequency;
-    const maxWords = hasMeme ? "1 sentence max." : "1-2 sentences. Sharp, specific, funny.";
+    const hasMeme = Math.random() < 0.65;
+    const maxWords = hasMeme ? "1 sentence max — punchy, no padding." : "1-2 sentences max.";
 
     const actionPrompts = {
-      playerAdd:    `New player joined: ${subject}. ${ctx}\n\nOne-liner. Use their handicap or team. ${variationSeed} ${maxWords}`,
-      playerEdit:   `${subject} just edited their player profile. ${ctx}\n\nOne-liner implying pre-trip gamesmanship. ${variationSeed} ${maxWords}`,
-      itineraryAdd: `Trip event added: "${subject}". ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      itineraryEdit:`Trip event edited: "${subject}". ${ctx}\n\nOne-liner about plans changing. ${variationSeed} ${maxWords}`,
-      itineraryDelete:`Trip event deleted: "${subject}". ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      matchAdd:     `New match: ${subject}. ${ctx}\n\nPre-match one-liner. Reference players or format. ${variationSeed} ${maxWords}`,
-      matchEdit:    `Match edited: ${subject}. ${ctx}\n\nOne-liner implying someone negotiated. ${variationSeed} ${maxWords}`,
-      matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nOne-liner. ${variationSeed} ${maxWords}`,
-      scoreUpdate:  `Scores: ${subject}. ${ctx}\n\nOne-liner on the drama or momentum. ${variationSeed} ${maxWords}`,
-      userComment:  `${subject}. ${ctx}\n\nOne-liner reaction. ${variationSeed} ${maxWords}`,
-      expenseAdd:   `${subject}. ${ctx}\n\nOne-liner on someone paying for the group. ${variationSeed} ${maxWords}`,
-      momentAdd:    `Hole moment: "${subject}". ${ctx}\n\nOne-liner. 1 sentence only.`,
-      photoAdd:     `Photo added: ${subject}. ${ctx}\n\nOne-liner on documenting the trip. ${variationSeed} ${maxWords}`,
-      teams:        `Teams set: ${subject}. ${ctx}\n\nOne-liner on the matchup. ${variationSeed} ${maxWords}`
+      playerAdd:    `New player joined: ${subject}. ${ctx}\n\nSwami reaction. Use their handicap, nickname, or team if available. ${variationSeed} ${maxWords}`,
+      playerEdit:   `Player edited their profile: ${subject}. ${ctx}\n\nSwami reaction implying suspicious pre-trip gamesmanship. ${variationSeed} ${maxWords}`,
+      itineraryAdd: `New trip event: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      itineraryEdit:`Trip event edited: "${subject}". ${ctx}\n\nSwami reaction about plans changing. ${variationSeed} ${maxWords}`,
+      itineraryDelete:`Trip event deleted: "${subject}". ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      matchAdd:     `New match created: ${subject}. ${ctx}\n\nSwami pre-match comment. Reference format, course, or players. ${variationSeed} ${maxWords}`,
+      matchEdit:    `Match edited: ${subject}. ${ctx}\n\nSwami reaction implying negotiation happened. ${variationSeed} ${maxWords}`,
+      matchDelete:  `Match deleted: ${subject}. ${ctx}\n\nSwami reaction. ${variationSeed} ${maxWords}`,
+      scoreUpdate:  `Scores updated: ${subject}. ${ctx}\n\nSwami reaction — momentum, lead changes, who's struggling. ${variationSeed} ${maxWords}`,
+      userComment:  `${subject} posted in the trip feed. ${ctx}\n\nSwami reaction to the post. ${variationSeed} ${maxWords}`,
+      expenseAdd:   `${subject}. ${ctx}\n\nSwami reaction to someone paying for a group expense. Reference the amount or category if specific enough to be funny. ${variationSeed} ${maxWords}`,
+      momentAdd:    `Match moment logged: "${subject}". ${ctx}\n\nSwami reaction. 1 sentence only.`,
+      photoAdd:     `A photo was just added to the golf trip library: ${subject}. ${ctx}\n\nSwami reaction to someone documenting the trip. ${variationSeed} ${maxWords}`,
+      teams:        `Teams set: ${subject}. ${ctx}\n\nSwami reaction to the rivalry. ${variationSeed} ${maxWords}`
     };
 
     const aiPrompt = actionPrompts[action] || `Golf trip update: ${subject}. ${ctx} Swami reaction. ${maxWords}`;
@@ -6510,21 +6297,40 @@ ${closer}`;
     return "Not entered";
   }
 
-  async function populateMemberPicker() {
-    const sel = document.getElementById("memberPicker");
-    if (!sel) return;
-    sel.innerHTML = `<option value="">— Choose a member —</option>`;
-    try {
-      const snap = await getDocs(membersCollection());
-      // Filter out members who are already players
-      const playerEmails = new Set(players.map(p => p.email?.toLowerCase()).filter(Boolean));
-      snap.docs.forEach(d => {
-        const m = d.data();
-        if (m.email && playerEmails.has(m.email.toLowerCase())) return; // already a player
-        const label = m.name ? `${m.name} (${m.email || "no email"})` : (m.email || d.id);
-        sel.innerHTML += `<option value="${escapeAttr(d.id)}">${escapeHtml(label)}</option>`;
-      });
-    } catch(e) { console.warn("populateMemberPicker failed:", e); }
+  function renderTraits() {
+    const s = document.getElementById("strengths");
+    const w = document.getElementById("weaknesses");
+
+    s.innerHTML = "";
+    w.innerHTML = "";
+
+    strengths.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "trait-card";
+      div.innerText = x;
+      div.onclick = () => toggleTrait(div, x, "strength");
+      s.appendChild(div);
+    });
+
+    weaknesses.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "trait-card";
+      div.innerText = x;
+      div.onclick = () => toggleTrait(div, x, "weakness");
+      w.appendChild(div);
+    });
+  }
+
+  function toggleTrait(el, value, type) {
+    el.classList.toggle("selected");
+
+    let arr = type === "strength" ? selectedStrengths : selectedWeaknesses;
+
+    if (arr.includes(value)) {
+      arr.splice(arr.indexOf(value), 1);
+    } else {
+      arr.push(value);
+    }
   }
 
   function resetPlayerForm() {
@@ -6533,119 +6339,83 @@ ${closer}`;
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
     document.getElementById("playerTeam").value = "";
-    const nameInput = document.getElementById("playerName");
-    if (nameInput) { nameInput.readOnly = false; nameInput.style.opacity = "1"; }
+    document.getElementById("playerEmail").value = "";
+    document.getElementById("playerVenmo").value = "";
+    document.getElementById("playerPaypal").value = "";
+    document.getElementById("swamiIntel").value = "";
+
+    selectedStrengths = [];
+    selectedWeaknesses = [];
+
+    document.querySelectorAll(".trait-card").forEach(card => {
+      card.classList.remove("selected");
+    });
   }
 
   function loadPlayerForEdit(playerId) {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
+
     document.getElementById("playerName").value = player.name || "";
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
-    loadTeamDropdown(player.team || "");
-    // Name is readonly for member-linked players
-    const nameInput = document.getElementById("playerName");
-    if (nameInput && player.linkedUid) {
-      nameInput.readOnly = true;
-      nameInput.style.opacity = "0.6";
-    } else if (nameInput) {
-      nameInput.readOnly = false;
-      nameInput.style.opacity = "1";
-    }
-    // Set link member picker
-    const picker = document.getElementById("linkMemberPicker");
-    if (picker && player.linkedUid) {
-      // Will be set after populateLinkMemberPicker finishes
-      setTimeout(() => { if (picker) picker.value = player.linkedUid || ""; }, 300);
-    }
-  }
+    document.getElementById("playerTeam").value = player.team || "";
+    document.getElementById("playerEmail").value = player.email || "";
+    document.getElementById("playerVenmo").value = player.venmo || "";
+    document.getElementById("playerPaypal").value = player.paypal || "";
+    document.getElementById("swamiIntel").value = player.swamiIntel || "";
 
-  async function deletePlayerWithCheck() {
-    if (!editingPlayerId) return;
-    if (!requireAdmin("delete players")) return;
-    const player = players.find(p => p.id === editingPlayerId);
-    if (!player) return;
+    selectedStrengths = player.strengths || [];
+    selectedWeaknesses = player.weaknesses || [];
 
-    // Check if player is in any match
-    const inMatch = matches.some(m =>
-      (m.teamAPlayerIds || []).includes(editingPlayerId) ||
-      (m.teamBPlayerIds || []).includes(editingPlayerId)
-    );
-    if (inMatch) {
-      alert(`${player.name} is part of an existing match. Delete the match first before removing this player.`);
-      return;
-    }
+    document.querySelectorAll("#strengths .trait-card").forEach(card => {
+      if (selectedStrengths.includes(card.innerText)) card.classList.add("selected");
+    });
 
-    if (!confirm(`Delete ${player.name}? This cannot be undone.`)) return;
-    await deleteDoc(doc(db, "trips", activeTripId, "players", editingPlayerId));
-    openPlayerList();
+    document.querySelectorAll("#weaknesses .trait-card").forEach(card => {
+      if (selectedWeaknesses.includes(card.innerText)) card.classList.add("selected");
+    });
   }
 
   async function savePlayer() {
     if (!requireAdmin("add or edit players")) return;
-    const name = document.getElementById("playerName").value.trim();
-    const nickname = document.getElementById("nickname").value.trim();
-    const handicapIndex = document.getElementById("handicapIndex").value.trim();
+    const name = document.getElementById("playerName").value;
+    const nickname = document.getElementById("nickname").value;
+    const handicapIndex = document.getElementById("handicapIndex").value;
     const gender = document.getElementById("playerGender").value;
     const team = document.getElementById("playerTeam").value;
+    const swamiIntel = document.getElementById("swamiIntel").value.trim();
 
-    if (!name) { alert("Please enter a player name."); return; }
-
-    const btn = document.getElementById("savePlayerBtn");
-    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
-
-    let linkedUid = null;
-    let email = "";
-
-    if (!editingPlayerId && playerSource === "member") {
-      linkedUid = document.getElementById("memberPicker").value;
-      if (!linkedUid) {
-        alert("Please select a member.");
-        if (btn) { btn.disabled = false; btn.textContent = "Save Player"; }
-        return;
-      }
-      try {
-        const mSnap = await getDoc(doc(db, "trips", activeTripId, "members", linkedUid));
-        if (mSnap.exists()) email = mSnap.data().email || "";
-      } catch(e) { /* ignore */ }
-    } else if (editingPlayerId) {
-      const existing = players.find(p => p.id === editingPlayerId);
-      // Use the link member picker value if admin changed it
-      const pickerVal = document.getElementById("linkMemberPicker")?.value;
-      linkedUid = pickerVal !== undefined ? (pickerVal || null) : (existing?.linkedUid || null);
-      email = existing?.email || "";
-      // If linking to a new member, get their email
-      if (linkedUid && linkedUid !== existing?.linkedUid) {
-        try {
-          const mSnap = await getDoc(doc(db, "trips", activeTripId, "members", linkedUid));
-          if (mSnap.exists()) email = mSnap.data().email || "";
-        } catch(e) { /* ignore */ }
-      }
+    if (!name.trim()) {
+      alert("Please enter a player name.");
+      return;
     }
+
+    const venmo = document.getElementById("playerVenmo").value.trim().replace(/^@/, "");
+    const paypal = document.getElementById("playerPaypal").value.trim().replace(/^@/, "");
+    const email = (document.getElementById("playerEmail").value || "").trim().toLowerCase();
 
     const player = {
       name, nickname, handicapIndex, gender, team,
-      email, linkedUid: linkedUid || null,
-      type: linkedUid ? "member" : "manual",
+      email, venmo, paypal, swamiIntel,
+      strengths: selectedStrengths,
+      weaknesses: selectedWeaknesses,
       updatedAt: new Date().toISOString()
     };
 
     const wasEditing = Boolean(editingPlayerId);
-    try {
-      if (editingPlayerId) {
-        await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), player);
-      } else {
-        await addDoc(playersCollection(), { ...player, createdAt: new Date().toISOString() });
-      }
-      await addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
-    } catch(e) {
-      console.error("savePlayer error:", e);
-      alert("Error saving player: " + e.message);
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = "Save Player"; }
+
+    if (editingPlayerId) {
+      await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), player);
+    } else {
+      await addDoc(playersCollection(), {
+        ...player,
+        createdAt: new Date().toISOString()
+      });
     }
+
+    await addSwamiPost(wasEditing ? "playerEdit" : "playerAdd", name);
 
     editingPlayerId = null;
     openPlayerList();
@@ -6654,45 +6424,36 @@ ${closer}`;
   function renderPlayerList() {
     const list = document.getElementById("playerList");
     if (!list) return;
+
     list.innerHTML = "";
+
     if (players.length === 0) {
-      list.innerHTML = `<div class="empty-state">No players yet. Tap "Add New Player" to create one.</div>`;
+      list.innerHTML = `
+        <div class="empty-state">
+          No players yet. Tap “Add New Player” to create one.
+        </div>
+      `;
       return;
     }
-    const myEmail = (currentUser?.email || getCookie(EMAIL_COOKIE) || "").toLowerCase();
-    players.sort((a, b) => (a.name || "").localeCompare(b.name || "")).forEach(player => {
-      const isMe = myEmail && player.email?.toLowerCase() === myEmail;
-      const div = document.createElement("div");
-      div.className = "player-row";
-      div.style.cssText = "display:flex;justify-content:space-between;align-items:center;";
-      const info = document.createElement("div");
-      info.style.flex = "1";
-      info.style.cursor = "pointer";
-      info.onclick = () => openPlayer(player.id);
-      info.innerHTML = `<div class="player-name">${escapeHtml(player.name)}</div>
-        <div class="player-detail">${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}${player.team ? escapeHtml(player.team === "A" ? (activeTripData.teamA || "Team A") : player.team === "B" ? (activeTripData.teamB || "Team B") : player.team) : "No team"}${player.handicapIndex ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}</div>`;
-      div.appendChild(info);
-      const actions = document.createElement("div");
-      actions.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-left:10px;flex-shrink:0;";
-      if (!isMe) {
-        const intelBtn = document.createElement("button");
-        intelBtn.textContent = "🧠 Intel";
-        intelBtn.className = "secondary";
-        intelBtn.style.cssText = "width:auto;padding:6px 12px;margin:0;font-size:12px;";
-        intelBtn.onclick = (e) => { e.stopPropagation(); openSubmitIntel(player); };
-        actions.appendChild(intelBtn);
-      }
-      if (isAdmin()) {
-        const viewBtn = document.createElement("button");
-        viewBtn.textContent = "👁 View";
-        viewBtn.className = "secondary";
-        viewBtn.style.cssText = "width:auto;padding:6px 12px;margin:0;font-size:12px;";
-        viewBtn.onclick = (e) => { e.stopPropagation(); openViewIntel(player); };
-        actions.appendChild(viewBtn);
-      }
-      if (actions.children.length) div.appendChild(actions);
-      list.appendChild(div);
-    });
+
+    players
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      .forEach(player => {
+        const div = document.createElement("div");
+        div.className = "player-row";
+        div.onclick = () => openPlayer(player.id);
+
+        div.innerHTML = `
+          <div class="player-name">${escapeHtml(player.name)}</div>
+          <div class="player-detail">
+            ${player.nickname ? `"${escapeHtml(player.nickname)}" • ` : ""}
+            ${player.team ? escapeHtml(player.team) : "No team assigned"}
+            ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? ` • HI: ${escapeHtml(player.handicapIndex)}` : ""}
+          </div>
+        `;
+
+        list.appendChild(div);
+      });
   }
 
   async function getSingleTripData(tripId) {
@@ -6996,7 +6757,7 @@ ${closer}`;
     return transactions;
   }
 
-  async function renderExpenseBalances() {
+  function renderExpenseBalances() {
     const balEl = document.getElementById("expenseBalances");
     const setEl = document.getElementById("expenseSettlement");
     if (!balEl || !setEl) return;
@@ -7015,31 +6776,17 @@ ${closer}`;
       </div>
     `).join("") : `<div class="empty-state">Add expenses to see balances.</div>`;
 
-    // Load Venmo/PayPal from user accounts for each player in settlements
-    const userPaymentInfo = {};
-    await Promise.all(players.map(async p => {
-      if (!p.linkedUid && !p.email) return;
-      try {
-        // Try linkedUid first, then search by email
-        if (p.linkedUid) {
-          const snap = await getDoc(doc(db, "users", p.linkedUid));
-          if (snap.exists()) {
-            userPaymentInfo[p.id] = { venmo: snap.data().venmo || "", paypal: snap.data().paypal || "" };
-          }
-        }
-      } catch(e) { /* ignore */ }
-    }));
-
+    // Find already-settled payments to show in settled section
     const settledSection = document.getElementById("expenseSettledSection");
     const settledEl = document.getElementById("expenseSettled");
 
     setEl.innerHTML = settlements.length ? settlements.map(t => {
+      const toPlayer = players.find(p => p.id === t.toId);
       const tripName = (activeTripData.name || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
       const note = encodeURIComponent(`${tripName} settlement`);
       const amount = t.amount.toFixed(2);
-      const payInfo = userPaymentInfo[t.toId] || {};
-      const venmoHandle = payInfo.venmo?.trim();
-      const paypalHandle = payInfo.paypal?.trim();
+      const venmoHandle = toPlayer?.venmo?.trim();
+      const paypalHandle = toPlayer?.paypal?.trim();
 
       const venmoBtn = venmoHandle
         ? `<a href="venmo://paycharge?txn=pay&recipients=${encodeURIComponent(venmoHandle)}&amount=${amount}&note=${note}"
@@ -7717,101 +7464,7 @@ ${closer}`;
     }, 50);
   }
 
-  // ── SWAMI INTEL ──────────────────────────────────────────────────────────────
-
-  let intelTargetPlayer = null;
-
-  function openSubmitIntel(player) {
-    intelTargetPlayer = player;
-    document.getElementById("submitIntelTitle").textContent = `Intel on ${player.name}`;
-    document.getElementById("intelText").value = "";
-    show("submitIntelScreen");
-  }
-
-  async function saveIntel() {
-    const text = document.getElementById("intelText").value.trim();
-    if (!text) { alert("Please enter some intel first."); return; }
-    if (!intelTargetPlayer) return;
-
-    const submitterName = getCookie(NAME_COOKIE) || currentUser?.email?.split("@")[0] || "Anonymous";
-
-    await addDoc(swamiIntelCollection(activeTripId, intelTargetPlayer.id), {
-      text,
-      submittedBy: currentUser?.uid || "",
-      submitterName,
-      submittedAt: new Date().toISOString()
-    });
-
-    alert(`Intel submitted on ${intelTargetPlayer.name}. Swami is taking notes. 🧠`);
-    openPlayerList();
-  }
-
-  async function openViewIntel(player) {
-    document.getElementById("viewIntelTitle").textContent = `Intel on ${player.name}`;
-    show("viewIntelScreen");
-
-    const list = document.getElementById("viewIntelList");
-    const empty = document.getElementById("viewIntelEmpty");
-    list.innerHTML = `<div style="color:#64748b;font-size:13px;">Loading...</div>`;
-    empty.style.display = "none";
-
-    const snap = await getDocs(swamiIntelCollection(activeTripId, player.id));
-
-    let items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
-
-    // Non-admins can only see their own submissions
-    const myUid = currentUser?.uid;
-    if (!isAdmin()) {
-      items = items.filter(item => item.submittedBy === myUid);
-    }
-
-    if (!items.length) {
-      list.innerHTML = "";
-      empty.style.display = "block";
-      empty.textContent = isAdmin()
-        ? "No intel submitted yet."
-        : "You haven't submitted any intel on this player yet.";
-      return;
-    }
-
-    list.innerHTML = items.map(item => `
-      <div style="padding:12px 0;border-bottom:1px solid #1e3a5f;">
-        <div style="font-size:14px;line-height:1.5;margin-bottom:6px;">${escapeHtml(item.text)}</div>
-        <div style="font-size:11px;color:#475569;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          ${isAdmin() ? `<span>From ${escapeHtml(item.submitterName || "Anonymous")}</span> ·` : ""}
-          <span>${formatFeedTime(item.submittedAt)}</span>
-          ${isAdmin() ? `<button onclick="deleteIntel('${escapeAttr(player.id)}','${escapeAttr(item.id)}')"
-            style="padding:2px 8px;font-size:11px;width:auto;margin:0;background:transparent;color:#f87171;border:1px solid #f87171;border-radius:10px;">
-            Delete
-          </button>` : ""}
-        </div>
-      </div>
-    `).join("");
-  }
-
-  async function deleteIntel(playerId, intelId) {
-    if (!confirm("Delete this intel?")) return;
-    await deleteDoc(doc(db, "trips", activeTripId, "players", playerId, "intel", intelId));
-    const player = players.find(p => p.id === playerId);
-    if (player) openViewIntel(player);
-  }
-
-  // Build Swami context — pull intel from Firestore subcollections
-  async function buildPlayerIntelContext(playerIds) {
-    const intelByPlayer = {};
-    await Promise.all(playerIds.map(async pid => {
-      try {
-        const snap = await getDocs(swamiIntelCollection(activeTripId, pid));
-        if (!snap.empty) {
-          intelByPlayer[pid] = snap.docs.map(d => d.data().text).join("; ");
-        }
-      } catch(e) { /* ignore */ }
-    }));
-    return intelByPlayer;
-  }
-
-  // ── END SWAMI INTEL ───────────────────────────────────────────────────────────
+  // ── MEMBERS & INVITES ────────────────────────────────────────────────────────
 
   let selectedInviteRole = "participant";
 
@@ -7845,36 +7498,28 @@ ${closer}`;
     const el = document.getElementById("membersList");
     if (!el) return;
     el.innerHTML = `<div class="empty-state" style="font-size:13px;">Loading...</div>`;
+
     const snap = await getDocs(membersCollection());
-    if (snap.empty) { el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`; return; }
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state" style="font-size:13px;">No members yet.</div>`;
+      return;
+    }
+
     el.innerHTML = snap.docs.map(d => {
       const m = d.data();
       const isMe = m.uid === currentUser?.uid;
       const roleColor = m.role === "admin" ? "#93c5fd" : "#86efac";
-      const otherRole = m.role === "admin" ? "participant" : "admin";
       return `<div class="player-row" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-weight:600;">${escapeHtml(m.name || m.email || "Unknown")}</div>
           <div style="font-size:12px;color:#64748b;">${escapeHtml(m.email || "")}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:${roleColor};font-weight:600;">${m.role === "admin" ? "Admin" : "Participant"}</span>
-          ${!isMe ? `
-            <button onclick="changeMemberRole('${escapeAttr(d.id)}','${otherRole}')"
-              class="secondary" style="width:auto;padding:5px 10px;margin:0;font-size:11px;">
-              → ${otherRole === "admin" ? "Admin" : "Participant"}
-            </button>
-            <button onclick="removeMember('${escapeAttr(d.id)}')"
-              class="danger" style="width:auto;padding:5px 10px;margin:0;font-size:11px;">Remove</button>
-          ` : `<span style="font-size:11px;color:#475569;">(you)</span>`}
+          ${!isMe ? `<button onclick="removeMember('${escapeAttr(d.id)}')" class="danger" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Remove</button>` : ""}
         </div>
       </div>`;
     }).join("");
-  }
-
-  async function changeMemberRole(uid, newRole) {
-    await updateDoc(doc(membersCollection(), uid), { role: newRole });
-    await renderMembersList();
   }
 
   async function renderPendingInvites() {
@@ -8004,15 +7649,6 @@ ${closer}`;
     if (e.key === "Enter") sendMagicLink();
   });
 
-  window.openSubmitIntel = openSubmitIntel;
-  window.saveIntel = saveIntel;
-  window.openViewIntel = openViewIntel;
-  window.deleteIntel = deleteIntel;
-  window.populateLinkMemberPicker = populateLinkMemberPicker;
-  window.changeMemberRole = changeMemberRole;
-  window.setPlayerSource = setPlayerSource;
-  window.onMemberPickerChange = onMemberPickerChange;
-  window.deletePlayerWithCheck = deletePlayerWithCheck;
   window.openMemberManager = openMemberManager;
   window.sendInvite = sendInvite;
   window.removeMember = removeMember;
@@ -8070,8 +7706,6 @@ ${closer}`;
   window.openItineraryEditor = openItineraryEditor;
   window.saveItineraryEvent = saveItineraryEvent;
   window.deleteItineraryEvent = deleteItineraryEvent;
-  window.toggleReaction = toggleReaction;
-  window.togglePostExpand = togglePostExpand;
   window.postUserComment = postUserComment;
   window.savePlayer = savePlayer;
   window.exportData = exportData;
@@ -8086,7 +7720,6 @@ ${closer}`;
     openTripHome(pendingTripId);
   }
 
-} // end module scope
 </script>
 
 </body>
