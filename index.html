@@ -1264,12 +1264,12 @@
 
   <!-- ── COMPETITION HOME ──────────────────────────────────────────────────── -->
   <div id="competitionScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2 id="competitionTitle">Competition</h2>
-      <div style="position:relative;margin-left:auto;">
-        <button onclick="openCompetitionMenu(event)" class="trip-menu-btn" style="font-size:18px;">☰</button>
-        <div id="competitionMenu" class="trip-menu hidden" style="right:0;top:40px;min-width:180px;">
+    <div class="page-header" style="position:sticky;top:0;z-index:1000;background:rgba(13,27,53,0.98);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(55,89,132,0.9);padding:14px 18px;margin:0 0 10px;">
+      <button onclick="goTripHome()" class="secondary" style="position:absolute;left:18px;margin:0;">Back</button>
+      <h2 id="competitionTitle" style="margin:0;text-align:center;flex:1;">Competition</h2>
+      <div class="trip-menu-wrap" style="position:absolute;right:12px;">
+        <button onclick="openCompetitionMenu(event)" class="trip-menu-btn">☰</button>
+        <div id="competitionMenu" class="trip-menu hidden">
           <div id="compTeamsMenuItem"></div>
           <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
           <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
@@ -1725,7 +1725,7 @@
 
   <div id="teamRosterScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <button onclick="show('competitionScreen')" class="secondary">Back</button>
       <h2 id="teamRosterTitle">Team Roster</h2>
     </div>
     <div class="card">
@@ -5449,6 +5449,7 @@ ${closer}`;
         }
       });
       await batch.commit();
+      // Re-open roster so it picks up the updated player data
       openTeamRoster(activeTeamRosterKey);
     } catch(e) {
       alert("Error saving: " + e.message);
@@ -5989,39 +5990,32 @@ ${closer}`;
 
   function renderTeamRoster(teamName) {
     const list = document.getElementById("teamRosterList");
-    const teamPlayers = players.filter(player => player.team === teamName);
+    if (!list) return;
 
-    list.innerHTML = "";
+    // Match by team name OR legacy team ID (A/B/C/D)
+    const teams = getTeams();
+    const team = teams.find(t => t.name === teamName || t.id === activeTeamRosterKey);
+    const teamId = team ? team.id : activeTeamRosterKey;
 
-    if (teamPlayers.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          No players assigned to ${teamName} yet.
-        </div>
-      `;
+    const teamPlayers = players.filter(p =>
+      p.team === teamName || p.team === teamId
+    );
+
+    if (!teamPlayers.length) {
+      list.innerHTML = '<div class="empty-state">No players assigned yet. Tap "+ Add Player to Team" above.</div>';
       return;
     }
 
-    teamPlayers.forEach(player => {
-      const div = document.createElement("div");
-      div.className = "player-row";
-
-      div.innerHTML = `
-        <div class="player-name">${escapeHtml(player.name)}</div>
-        <div class="player-detail">
-          ${player.nickname ? `"${escapeHtml(player.nickname)}"<br>` : ""}
-          <strong>Hcp Index:</strong> ${player.handicapIndex !== undefined && player.handicapIndex !== "" ? escapeHtml(player.handicapIndex) : "Not entered"}<br>
-          <strong>Gender:</strong> ${formatGender(player.gender)}<br>
-          <strong>Strengths:</strong>
-          ${player.strengths && player.strengths.length ? player.strengths.map(escapeHtml).join(", ") : "None selected"}
-          <br>
-          <strong>Weaknesses:</strong>
-          ${player.weaknesses && player.weaknesses.length ? player.weaknesses.map(escapeHtml).join(", ") : "None selected"}
-        </div>
-      `;
-
-      list.appendChild(div);
-    });
+    list.innerHTML = teamPlayers.map(player =>
+      '<div class="player-row">' +
+        '<div class="player-name">' + escapeHtml(player.name) + '</div>' +
+        '<div class="player-detail">' +
+          (player.nickname ? '"' + escapeHtml(player.nickname) + '"<br>' : '') +
+          '<strong>HI:</strong> ' + (player.handicapIndex || "—") + ' &nbsp;' +
+          '<strong>Gender:</strong> ' + formatGender(player.gender) +
+        '</div>' +
+      '</div>'
+    ).join("");
   }
 
   function renderItinerary() {
