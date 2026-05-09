@@ -969,6 +969,10 @@
       margin: 8px 0 0;
     }
 
+    .secondary-screen .sticky-page-header.flex-header h2 {
+      margin: 0;
+    }
+
     .secondary-screen > .card:first-of-type {
       margin-top: 10px;
     }
@@ -1264,10 +1268,10 @@
 
   <!-- ── COMPETITION HOME ──────────────────────────────────────────────────── -->
   <div id="competitionScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-      <button onclick="goTripHome()" class="secondary" style="flex-shrink:0;margin:0;">Back</button>
-      <h2 id="competitionTitle" style="margin:0;flex:1;text-align:center;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Competition</h2>
-      <div class="trip-menu-wrap" style="flex-shrink:0;">
+    <div class="sticky-page-header flex-header" style="display:flex;align-items:center;gap:8px;">
+      <button onclick="goTripHome()" class="secondary" style="margin:0;flex-shrink:0;">Back</button>
+      <h2 id="competitionTitle" style="margin:0;flex:1;text-align:center;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Competition</h2>
+      <div class="trip-menu-wrap" style="flex-shrink:0;margin:0;">
         <button onclick="openCompetitionMenu(event)" class="trip-menu-btn">☰</button>
         <div id="competitionMenu" class="trip-menu hidden">
           <div id="compTeamsMenuItem"></div>
