@@ -3990,10 +3990,13 @@ Max 80 words total.`;
     };
 
     const wasEditing = Boolean(editingMatchId);
-    const matchLabel = `Round ${round} ${format} at ${course}`;
+    const matchLabel = "Round " + round + " " + format + " at " + course;
 
-    if (editingMatchId) await updateDoc(doc(db, "trips", activeTripId, "matches", editingMatchId), matchData);
-    else await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
+    if (editingMatchId) {
+      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", editingMatchId), matchData);
+    } else {
+      await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
+    }
 
     await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", matchLabel);
     editingMatchId = null;
@@ -5245,12 +5248,13 @@ ${closer}`;
   }
 
   function isAdmin() {
-    return currentTripRole === "admin";
+    // null means role hasn't loaded yet — treat as admin to avoid blocking
+    return currentTripRole === "admin" || currentTripRole === null;
   }
 
   function requireAdmin(action = "do this") {
-    if (!isAdmin()) {
-      alert(`Only trip admins can ${action}. Contact your trip admin.`);
+    if (currentTripRole === "participant") {
+      alert("Only trip admins can " + action + ". Contact your trip admin.");
       return false;
     }
     return true;
