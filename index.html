@@ -5764,21 +5764,20 @@ ${closer}`;
     const holeCount = holes.length || 18;
 
     const prompt = 'This is a golf scorecard. Extract the scores for each player for each hole.\n\n' +
-      'Players in this match: ' + playerContext + '\n\n' +
+      'Players to look for: ' + playerContext + '\n\n' +
       'Return ONLY a JSON object, no markdown, no explanation:\n' +
       '{\n' +
       '  "players": [\n' +
       '    {\n' +
-      '      "name": "name as written on scorecard",\n' +
-      '      "matched": "exact player name from the list above, or null if unclear",\n' +
-      '      "scores": {"1": 4, "2": 5, ...}\n' +
+      '      "name": "name exactly as written on scorecard",\n' +
+      '      "scores": {"1": 4, "2": 5, "3": 3}\n' +
       '    }\n' +
       '  ],\n' +
       '  "confidence": "high" or "low"\n' +
       '}\n\n' +
-      'Rules: Match names loosely. Only include holes you can clearly read. Scores must be integers. ' +
-      'If a score is illegible, omit that hole rather than guessing. ' +
-      'The scorecard has ' + holeCount + ' holes.';
+      'Rules: Only include holes you can clearly read. Scores must be integers 1-12. ' +
+      'If a score cell is blank or illegible, omit that hole. ' +
+      'The scorecard has ' + holeCount + ' holes numbered 1 through ' + holeCount + '.';
 
     try {
       const res = await fetch("/api/swami", {
@@ -5834,13 +5833,39 @@ ${closer}`;
       scanExtractedScores = {};
       const unmatched = [];
 
-      (result.players || []).forEach(p => {
-        const targetName = p.matched || p.name;
-        if (!targetName) return;
-        const player = matchPlayers.find(mp =>
-          mp.name.toLowerCase() === targetName.toLowerCase() ||
-          (mp.nickname && mp.nickname.toLowerCase() === targetName.toLowerCase())
+      // Build a fuzzy name matcher
+      function findPlayerByName(nameFromCard) {
+        if (!nameFromCard) return null;
+        const cardName = nameFromCard.toLowerCase().trim();
+
+        // Exact full name match
+        let match = matchPlayers.find(mp => mp.name.toLowerCase() === cardName);
+        if (match) return match;
+
+        // Nickname match
+        match = matchPlayers.find(mp => mp.nickname && mp.nickname.toLowerCase() === cardName);
+        if (match) return match;
+
+        // First name only match (card says "RYAN", player is "Ryan Smith")
+        match = matchPlayers.find(mp => {
+          const firstName = mp.name.toLowerCase().split(" ")[0];
+          return firstName === cardName;
+        });
+        if (match) return match;
+
+        // Card name is contained in player name or vice versa
+        match = matchPlayers.find(mp =>
+          mp.name.toLowerCase().includes(cardName) ||
+          cardName.includes(mp.name.toLowerCase())
         );
+        if (match) return match;
+
+        return null;
+      }
+
+      (result.players || []).forEach(p => {
+        // Try matched field first, then fall back to name field
+        const player = findPlayerByName(p.matched) || findPlayerByName(p.name);
         if (player) {
           scanExtractedScores[player.id] = p.scores || {};
         } else if (p.name) {
