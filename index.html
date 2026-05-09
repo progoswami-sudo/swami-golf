@@ -2165,18 +2165,144 @@
   const COURSE_LIBRARY_URLS = ["./pinehurst-course-library.json", "./pinehurst-course-library-v1.1.json", "./pinehurst-course-library-for-repo.json"];
 
   let courseLibrary = {
-    // Add scorecards here. Example:
-    // "pinehurst-no-2": {
-    //   name: "Pinehurst No. 2",
-    //   tees: {
-
-    //       teeName: "White",
-    //       holes: [
-    //         { hole: 1, par: 4, hcp: 9 }
-    //       ]
-    //     }
-    //   }
-    // }
+    "cedarbrook-cc": {
+      id: "cedarbrook-cc",
+      name: "Cedarbrook Country Club",
+      location: "Blue Bell, PA",
+      par: 72,
+      tees: [
+        {
+          teeName: "Black",
+          rating: 74.0,
+          slope: 135,
+          totalYards: 7009,
+          holes: [
+            { hole: 1,  par: 4, hcp: 9,  yards: 394 },
+            { hole: 2,  par: 5, hcp: 13, yards: 528 },
+            { hole: 3,  par: 4, hcp: 1,  yards: 415 },
+            { hole: 4,  par: 4, hcp: 15, yards: 347 },
+            { hole: 5,  par: 3, hcp: 7,  yards: 191 },
+            { hole: 6,  par: 5, hcp: 11, yards: 561 },
+            { hole: 7,  par: 4, hcp: 3,  yards: 410 },
+            { hole: 8,  par: 4, hcp: 17, yards: 412 },
+            { hole: 9,  par: 3, hcp: 5,  yards: 203 },
+            { hole: 10, par: 5, hcp: 16, yards: 490 },
+            { hole: 11, par: 4, hcp: 4,  yards: 430 },
+            { hole: 12, par: 5, hcp: 8,  yards: 560 },
+            { hole: 13, par: 3, hcp: 18, yards: 165 },
+            { hole: 14, par: 4, hcp: 2,  yards: 452 },
+            { hole: 15, par: 4, hcp: 6,  yards: 446 },
+            { hole: 16, par: 3, hcp: 14, yards: 172 },
+            { hole: 17, par: 4, hcp: 10, yards: 444 },
+            { hole: 18, par: 4, hcp: 12, yards: 389 }
+          ]
+        },
+        {
+          teeName: "Blue",
+          rating: 71.9,
+          slope: 130,
+          totalYards: 6524,
+          holes: [
+            { hole: 1,  par: 4, hcp: 9,  yards: 376 },
+            { hole: 2,  par: 5, hcp: 13, yards: 503 },
+            { hole: 3,  par: 4, hcp: 1,  yards: 388 },
+            { hole: 4,  par: 4, hcp: 15, yards: 315 },
+            { hole: 5,  par: 3, hcp: 7,  yards: 180 },
+            { hole: 6,  par: 5, hcp: 11, yards: 541 },
+            { hole: 7,  par: 4, hcp: 3,  yards: 391 },
+            { hole: 8,  par: 4, hcp: 17, yards: 403 },
+            { hole: 9,  par: 3, hcp: 5,  yards: 163 },
+            { hole: 10, par: 5, hcp: 16, yards: 476 },
+            { hole: 11, par: 4, hcp: 4,  yards: 375 },
+            { hole: 12, par: 5, hcp: 8,  yards: 504 },
+            { hole: 13, par: 3, hcp: 18, yards: 134 },
+            { hole: 14, par: 4, hcp: 2,  yards: 411 },
+            { hole: 15, par: 4, hcp: 6,  yards: 421 },
+            { hole: 16, par: 3, hcp: 14, yards: 154 },
+            { hole: 17, par: 4, hcp: 10, yards: 418 },
+            { hole: 18, par: 4, hcp: 12, yards: 371 }
+          ]
+        },
+        {
+          teeName: "White",
+          rating: 69.3,
+          slope: 128,
+          totalYards: 5981,
+          holes: [
+            { hole: 1,  par: 4, hcp: 9,  yards: 367 },
+            { hole: 2,  par: 5, hcp: 13, yards: 476 },
+            { hole: 3,  par: 4, hcp: 1,  yards: 376 },
+            { hole: 4,  par: 4, hcp: 15, yards: 271 },
+            { hole: 5,  par: 3, hcp: 7,  yards: 166 },
+            { hole: 6,  par: 5, hcp: 11, yards: 517 },
+            { hole: 7,  par: 4, hcp: 3,  yards: 345 },
+            { hole: 8,  par: 4, hcp: 17, yards: 327 },
+            { hole: 9,  par: 3, hcp: 5,  yards: 143 },
+            { hole: 10, par: 5, hcp: 16, yards: 420 },
+            { hole: 11, par: 4, hcp: 4,  yards: 349 },
+            { hole: 12, par: 5, hcp: 8,  yards: 467 },
+            { hole: 13, par: 3, hcp: 18, yards: 120 },
+            { hole: 14, par: 4, hcp: 2,  yards: 393 },
+            { hole: 15, par: 4, hcp: 6,  yards: 378 },
+            { hole: 16, par: 3, hcp: 14, yards: 137 },
+            { hole: 17, par: 4, hcp: 10, yards: 396 },
+            { hole: 18, par: 4, hcp: 12, yards: 333 }
+          ]
+        },
+        {
+          teeName: "Orange",
+          rating: 70.7,
+          slope: 126,
+          totalYards: 5150,
+          holes: [
+            { hole: 1,  par: 4, hcp: 9,  yards: 342 },
+            { hole: 2,  par: 5, hcp: 13, yards: 423 },
+            { hole: 3,  par: 4, hcp: 1,  yards: 255 },
+            { hole: 4,  par: 4, hcp: 15, yards: 265 },
+            { hole: 5,  par: 3, hcp: 7,  yards: 112 },
+            { hole: 6,  par: 5, hcp: 11, yards: 432 },
+            { hole: 7,  par: 4, hcp: 3,  yards: 297 },
+            { hole: 8,  par: 4, hcp: 17, yards: 279 },
+            { hole: 9,  par: 3, hcp: 5,  yards: 112 },
+            { hole: 10, par: 5, hcp: 16, yards: 393 },
+            { hole: 11, par: 4, hcp: 4,  yards: 316 },
+            { hole: 12, par: 5, hcp: 8,  yards: 364 },
+            { hole: 13, par: 3, hcp: 18, yards: 103 },
+            { hole: 14, par: 4, hcp: 2,  yards: 358 },
+            { hole: 15, par: 4, hcp: 6,  yards: 336 },
+            { hole: 16, par: 3, hcp: 14, yards: 104 },
+            { hole: 17, par: 4, hcp: 10, yards: 356 },
+            { hole: 18, par: 4, hcp: 12, yards: 303 }
+          ]
+        },
+        {
+          teeName: "Yellow",
+          rating: 64.0,
+          slope: 112,
+          totalYards: 4038,
+          holes: [
+            { hole: 1,  par: 4, hcp: 9,  yards: 280 },
+            { hole: 2,  par: 5, hcp: 13, yards: 331 },
+            { hole: 3,  par: 4, hcp: 1,  yards: 250 },
+            { hole: 4,  par: 4, hcp: 15, yards: 236 },
+            { hole: 5,  par: 3, hcp: 7,  yards: 112 },
+            { hole: 6,  par: 5, hcp: 11, yards: 363 },
+            { hole: 7,  par: 4, hcp: 3,  yards: 233 },
+            { hole: 8,  par: 4, hcp: 17, yards: 218 },
+            { hole: 9,  par: 3, hcp: 5,  yards: 112 },
+            { hole: 10, par: 5, hcp: 16, yards: 344 },
+            { hole: 11, par: 4, hcp: 4,  yards: 240 },
+            { hole: 12, par: 5, hcp: 8,  yards: 313 },
+            { hole: 13, par: 3, hcp: 18, yards: 67  },
+            { hole: 14, par: 4, hcp: 2,  yards: 206 },
+            { hole: 15, par: 4, hcp: 6,  yards: 178 },
+            { hole: 16, par: 3, hcp: 14, yards: 94  },
+            { hole: 17, par: 4, hcp: 10, yards: 223 },
+            { hole: 18, par: 4, hcp: 12, yards: 238 }
+          ]
+        }
+      ]
+    }
   };
 
   const defaultPinehurstItineraryEvents = [
