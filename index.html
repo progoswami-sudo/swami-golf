@@ -1694,12 +1694,54 @@
       <div id="scoreEntryTableWrap" style="min-height:40px;"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="openMoments()" class="secondary" style="flex:1;">Match Moments</button>
+        <button onclick="openScanScorecard()" class="secondary" style="flex:1;">📷 Scan Scores</button>
         <button onclick="openScorecardPhotoCapture()" class="secondary" style="flex:1;">📷 Photo</button>
       </div>
     </div>
   </div>
 
-  <div id="holeDetailScreen" class="hidden secondary-screen">
+  <!-- ── SCAN SCORECARD ──────────────────────────────────────────────────── -->
+  <div id="scanScorecardScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openScoreEntry(activeScorecardMatchId)" class="secondary">Back</button>
+      <h2>Scan Scorecard</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;color:#93c5fd;margin-bottom:12px;line-height:1.5;">
+        Take a clear photo of the completed scorecard. Make sure all names and scores are legible. Claude will read the scores and match them to your players.
+      </div>
+      <label style="display:block;cursor:pointer;">
+        <input type="file" id="scanScorecardInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScanUpload(event)">
+        <div id="scanPreview" style="width:100%;min-height:160px;border:2px dashed #375984;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#64748b;font-size:14px;cursor:pointer;overflow:hidden;">
+          <div style="font-size:40px;">📷</div>
+          <div>Tap to take photo or choose image</div>
+        </div>
+      </label>
+      <button id="scanScorecardBtn" onclick="runScorecardScan()" style="margin-top:12px;display:none;">
+        Read Scores with AI
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCAN REVIEW ──────────────────────────────────────────────────────── -->
+  <div id="scanReviewScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="show('scanScorecardScreen')" class="secondary">Back</button>
+      <h2>Review Scores</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px;">Review the extracted scores below. Tap any score to correct it. When ready, tap Accept to save.</div>
+      <div id="scanReviewTable"></div>
+      <div id="scanUnmatched" style="margin-top:12px;display:none;">
+        <div style="font-size:12px;color:#f87171;margin-bottom:6px;">⚠️ Unmatched names from scorecard:</div>
+        <div id="scanUnmatchedList" style="font-size:12px;color:#94a3b8;"></div>
+      </div>
+    </div>
+    <div style="padding:12px;display:flex;gap:8px;">
+      <button onclick="goBackToScanScorecardScreen()" class="secondary" style="flex:1;">Re-scan</button>
+      <button id="acceptScanBtn" onclick="acceptScannedScores()" style="flex:1;">✓ Accept All</button>
+    </div>
+  </div>
     <div class="sticky-page-header">
       <button onclick="closeHoleDetail()" class="secondary">Back</button>
       <h2 id="holeDetailTitle">Hole 1</h2>
@@ -3474,6 +3516,8 @@ Respond ONLY with valid JSON, nothing else:
       "settlementScreen",
       "competitionScreen",
       "addToTeamScreen",
+      "scanScorecardScreen",
+      "scanReviewScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -5595,7 +5639,273 @@ ${closer}`;
     }
   }
 
-  // ── COMPETITIONS ────────────────────────────────────────────────────────────
+  // ── SCORECARD SCANNER ───────────────────────────────────────────────────────
+
+  let activeScorecardMatchId = null;
+  let scanImageBase64 = null;
+  let scanExtractedScores = {}; // { playerId: { holeNum: score } }
+  let scanEditedScores = {};    // user edits on review screen
+
+  function openScanScorecard() {
+    // Store current match id so we can return
+    activeScorecardMatchId = holeDetailMatchId || (matches[0] && matches[0].id) || null;
+    scanImageBase64 = null;
+    scanExtractedScores = {};
+    scanEditedScores = {};
+
+    // Reset preview
+    const preview = document.getElementById("scanPreview");
+    const btn = document.getElementById("scanScorecardBtn");
+    if (preview) preview.innerHTML = '<div style="font-size:40px;">📷</div><div>Tap to take photo or choose image</div>';
+    if (btn) btn.style.display = "none";
+    document.getElementById("scanScorecardInput").value = "";
+    show("scanScorecardScreen");
+  }
+
+  function goBackToScanScorecardScreen() {
+    show("scanScorecardScreen");
+  }
+
+  function handleScanUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      scanImageBase64 = dataUrl.split(",")[1]; // strip data:image/...;base64,
+
+      // Show preview
+      const preview = document.getElementById("scanPreview");
+      if (preview) {
+        preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;border-radius:10px;display:block;">';
+      }
+      const btn = document.getElementById("scanScorecardBtn");
+      if (btn) btn.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function runScorecardScan() {
+    if (!scanImageBase64) return;
+
+    const btn = document.getElementById("scanScorecardBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Reading scores..."; }
+
+    const match = matches.find(m => m.id === activeScorecardMatchId);
+    if (!match) { alert("No active match found."); return; }
+
+    // Build player context for matching
+    const matchPlayers = (match.players || []).map(pid => {
+      const p = players.find(x => x.id === pid);
+      return p ? { id: p.id, name: p.name, nickname: p.nickname || "" } : null;
+    }).filter(Boolean);
+
+    const playerContext = matchPlayers.map(p =>
+      p.nickname ? p.name + ' (also known as "' + p.nickname + '")' : p.name
+    ).join(", ");
+
+    const holeCount = (match.scorecardData && match.scorecardData.holes)
+      ? match.scorecardData.holes.length : 18;
+
+    const prompt = 'This is a golf scorecard. Extract the scores for each player for each hole.\n\n' +
+      'The players in this match are: ' + playerContext + '\n\n' +
+      'Return ONLY a JSON object with this exact structure (no markdown, no explanation):\n' +
+      '{\n' +
+      '  "players": [\n' +
+      '    {\n' +
+      '      "name": "name as written on scorecard",\n' +
+      '      "matched": "exact player name from the list above, or null if no match",\n' +
+      '      "scores": { "1": 4, "2": 5, "3": 3, ... } (hole number as string key, score as integer)\n' +
+      '    }\n' +
+      '  ],\n' +
+      '  "confidence": "high" or "low"\n' +
+      '}\n\n' +
+      'Rules:\n' +
+      '- Match names loosely (Frank = Frank McGolf, etc.)\n' +
+      '- Only include holes you can clearly read\n' +
+      '- If a score is unclear, omit that hole\n' +
+      '- Scores should be integers (no letters like X or DNF)\n' +
+      '- The scorecard has ' + holeCount + ' holes';
+
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          maxTokens: 1500,
+          imageBase64: scanImageBase64,
+          imageMediaType: "image/jpeg"
+        })
+      });
+      const data = await res.json();
+      const text = data.text || "";
+
+      // Parse JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Could not parse response");
+      const result = JSON.parse(jsonMatch[0]);
+
+      // Build extracted scores keyed by player ID
+      scanExtractedScores = {};
+      const unmatched = [];
+
+      (result.players || []).forEach(p => {
+        if (p.matched) {
+          const player = matchPlayers.find(mp =>
+            mp.name.toLowerCase() === p.matched.toLowerCase()
+          );
+          if (player) {
+            scanExtractedScores[player.id] = p.scores || {};
+          }
+        } else {
+          unmatched.push(p.name);
+        }
+      });
+
+      scanEditedScores = JSON.parse(JSON.stringify(scanExtractedScores));
+      showScanReview(matchPlayers, unmatched, result.confidence);
+
+    } catch(e) {
+      alert("Error reading scorecard: " + e.message + "\n\nTry a clearer photo.");
+      if (btn) { btn.disabled = false; btn.textContent = "Read Scores with AI"; }
+    }
+  }
+
+  function showScanReview(matchPlayers, unmatched, confidence) {
+    show("scanReviewScreen");
+
+    const match = matches.find(m => m.id === activeScorecardMatchId);
+    const holes = (match && match.scorecardData && match.scorecardData.holes) || [];
+    const holeNums = holes.length
+      ? holes.map(h => h.hole)
+      : Array.from({length: 18}, (_, i) => i + 1);
+
+    const table = document.getElementById("scanReviewTable");
+    if (!table) return;
+
+    // Build review grid
+    let html = '<div style="overflow-x:auto;">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+      '<thead><tr>' +
+      '<th style="text-align:left;padding:6px 4px;color:#64748b;border-bottom:1px solid #1e3a5f;">Player</th>';
+
+    holeNums.forEach(h => {
+      const holePar = holes.find(x => x.hole === h);
+      html += '<th style="text-align:center;padding:4px 2px;color:#64748b;min-width:28px;">' + h + '</th>';
+    });
+    html += '<th style="text-align:center;padding:4px;color:#64748b;">Tot</th></tr></thead><tbody>';
+
+    matchPlayers.forEach(player => {
+      const playerScores = scanEditedScores[player.id] || {};
+      const hasScores = Object.keys(playerScores).length > 0;
+      const rowBg = hasScores ? "" : "opacity:0.5;";
+
+      html += '<tr style="' + rowBg + '">' +
+        '<td style="padding:6px 4px;font-weight:600;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;">' +
+          escapeHtml(player.name) +
+        '</td>';
+
+      let total = 0;
+      holeNums.forEach(h => {
+        const score = playerScores[String(h)];
+        const holeData = holes.find(x => x.hole === h);
+        const par = holeData ? holeData.par : null;
+        let cellColor = "#0f2442";
+        if (score && par) {
+          if (score <= par - 2) cellColor = "#854d0e";      // eagle
+          else if (score === par - 1) cellColor = "#166534"; // birdie
+          else if (score === par + 1) cellColor = "#7f1d1d"; // bogey
+          else if (score >= par + 2) cellColor = "#450a0a";  // double+
+        }
+        if (score) total += score;
+
+        html += '<td style="text-align:center;padding:2px;min-width:28px;">' +
+          '<button onclick="editScanScore(\'' + escapeAttr(player.id) + '\',' + h + ',this)" ' +
+          'style="width:26px;height:26px;padding:0;margin:0;border-radius:6px;font-size:12px;font-weight:600;' +
+          'background:' + cellColor + ';border:1px solid #375984;">' +
+          (score || '—') +
+          '</button></td>';
+      });
+
+      html += '<td style="text-align:center;font-weight:700;padding:4px;">' + (total || '—') + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+
+    if (confidence === "low") {
+      html += '<div style="margin-top:10px;padding:8px;background:#451a03;border-radius:8px;font-size:12px;color:#fcd34d;">⚠️ Low confidence read — please check scores carefully</div>';
+    }
+
+    table.innerHTML = html;
+
+    // Show unmatched
+    const unmatchedSection = document.getElementById("scanUnmatched");
+    const unmatchedList = document.getElementById("scanUnmatchedList");
+    if (unmatched.length && unmatchedSection && unmatchedList) {
+      unmatchedSection.style.display = "block";
+      unmatchedList.textContent = unmatched.join(", ");
+    } else if (unmatchedSection) {
+      unmatchedSection.style.display = "none";
+    }
+  }
+
+  function editScanScore(playerId, holeNum, btn) {
+    const current = (scanEditedScores[playerId] && scanEditedScores[playerId][String(holeNum)]) || "";
+    const input = window.prompt("Score for hole " + holeNum + ":", current);
+    if (input === null) return; // cancelled
+    const score = parseInt(input);
+    if (!isNaN(score) && score > 0) {
+      if (!scanEditedScores[playerId]) scanEditedScores[playerId] = {};
+      scanEditedScores[playerId][String(holeNum)] = score;
+      btn.textContent = score;
+    } else if (input === "" || input === "0") {
+      if (scanEditedScores[playerId]) delete scanEditedScores[playerId][String(holeNum)];
+      btn.textContent = "—";
+    }
+  }
+
+  async function acceptScannedScores() {
+    const match = matches.find(m => m.id === activeScorecardMatchId);
+    if (!match) return;
+
+    const btn = document.getElementById("acceptScanBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+    try {
+      // Merge scanned scores into existing holeScores
+      const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
+      const updatedHoleDetail = JSON.parse(JSON.stringify(match.holeDetail || {}));
+
+      Object.entries(scanEditedScores).forEach(([playerId, holes]) => {
+        if (!updatedHoleScores[playerId]) updatedHoleScores[playerId] = {};
+        if (!updatedHoleDetail[playerId]) updatedHoleDetail[playerId] = {};
+        Object.entries(holes).forEach(([holeNum, score]) => {
+          updatedHoleScores[playerId][holeNum] = String(score);
+          if (!updatedHoleDetail[playerId][holeNum]) updatedHoleDetail[playerId][holeNum] = {};
+          updatedHoleDetail[playerId][holeNum].score = score;
+        });
+      });
+
+      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", activeScorecardMatchId), {
+        holeScores: updatedHoleScores,
+        holeDetail: updatedHoleDetail,
+        updatedAt: new Date().toISOString()
+      });
+
+      await addSwamiPost("scoreUpdate", "Scorecard scanned and scores imported");
+
+      // Return to scorecard
+      openScoreEntry(activeScorecardMatchId);
+    } catch(e) {
+      alert("Error saving scores: " + e.message);
+      if (btn) { btn.disabled = false; btn.textContent = "✓ Accept All"; }
+    }
+  }
+
+  // ── END SCORECARD SCANNER ────────────────────────────────────────────────────
 
   let _editingCompetitionId = null;
 
@@ -8838,6 +9148,12 @@ ${closer}`;
   window.saveTeams = saveTeams;
   window.goCompetitionScreen = goCompetitionScreen;
   window.goTeamRosterScreen = goTeamRosterScreen;
+  window.openScanScorecard = openScanScorecard;
+  window.handleScanUpload = handleScanUpload;
+  window.runScorecardScan = runScorecardScan;
+  window.editScanScore = editScanScore;
+  window.acceptScannedScores = acceptScannedScores;
+  window.goBackToScanScorecardScreen = goBackToScanScorecardScreen;
   window.openAddToTeamPicker = openAddToTeamPicker;
   window.saveTeamAssignments = saveTeamAssignments;
   window.openTeamRoster = openTeamRoster;
