@@ -9,16 +9,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, maxTokens, useSearch } = req.body;
+    const { prompt, maxTokens, useSearch, imageBase64, imageMediaType } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: "Missing prompt" });
     }
 
-    const body = {
-      model: "claude-haiku-4-5",
-      max_tokens: maxTokens || 300,
-      system: `You are Swami — the resident oracle and instigator of a golf trip app called Swami Golf.
+    // Build message content — support optional image for scorecard scanning
+    let messageContent;
+    if (imageBase64) {
+      messageContent = [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: imageMediaType || "image/jpeg",
+            data: imageBase64
+          }
+        },
+        { type: "text", text: prompt }
+      ];
+    } else {
+      messageContent = prompt;
+    }
+
+    // For scorecard scanning, use a more capable model and skip the Swami persona
+    const isScorecardScan = imageBase64 && prompt.includes("golf scorecard");
+    const model = isScorecardScan ? "claude-sonnet-4-20250514" : "claude-haiku-4-5";
+    const systemPrompt = isScorecardScan
+      ? "You are a precise OCR assistant. Extract golf scorecard data exactly as instructed and return only valid JSON."
+      : `You are Swami — the resident oracle and instigator of a golf trip app called Swami Golf.
 
 Personality:
 - Part caddie, part ESPN anchor, part group-chat chaos agent, part roast comic
@@ -43,10 +63,13 @@ Hard rules:
 - Real names, real numbers, real specifics — vague is boring, specific is funny
 - Every response must feel different from the last — vary structure, tone, angle, length
 - Sometimes ONE sentence is the whole move. Don't over-explain.
-- When there's a meme opportunity, take it. When there isn't, don't force it.`,
-      messages: [
-        { role: "user", content: prompt }
-      ]
+- When there's a meme opportunity, take it. When there isn't, don't force it.`;
+
+    const body = {
+      model,
+      max_tokens: maxTokens || 300,
+      system: systemPrompt,
+      messages: [{ role: "user", content: messageContent }]
     };
 
     // Add web search for recaps and context-heavy requests
