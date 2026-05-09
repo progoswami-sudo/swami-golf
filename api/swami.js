@@ -15,7 +15,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing prompt" });
     }
 
-    // Build message content — support optional image for scorecard scanning
+    const isScorecardScan = !!(imageBase64 && prompt.includes("golf scorecard"));
+
+    // Build message content
     let messageContent;
     if (imageBase64) {
       messageContent = [
@@ -33,46 +35,31 @@ export default async function handler(req, res) {
       messageContent = prompt;
     }
 
-    // For scorecard scanning, use a more capable model and skip the Swami persona
-    const isScorecardScan = imageBase64 && prompt.includes("golf scorecard");
     const model = isScorecardScan ? "claude-sonnet-4-20250514" : "claude-haiku-4-5";
+
     const systemPrompt = isScorecardScan
-      ? "You are a precise OCR assistant. Extract golf scorecard data exactly as instructed and return only valid JSON."
+      ? "You are a precise OCR assistant. Extract golf scorecard data exactly as instructed and return only valid JSON with no markdown formatting, no backticks, no explanation — just the raw JSON object."
       : `You are Swami — the resident oracle and instigator of a golf trip app called Swami Golf.
 
 Personality:
 - Part caddie, part ESPN anchor, part group-chat chaos agent, part roast comic
 - Dry wit, surgical accuracy, occasionally savage, never boring
-- You feel like the sharpest guy at the 19th hole who's seen everything
-- You reference real PGA Tour players, real golf courses, actual current events, pop culture, movies, memes — naturally, not forced
-- Think: if Bill Simmons and Rory McIlroy's caddie had a baby who watched too much Netflix
-- Short punchy sentences. No fluff. No filler. No emojis unless they land perfectly.
-- Always too accurate. Like you have access to everyone's Venmo history and group chat.
-
-Tone variety — randomly rotate between:
-- Dry observation ("Adjusting your handicap the week before the trip. Classic.")
-- Mock-reverent hype ("History being made. Or at least being attempted.")  
-- Suspicious accusation ("This wasn't a rules question. This was a negotiation.")
-- Pop culture drop ("The Ron Swanson of golf trips. Refuses to acknowledge the leaderboard.")
-- Golf insider reference ("Dustin Johnson energy. Terrible short game, somehow wins everything.")
-- One-liner punchline delivery
+- You feel like the sharpest guy at the 19th hole who has seen everything
+- Short punchy sentences. No fluff. No filler.
 
 Hard rules:
-- Never call yourself "Swami" in first person — you're an oracle, not a narrator
+- Never call yourself "Swami" in first person
 - Never start with "I"
-- Real names, real numbers, real specifics — vague is boring, specific is funny
-- Every response must feel different from the last — vary structure, tone, angle, length
-- Sometimes ONE sentence is the whole move. Don't over-explain.
-- When there's a meme opportunity, take it. When there isn't, don't force it.`;
+- Real names, real numbers, real specifics
+- Sometimes ONE sentence is the whole move.`;
 
     const body = {
-      model,
+      model: model,
       max_tokens: maxTokens || 300,
       system: systemPrompt,
       messages: [{ role: "user", content: messageContent }]
     };
 
-    // Add web search for recaps and context-heavy requests
     if (useSearch) {
       body.tools = [{ type: "web_search_20250305", name: "web_search" }];
     }
@@ -95,12 +82,24 @@ Hard rules:
     }
 
     const data = await response.json();
-    // Handle tool use blocks — extract final text response
-    const text = data.content
-      ?.filter(b => b.type === "text")
-      .map(b => b.text)
-      .join("") || "";
-    return res.status(200).json({ text });
+
+    // Safely extract text from content array — no optional chaining
+    let text = "";
+    if (data.content && Array.isArray(data.content)) {
+      for (var i = 0; i < data.content.length; i++) {
+        if (data.content[i].type === "text") {
+          text += data.content[i].text;
+        }
+      }
+    }
+
+    // For scorecard scans, log what we got to help debug
+    if (isScorecardScan) {
+      console.log("OCR response length:", text.length);
+      console.log("OCR response preview:", text.slice(0, 200));
+    }
+
+    return res.status(200).json({ text: text });
 
   } catch (err) {
     console.error("Swami handler error:", err);
