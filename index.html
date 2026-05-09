@@ -3839,14 +3839,18 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   function loadMatchPlayerSelectors() {
-    const teamA = activeTripData.teamA || "Team A";
-    const teamB = activeTripData.teamB || "Team B";
+    const teams = getTeams();
+    const teamA = teams[0] || { id: "A", name: activeTripData.teamA || "Team A" };
+    const teamB = teams[1] || { id: "B", name: activeTripData.teamB || "Team B" };
 
-    document.getElementById("matchTeamALabel").innerText = teamA;
-    document.getElementById("matchTeamBLabel").innerText = teamB;
+    document.getElementById("matchTeamALabel").innerText = teamA.name;
+    document.getElementById("matchTeamBLabel").innerText = teamB.name;
 
-    fillPlayerSelect("matchTeamAPlayers", players.filter(player => player.team === teamA));
-    fillPlayerSelect("matchTeamBPlayers", players.filter(player => player.team === teamB));
+    const matchesTeam = (player, team) =>
+      player.team === team.name || player.team === team.id;
+
+    fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
+    fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
   }
 
   function fillPlayerSelect(elementId, playerList) {
