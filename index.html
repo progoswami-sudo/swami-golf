@@ -1590,11 +1590,19 @@
       <label class="form-label" for="matchDate">Date</label>
       <input id="matchDate" type="date"/>
 
-      <label class="form-label" for="matchCourse">Golf Course</label>
-      <select id="matchCourse" onchange="handleCourseChange()"></select>
-      <input id="matchCourseOther" class="hidden" placeholder="Type golf course name"/>
+      <label class="form-label" for="courseSearchInput">Golf Course</label>
+      <div style="position:relative;">
+        <input id="courseSearchInput" placeholder="Search or type course name…" autocomplete="off"
+          oninput="filterCourseDropdown(this.value)" onfocus="filterCourseDropdown(this.value)"
+          style="margin-bottom:0;"/>
+        <div id="courseSearchDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;background:#13294d;border:1px solid #375984;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:500;"></div>
+      </div>
+      <!-- Hidden fields to store selected course/tee IDs -->
+      <input id="matchCourse" type="hidden"/>
+      <input id="matchCourseOther" type="hidden"/>
+      <input id="selectedCourseId" type="hidden"/>
 
-      <label class="form-label" for="matchTees">Tees</label>
+      <label class="form-label" for="matchTees" style="margin-top:12px;">Tees</label>
       <select id="matchTees" onchange="handleTeeChange()"></select>
       <input id="matchTeesOther" class="hidden" placeholder="Type tee name"/>
 
@@ -2039,8 +2047,12 @@
   window._q = [];
   function _stub(name) {
     return function() {
-      var a = arguments;
-      window._q.push([name, Array.prototype.slice.call(a)]);
+      var a = Array.prototype.slice.call(arguments);
+      // If module has already set the real function on window, call it
+      var real = window['__fn_' + name];
+      if (real) { real.apply(null, a); return; }
+      // Otherwise queue for replay
+      window._q.push([name, a]);
     };
   }
   window.toggleHomeMenu     = _stub('toggleHomeMenu');
@@ -2057,6 +2069,41 @@
   window.requestNotifications  = _stub('requestNotifications');
   window.turnOffNotifications  = _stub('turnOffNotifications');
   window.openTab               = _stub('openTab');
+  // Action functions that can be called from inline onclick before module loads
+  window.saveMatch          = _stub('saveMatch');
+  window.savePlayer         = _stub('savePlayer');
+  window.saveExpense        = _stub('saveExpense');
+  window.saveWager          = _stub('saveWager');
+  window.saveCompetition    = _stub('saveCompetition');
+  window.saveTeamAssignments= _stub('saveTeamAssignments');
+  window.saveIntel          = _stub('saveIntel');
+  window.saveHoleDetail     = _stub('saveHoleDetail');
+  window.markPaymentPaid    = _stub('markPaymentPaid');
+  window.unmarkPaymentPaid  = _stub('unmarkPaymentPaid');
+  window.deleteMatch        = _stub('deleteMatch');
+  window.deleteExpense      = _stub('deleteExpense');
+  window.deleteCompetition  = _stub('deleteCompetition');
+  window.openScoreEntry     = _stub('openScoreEntry');
+  window.openMatchSetup     = _stub('openMatchSetup');
+  window.openExpenseEditor  = _stub('openExpenseEditor');
+  window.openWagerEditor    = _stub('openWagerEditor');
+  window.openPlayerList     = _stub('openPlayerList');
+  window.openPlayer         = _stub('openPlayer');
+  window.openMemberManager  = _stub('openMemberManager');
+  window.openRecaps         = _stub('openRecaps');
+  window.openTripFeed       = _stub('openTripFeed');
+  window.openPhotoLibrary   = _stub('openPhotoLibrary');
+  window.openSettlement     = _stub('openSettlement');
+  window.openExpenses       = _stub('openExpenses');
+  window.openWagers         = _stub('openWagers');
+  window.openCompetition    = _stub('openCompetition');
+  window.postUserComment    = _stub('postUserComment');
+  window.toggleReaction     = _stub('toggleReaction');
+  window.togglePostExpand   = _stub('togglePostExpand');
+  window.sendInvite         = _stub('sendInvite');
+  window.removeMember       = _stub('removeMember');
+  window.cancelInvite       = _stub('cancelInvite');
+  window.changeMemberRole   = _stub('changeMemberRole');
   window.addEventListener('error', function(e) {
     var msg = (e.message||'unknown') + ' (line ' + e.lineno + ' col ' + e.colno + ')';
     console.error('SCRIPT ERROR:', msg);
@@ -2891,93 +2938,66 @@ Respond ONLY with valid JSON, nothing else:
       });
   }
 
-  function populateCourseDropdown(selectedCourseName, selectedTeeName) {
-    const courseSelect = document.getElementById("matchCourse");
-    if (!courseSelect) return;
-
-    const currentValue = selectedCourseName || courseSelect.value || "";
-    const courseOptions = getCourseOptions();
-
-    courseSelect.innerHTML = "";
-
-    const blank = document.createElement("option");
-    blank.value = "";
-    blank.textContent = courseOptions.length ? "Select Golf Course" : "Course library unavailable";
-    courseSelect.appendChild(blank);
-
-    courseOptions.forEach(function(course) {
-      const option = document.createElement("option");
-      option.value = course.name;
-      option.setAttribute("data-course-id", course.id);
-      option.textContent = course.name;
-      courseSelect.appendChild(option);
-    });
-
-    const other = document.createElement("option");
-    other.value = "__other__";
-    other.textContent = "Other / Free Text";
-    courseSelect.appendChild(other);
-
-    if (currentValue) {
-      let found = false;
-      Array.from(courseSelect.options).forEach(function(option) {
-        if (option.value === currentValue || option.getAttribute("data-course-id") === normalizeCourseKey(currentValue) || option.getAttribute("data-course-id") === currentValue) {
-          courseSelect.value = option.value;
-          found = true;
-        }
-      });
-
-      setOtherCourseVisibility(!found);
-
-      if (!found) {
-        courseSelect.value = "__other__";
-        const otherCourse = document.getElementById("matchCourseOther");
-        if (otherCourse) otherCourse.value = currentValue;
-      }
-    } else {
-      setOtherCourseVisibility(false);
-    }
-
-    populateTeeDropdown(selectedTeeName);
-  }
-
-
   function getSelectedCourseName() {
-    const select = document.getElementById("matchCourse");
-    const other = document.getElementById("matchCourseOther");
-
-    if (!select) return "";
-
-    if (select.value === "__other__") {
-      return other ? other.value.trim() : "";
-    }
-
-    return select.value.trim();
+    const input = document.getElementById("courseSearchInput");
+    return input ? input.value.trim() : "";
   }
 
   function getSelectedCourseId() {
-    const select = document.getElementById("matchCourse");
-
-    if (!select || select.value === "__other__") {
-      return normalizeCourseKey(getSelectedCourseName());
-    }
-
-    const selectedOption = select.options[select.selectedIndex];
-    return selectedOption ? (selectedOption.getAttribute("data-course-id") || normalizeCourseKey(select.value)) : normalizeCourseKey(select.value);
+    const el = document.getElementById("selectedCourseId");
+    return el ? el.value : normalizeCourseKey(getSelectedCourseName());
   }
 
+  function filterCourseDropdown(query) {
+    const dropdown = document.getElementById("courseSearchDropdown");
+    if (!dropdown) return;
+    const q = (query || "").toLowerCase().trim();
+    const opts = getCourseOptions();
+    const filtered = q ? opts.filter(c => c.name.toLowerCase().includes(q)) : opts;
 
-  function setOtherCourseVisibility(showOther) {
-    const other = document.getElementById("matchCourseOther");
-    if (!other) return;
-    other.classList.toggle("hidden", !showOther);
+    if (!filtered.length && !q) { dropdown.style.display = "none"; return; }
+    dropdown.style.display = "block";
+    dropdown.innerHTML = filtered.slice(0, 20).map(c =>
+      "<div onclick=\"selectCourse('" + c.id + "','" + c.name.replace(/'/g,"\\'") + "')\" " +
+      "style=\"padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid #1e3a5f;\" " +
+      "onmousedown=\"event.preventDefault()\">" + escapeHtml(c.name) + "</div>"
+    ).join("") +
+    (q ? "<div onclick=\"selectCourse(\'\','" + escapeHtml(query).replace(/'/g,"\\'") + "')\" " +
+      "style=\"padding:10px 14px;cursor:pointer;font-size:13px;color:#64748b;border-top:1px solid #375984;\" " +
+      "onmousedown=\"event.preventDefault()\">Use \"" + escapeHtml(query) + "\" as custom course</div>" : "");
+    setTimeout(() => document.addEventListener("click", closeCourseDropdown, { once: true }), 0);
   }
 
-  function handleCourseChange() {
-    const select = document.getElementById("matchCourse");
-    setOtherCourseVisibility(select && select.value === "__other__");
+  function closeCourseDropdown() {
+    const d = document.getElementById("courseSearchDropdown");
+    if (d) d.style.display = "none";
+  }
+
+  function selectCourse(courseId, courseName) {
+    const input = document.getElementById("courseSearchInput");
+    const idEl = document.getElementById("selectedCourseId");
+    if (input) input.value = courseName;
+    if (idEl) idEl.value = courseId;
+    const d = document.getElementById("courseSearchDropdown");
+    if (d) d.style.display = "none";
     populateTeeDropdown();
   }
+
+  function setOtherCourseVisibility() {}
+  function handleCourseChange() {}
+
+  function populateCourseDropdown(selectedCourseName, selectedTeeName) {
+    if (selectedCourseName) {
+      const input = document.getElementById("courseSearchInput");
+      if (input) input.value = selectedCourseName;
+      const opts = getCourseOptions();
+      const match = opts.find(c => c.name === selectedCourseName);
+      const idEl = document.getElementById("selectedCourseId");
+      if (idEl) idEl.value = match ? match.id : normalizeCourseKey(selectedCourseName);
+    }
+    populateTeeDropdown(selectedTeeName);
+  }
+
 
   function populateTeeDropdown(selectedTeeName) {
     const teeSelect = document.getElementById("matchTees");
@@ -9031,17 +9051,37 @@ ${closer}`;
   window.saveHoleDetail = saveHoleDetail;
   window.goBackToScoreEntry = function() { openEnterScore(activeScoreMatchId); };
   // Register module with stub system and replay any queued calls
-  window._mod = {
-    toggleHomeMenu, openUserProfile, goHome, createTrip,
-    openTripHome, goTripHome, toggleTripMenu,
-    sendMagicLink, showLoginEmailStep, signOutUser, saveUserProfile,
-    requestNotifications, turnOffNotifications
+  // Register ALL real functions so stubs can find them
+  var _allFns = {
+    toggleHomeMenu, openUserProfile, goHome, createTrip, openTripHome, goTripHome,
+    toggleTripMenu, sendMagicLink, showLoginEmailStep, signOutUser, saveUserProfile,
+    requestNotifications, turnOffNotifications, openTab,
+    filterCourseDropdown, selectCourse, closeCourseDropdown,
+    saveMatch, savePlayer, saveExpense, saveWager, saveCompetition,
+    saveTeamAssignments, saveIntel, saveHoleDetail,
+    markPaymentPaid, unmarkPaymentPaid,
+    deleteMatch, deleteExpense, deleteCompetition,
+    openScoreEntry, openMatchSetup, openExpenseEditor, openWagerEditor,
+    openPlayerList, openPlayer, openMemberManager, openRecaps,
+    openTripFeed, openPhotoLibrary, openSettlement, openExpenses, openWagers,
+    openCompetition, postUserComment, toggleReaction, togglePostExpand,
+    sendInvite, removeMember, cancelInvite,
+    goCompetitionScreen, goTeamRosterScreen, openAddToTeamPicker,
+    openScanScorecard, handleScanUpload, runScorecardScan,
+    editScanScore, acceptScannedScores, goBackToScanScorecardScreen,
+    openNewCompetition, editCompetition, saveTeams, setNumTeams,
+    openTeamRoster, openTeamEdit, openTeamSetup
   };
-  console.log('✅ window._mod registered');
+  Object.keys(_allFns).forEach(function(name) {
+    window['__fn_' + name] = _allFns[name];
+    window[name] = _allFns[name]; // also set directly
+  });
+  // Replay any queued calls
   (window._q || []).forEach(function(c) {
-    if (window._mod[c[0]]) window._mod[c[0]].apply(null, c[1]);
+    if (window['__fn_' + c[0]]) window['__fn_' + c[0]].apply(null, c[1]);
   });
   window._q = [];
+  console.log('✅ window._mod registered');
 
   console.log('📍 reached window exports');
   window.toggleHomeMenu = toggleHomeMenu;
@@ -9097,6 +9137,9 @@ ${closer}`;
   window.deleteMatch = deleteMatch;
   window.openEnterScore = openEnterScore;
   window.renderMatchValueFields = renderMatchValueFields;
+  window.filterCourseDropdown = filterCourseDropdown;
+  window.selectCourse = selectCourse;
+  window.closeCourseDropdown = closeCourseDropdown;
   window.toggleTripMenu = toggleTripMenu;
   window.openRecaps = openRecaps;
   window.renderRecapControls = renderRecapControls;
