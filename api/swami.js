@@ -35,23 +35,25 @@ export default async function handler(req, res) {
       messageContent = prompt;
     }
 
-    const model = isScorecardScan ? "claude-sonnet-4-20250514" : "claude-haiku-4-5";
+    // Use claude-sonnet-4-5 for vision (confirmed vision support), haiku for Swami
+    const model = isScorecardScan ? "claude-sonnet-4-5" : "claude-haiku-4-5";
 
     const systemPrompt = isScorecardScan
       ? "You are a precise OCR assistant. Extract golf scorecard data exactly as instructed and return only valid JSON with no markdown formatting, no backticks, no explanation — just the raw JSON object."
       : `You are Swami — the resident oracle and instigator of a golf trip app called Swami Golf.
+Personality: dry wit, surgical accuracy, occasionally savage. Short punchy sentences. No fluff.
+Hard rules: Never call yourself "Swami" in first person. Never start with "I". Be specific and funny.`;
 
-Personality:
-- Part caddie, part ESPN anchor, part group-chat chaos agent, part roast comic
-- Dry wit, surgical accuracy, occasionally savage, never boring
-- You feel like the sharpest guy at the 19th hole who has seen everything
-- Short punchy sentences. No fluff. No filler.
+    const headers = {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01"
+    };
 
-Hard rules:
-- Never call yourself "Swami" in first person
-- Never start with "I"
-- Real names, real numbers, real specifics
-- Sometimes ONE sentence is the whole move.`;
+    // Only add web search beta header when actually using search
+    if (useSearch) {
+      headers["anthropic-beta"] = "web-search-2025-03-05";
+    }
 
     const body = {
       model: model,
@@ -64,27 +66,27 @@ Hard rules:
       body.tools = [{ type: "web_search_20250305", name: "web_search" }];
     }
 
+    console.log("Swami request: model=" + model + " scan=" + isScorecardScan + " imageLen=" + (imageBase64 ? imageBase64.length : 0));
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "web-search-2025-03-05"
-      },
+      headers: headers,
       body: JSON.stringify(body)
     });
 
+    const responseText = await response.text();
+    console.log("API status:", response.status);
+    console.log("API response preview:", responseText.slice(0, 300));
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Anthropic API error:", response.status, errorText);
-      return res.status(response.status).json({ error: errorText });
+      console.error("Anthropic API error:", response.status, responseText);
+      return res.status(response.status).json({ error: responseText });
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
 
-    // Safely extract text from content array — no optional chaining
-    let text = "";
+    // Extract text blocks from content array
+    var text = "";
     if (data.content && Array.isArray(data.content)) {
       for (var i = 0; i < data.content.length; i++) {
         if (data.content[i].type === "text") {
@@ -93,10 +95,9 @@ Hard rules:
       }
     }
 
-    // For scorecard scans, log what we got to help debug
+    console.log("Extracted text length:", text.length);
     if (isScorecardScan) {
-      console.log("OCR response length:", text.length);
-      console.log("OCR response preview:", text.slice(0, 200));
+      console.log("OCR text:", text.slice(0, 500));
     }
 
     return res.status(200).json({ text: text });
