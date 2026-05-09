@@ -2083,7 +2083,7 @@
   window.deleteMatch        = _stub('deleteMatch');
   window.deleteExpense      = _stub('deleteExpense');
   window.deleteCompetition  = _stub('deleteCompetition');
-  window.openScoreEntry     = _stub('openScoreEntry');
+  window.openScoreEntry     = _stub('openEnterScore');
   window.openMatchSetup     = _stub('openMatchSetup');
   window.openExpenseEditor  = _stub('openExpenseEditor');
   window.openWagerEditor    = _stub('openWagerEditor');
@@ -5696,24 +5696,49 @@ ${closer}`;
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const dataUrl = e.target.result;
-      scanImageBase64 = dataUrl.split(",")[1]; // strip data:image/...;base64,
+    const btn = document.getElementById("scanScorecardBtn");
+    const preview = document.getElementById("scanPreview");
 
-      // Show preview
-      const preview = document.getElementById("scanPreview");
+    // Compress image to max 1200px wide before sending
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement("canvas");
+      const maxW = 1200;
+      const scale = img.width > maxW ? maxW / img.width : 1;
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Use JPEG at 85% quality
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      scanImageBase64 = dataUrl.split(",")[1];
+
       if (preview) {
         preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;border-radius:10px;display:block;">';
       }
-      const btn = document.getElementById("scanScorecardBtn");
+      const kb = Math.round(scanImageBase64.length * 0.75 / 1024);
+      console.log("Image compressed to ~" + kb + "KB, " + canvas.width + "x" + canvas.height);
       if (btn) btn.style.display = "block";
     };
-    reader.readAsDataURL(file);
+    img.onerror = function() {
+      // Fallback: read as-is
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        scanImageBase64 = dataUrl.split(",")[1];
+        if (preview) preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;border-radius:10px;display:block;">';
+        if (btn) btn.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    };
+    img.src = objectUrl;
   }
 
   function goBackFromScan() {
-    openScoreEntry(activeScorecardMatchId);
+    openEnterScore(activeScorecardMatchId);
   }
 
   async function runScorecardScan() {
@@ -5769,7 +5794,11 @@ ${closer}`;
       const data = await res.json();
       const text = (data.text || data.content || "").trim();
 
-      console.log("Scan raw response:", text.slice(0, 300));
+      console.log("=== OCR RESPONSE ===");
+      console.log("HTTP status:", res.status);
+      console.log("Response text length:", text.length);
+      console.log("Response preview:", text.slice(0, 500));
+      if (data.error) console.error("API error:", data.error);
 
       // Try multiple parsing strategies
       let result = null;
@@ -9116,7 +9145,7 @@ ${closer}`;
     saveTeamAssignments, saveIntel, saveHoleDetail,
     markPaymentPaid, unmarkPaymentPaid,
     deleteMatch, deleteExpense, deleteCompetition,
-    openScoreEntry, openMatchSetup, openExpenseEditor, openWagerEditor,
+    openEnterScore, openMatchSetup, openExpenseEditor, openWagerEditor,
     openPlayerList, openPlayer, openMemberManager, openRecaps,
     openTripFeed, openPhotoLibrary, openSettlement, openExpenses, openWagers,
     openCompetition, postUserComment, toggleReaction, togglePostExpand,
@@ -9191,6 +9220,7 @@ ${closer}`;
   window.toggleMatchMenu = toggleMatchMenu;
   window.deleteMatch = deleteMatch;
   window.openEnterScore = openEnterScore;
+  window.openScoreEntry = openEnterScore; // alias
   window.renderMatchValueFields = renderMatchValueFields;
   window.filterCourseDropdown = filterCourseDropdown;
   window.selectCourse = selectCourse;
