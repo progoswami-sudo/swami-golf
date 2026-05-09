@@ -1229,18 +1229,17 @@
         <div class="trip-menu-wrap">
           <button class="trip-menu-btn" onclick="toggleTripMenu(event)">☰</button>
           <div id="tripMenu" class="trip-menu hidden">
-            <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
-            <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
-            <div class="home-menu-item" onclick="openMatchHome()">Matches</div>
+            <div class="home-menu-item" onclick="openPlayerList()">Players</div>
             <div class="home-menu-item" onclick="openTab()">The Tab</div>
             <div class="home-menu-item" onclick="openPhotoLibrary()">Photos</div>
-            <div class="home-menu-item" onclick="openPlayerList()">Players</div>
-            <div class="home-menu-item" onclick="openMemberManager()">Members &amp; Invites</div>
+            <div class="home-menu-item" onclick="openTripFeed()">Trip Feed</div>
+            <div class="home-menu-item" onclick="openRecaps()">Recaps</div>
             <div class="home-menu-item trip-menu-item-row" onclick="openTags()">
               <span>Tags</span><span id="tagBadge" class="badge hidden">0</span>
             </div>
             <div class="danger-zone">
               <div class="home-menu-item" onclick="openNewCompetition()">New Competition</div>
+              <div class="home-menu-item" onclick="openMemberManager()">Members &amp; Invites</div>
               <div class="home-menu-item" onclick="editTrip()">Edit Trip</div>
               <div class="home-menu-item" onclick="deleteTrip()" style="color:#fecaca;">Delete Trip</div>
             </div>
@@ -1268,10 +1267,9 @@
     <div class="sticky-page-header">
       <button onclick="goTripHome()" class="secondary">Back</button>
       <h2 id="competitionTitle">Competition</h2>
-      <div style="position:relative;">
-        <button onclick="openCompetitionMenu(event)" style="width:auto;padding:8px 14px;margin:0;font-size:18px;line-height:1;">☰</button>
+      <div style="position:relative;margin-left:auto;">
+        <button onclick="openCompetitionMenu(event)" class="trip-menu-btn" style="font-size:18px;">☰</button>
         <div id="competitionMenu" class="trip-menu hidden" style="right:0;top:40px;min-width:180px;">
-          <div class="home-menu-item" onclick="openCompRecaps()">Recaps</div>
           <div id="compTeamsMenuItem"></div>
           <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
           <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
@@ -1281,7 +1279,10 @@
     <div class="card score-card">
       <div id="compScoreboard" class="scoreboard"></div>
     </div>
-    <div id="compMatchList" style="padding:0 12px 12px;"></div>
+    <div class="card">
+      <div class="mini-tile" onclick="openMatchSetup()">Set Up New Match</div>
+      <div id="matchList"></div>
+    </div>
   </div>
 
 
@@ -1577,21 +1578,6 @@
     </div>
   </div>
 
-  <div id="matchHomeScreen" class="hidden secondary-screen">
-    <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2>Matches</h2>
-    </div>
-
-    <div class="card">
-      <div class="mini-tile" onclick="openMatchSetup()">
-        Set Up New Match
-      </div>
-
-      <div id="matchList"></div>
-    </div>
-  </div>
-
   <div id="matchSetupScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="openMatchHome()" class="secondary">Back</button>
@@ -1740,10 +1726,24 @@
   <div id="teamRosterScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2 id="teamRosterTitle" class="team-name" onclick="promptEditTeamNameFromRoster()" style="text-decoration:underline;text-underline-offset:4px;cursor:pointer;">Team Roster</h2>
+      <h2 id="teamRosterTitle">Team Roster</h2>
     </div>
     <div class="card">
+      <button onclick="openAddToTeamPicker()" style="margin-bottom:8px;">+ Add Player to Team</button>
       <div id="teamRosterList"></div>
+    </div>
+  </div>
+
+  <!-- ── ADD TO TEAM PICKER ──────────────────────────────────────────────── -->
+  <div id="addToTeamScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="show('teamRosterScreen')" class="secondary">Back</button>
+      <h2 id="addToTeamTitle">Add to Team</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px;">Select players to add to this team. Players already on this team are shown as assigned.</div>
+      <div id="addToTeamList"></div>
+      <button id="saveTeamAssignmentsBtn" onclick="saveTeamAssignments()" style="margin-top:12px;">Save</button>
     </div>
   </div>
 
@@ -1822,11 +1822,6 @@
           </select>
         </div>
       </div>
-
-      <label class="form-label" for="playerTeam">Team</label>
-      <select id="playerTeam">
-        <option value="">No team assigned</option>
-      </select>
 
       <div id="linkMemberRow" style="display:none;margin-bottom:8px;">
         <label class="form-label">Link to Trip Member (optional)</label>
@@ -3463,7 +3458,6 @@ Respond ONLY with valid JSON, nothing else:
       "itineraryEditorScreen",
       "tagsScreen",
       "recapsScreen",
-      "matchHomeScreen",
       "matchSetupScreen",
       "scoreEntryScreen",
       "holeDetailScreen",
@@ -3477,6 +3471,7 @@ Respond ONLY with valid JSON, nothing else:
       "wagerEditorScreen",
       "settlementScreen",
       "competitionScreen",
+      "addToTeamScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -3606,7 +3601,9 @@ Respond ONLY with valid JSON, nothing else:
   }
 
   function openMatchHome() {
-    show("matchHomeScreen");
+    if (activeCompetitionId) {
+      show("competitionScreen");
+    }
     renderMatchList();
   }
 
@@ -5395,12 +5392,69 @@ ${closer}`;
 
   function openTeamRoster(teamKeyValue) {
     activeTeamRosterKey = teamKeyValue;
-    const teamName = teamKeyValue === "A"
-      ? activeTripData.teamA || "Team A"
-      : activeTripData.teamB || "Team B";
+    const teams = getTeams();
+    const team = teams.find(t => t.id === teamKeyValue);
+    const teamName = team ? team.name : teamKeyValue;
     document.getElementById("teamRosterTitle").innerText = teamName;
     renderTeamRoster(teamName);
     show("teamRosterScreen");
+  }
+
+  function openAddToTeamPicker() {
+    const teams = getTeams();
+    const team = teams.find(t => t.id === activeTeamRosterKey);
+    const teamName = team ? team.name : activeTeamRosterKey;
+    document.getElementById("addToTeamTitle").textContent = "Add to " + teamName;
+
+    // Show all players with checkboxes; pre-check those already on this team
+    const el = document.getElementById("addToTeamList");
+    if (!el) return;
+    el.innerHTML = players
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      .map(p => {
+        const onTeam = (p.team === teamName || p.team === activeTeamRosterKey);
+        return '<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e3a5f;cursor:pointer;">' +
+          '<input type="checkbox" value="' + escapeAttr(p.id) + '"' + (onTeam ? " checked" : "") + ' style="width:18px;height:18px;">' +
+          '<div><div style="font-weight:600;">' + escapeHtml(p.name) + '</div>' +
+          (p.nickname ? '<div style="font-size:12px;color:#64748b;">"' + escapeHtml(p.nickname) + '"</div>' : '') +
+          '</div></label>';
+      }).join("");
+    show("addToTeamScreen");
+  }
+
+  async function saveTeamAssignments() {
+    const btn = document.getElementById("saveTeamAssignmentsBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+    const teams = getTeams();
+    const team = teams.find(t => t.id === activeTeamRosterKey);
+    const teamName = team ? team.name : activeTeamRosterKey;
+
+    const checked = new Set(
+      Array.from(document.querySelectorAll("#addToTeamList input:checked")).map(cb => cb.value)
+    );
+
+    try {
+      const batch = writeBatch(db);
+      players.forEach(p => {
+        const shouldBeOnTeam = checked.has(p.id);
+        const isOnTeam = (p.team === teamName || p.team === activeTeamRosterKey);
+        // Also check if on a DIFFERENT team from this competition
+        const onOtherTeam = p.team && !isOnTeam && teams.some(t => t.name === p.team || t.id === p.team);
+
+        if (shouldBeOnTeam && !isOnTeam) {
+          batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: teamName });
+        } else if (!shouldBeOnTeam && isOnTeam) {
+          batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: "" });
+        }
+      });
+      await batch.commit();
+      openTeamRoster(activeTeamRosterKey);
+    } catch(e) {
+      alert("Error saving: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+    }
   }
 
   let playerSource = "manual"; // "member" or "manual"
@@ -5804,12 +5858,12 @@ ${closer}`;
     window._compMatchUnsub = onSnapshot(matchesCollection(), snapshot => {
       matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       renderCompScoreboard();
-      renderCompInlineMatches();
+      renderMatchList();
     });
 
     show("competitionScreen");
     renderCompScoreboard();
-    renderCompInlineMatches();
+    renderMatchList();
   }
 
   function openCompetitionMenu(e) {
@@ -6893,7 +6947,7 @@ ${closer}`;
     document.getElementById("nickname").value = "";
     document.getElementById("handicapIndex").value = "";
     document.getElementById("playerGender").value = "";
-    document.getElementById("playerTeam").value = "";
+    // team assignment moved to competition level
     const nameInput = document.getElementById("playerName");
     if (nameInput) { nameInput.readOnly = false; nameInput.style.opacity = "1"; }
   }
@@ -6905,7 +6959,7 @@ ${closer}`;
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
     document.getElementById("playerGender").value = player.gender || "";
-    loadTeamDropdown(player.team || "");
+    // team dropdown removed - assignment at competition level
     // Name is readonly for member-linked players
     const nameInput = document.getElementById("playerName");
     if (nameInput && player.linkedUid) {
@@ -6951,7 +7005,7 @@ ${closer}`;
     const nickname = document.getElementById("nickname").value.trim();
     const handicapIndex = document.getElementById("handicapIndex").value.trim();
     const gender = document.getElementById("playerGender").value;
-    const team = document.getElementById("playerTeam").value;
+    const team = "";  // team assignment now at competition level
 
     if (!name) { alert("Please enter a player name."); return; }
 
@@ -8779,6 +8833,8 @@ ${closer}`;
   window.openPlayerList = openPlayerList;
   window.openPlayer = openPlayer;
   window.saveTeams = saveTeams;
+  window.openAddToTeamPicker = openAddToTeamPicker;
+  window.saveTeamAssignments = saveTeamAssignments;
   window.openTeamRoster = openTeamRoster;
   window.openItineraryEditor = openItineraryEditor;
   window.saveItineraryEvent = saveItineraryEvent;
