@@ -120,12 +120,8 @@
     }
 
     .team-name {
-      cursor: pointer;
       font-weight: bold;
-      text-decoration: underline;
-      text-underline-offset: 4px;
       font-size: 17px;
-      touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
       padding: 4px;
@@ -1272,18 +1268,20 @@
     <div class="sticky-page-header">
       <button onclick="goTripHome()" class="secondary">Back</button>
       <h2 id="competitionTitle">Competition</h2>
-      <button onclick="openCompetitionMenu(event)" style="width:auto;padding:8px 14px;margin:0;font-size:18px;">☰</button>
-    </div>
-    <div id="competitionMenu" class="trip-menu hidden" style="right:12px;top:56px;">
-      <div class="home-menu-item" onclick="openCompMatchHome()">Matches</div>
-      <div class="home-menu-item" onclick="openCompRecaps()">Recaps</div>
-      <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
-      <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
+      <div style="position:relative;">
+        <button onclick="openCompetitionMenu(event)" style="width:auto;padding:8px 14px;margin:0;font-size:18px;line-height:1;">☰</button>
+        <div id="competitionMenu" class="trip-menu hidden" style="right:0;top:40px;min-width:180px;">
+          <div class="home-menu-item" onclick="openCompRecaps()">Recaps</div>
+          <div id="compTeamsMenuItem"></div>
+          <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
+          <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
+        </div>
+      </div>
     </div>
     <div class="card score-card">
       <div id="compScoreboard" class="scoreboard"></div>
     </div>
-    <div id="compMatchSummary" style="padding:0 12px;"></div>
+    <div id="compMatchList" style="padding:0 12px 12px;"></div>
   </div>
 
 
@@ -3596,6 +3594,17 @@ Respond ONLY with valid JSON, nothing else:
     });
   }
 
+  function openMatchEditor() {
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.add("hidden");
+    openMatchHome();
+    // After a brief delay, open the add match form
+    setTimeout(() => {
+      const addBtn = document.querySelector("#matchListScreen button");
+      if (addBtn) addBtn.click();
+    }, 100);
+  }
+
   function openMatchHome() {
     show("matchHomeScreen");
     renderMatchList();
@@ -5601,7 +5610,7 @@ ${closer}`;
         const scoreHtml = buildScoreboardHtml(teams, scores);
 
         return '<div onclick="openCompetition(\'' + escapeAttr(comp.id) + '\')" style="cursor:pointer;">' +
-          '<div style="font-size:12px;color:#93c5fd;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:8px 4px 2px;">' +
+          '<div style="font-size:12px;color:#93c5fd;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:8px 4px 2px;text-align:center;">' +
             escapeHtml(comp.name || "Competition") +
           '</div>' +
           '<div class="card score-card" style="margin-top:0;">' +
@@ -5781,18 +5790,26 @@ ${closer}`;
     }
     document.getElementById("competitionTitle").textContent = activeCompetitionData.name || "Competition";
 
+    // Build Teams menu items
+    const teamsMenuItem = document.getElementById("compTeamsMenuItem");
+    if (teamsMenuItem) {
+      const teams = getTeams();
+      teamsMenuItem.innerHTML = teams.map(function(t) {
+        return '<div class="home-menu-item" onclick="openTeamRoster(\'' + t.id + '\');this.closest(\'.trip-menu\').classList.add(\'hidden\');">' + escapeHtml(t.name) + ' Roster</div>';
+      }).join("");
+    }
+
     // Subscribe to this competition's matches
     if (window._compMatchUnsub) window._compMatchUnsub();
     window._compMatchUnsub = onSnapshot(matchesCollection(), snapshot => {
       matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderMatchList();
       renderCompScoreboard();
-      renderCompMatchSummary();
+      renderCompInlineMatches();
     });
 
     show("competitionScreen");
     renderCompScoreboard();
-    renderCompMatchSummary();
+    renderCompInlineMatches();
   }
 
   function openCompetitionMenu(e) {
@@ -5809,23 +5826,37 @@ ${closer}`;
     el.innerHTML = buildScoreboardHtml(teams, scores).replace('<div class="scoreboard"', '<div class="scoreboard" style="width:100%"');
   }
 
-  function renderCompMatchSummary() {
-    const el = document.getElementById("compMatchSummary");
+  function renderCompInlineMatches() {
+    const el = document.getElementById("compMatchList");
     if (!el) return;
-    const total = matches.length;
-    const complete = matches.filter(m => m.isComplete || Number(m.teamAScore||0)+Number(m.teamBScore||0) > 0).length;
-    el.innerHTML = '<div style="padding:8px 0;font-size:13px;color:#64748b;">' +
-      total + ' match' + (total !== 1 ? 'es' : '') +
-      (total > 0 ? ' · ' + complete + ' complete' : '') +
-      ' · <span style="color:#60a5fa;cursor:pointer;" onclick="openCompMatchHome()">View all →</span>' +
-    '</div>';
-  }
-
-  // Redirect openMatchHome to go through competition context
-  function openCompMatchHome() {
-    const menu = document.getElementById("competitionMenu");
-    if (menu) menu.classList.add("hidden");
-    openMatchHome();
+    const header = '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 6px;">' +
+      '<div class="feed-title" style="margin:0;">Matches</div>' +
+      (isAdmin() ? '<button onclick="openMatchEditor()" style="width:auto;padding:6px 14px;margin:0;font-size:13px;">+ Add</button>' : '') +
+      '</div>';
+    if (!matches.length) {
+      el.innerHTML = header + '<div class="empty-state">No matches yet.' + (isAdmin() ? ' Tap + Add to create one.' : '') + '</div>';
+      return;
+    }
+    const sorted = [...matches].sort((a, b) =>
+      ((a.matchDate || "") + (a.createdAt || "")).localeCompare((b.matchDate || "") + (b.createdAt || ""))
+    );
+    el.innerHTML = header + sorted.map(match => {
+      const aScore = Number(match.teamAScore || match.overallA || 0);
+      const bScore = Number(match.teamBScore || match.overallB || 0);
+      const hasScore = aScore > 0 || bScore > 0;
+      return '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openScoreEntry(\'' + escapeAttr(match.id) + '\')">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<div style="font-size:14px;font-weight:600;">' + escapeHtml(match.courseName || match.course || "Match") + '</div>' +
+          '<div style="font-size:12px;color:#64748b;">' + (match.matchDate || "") + '</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">' +
+          '<div style="font-size:13px;color:#93c5fd;">' + escapeHtml(match.format || "") + '</div>' +
+          (hasScore
+            ? '<div style="font-size:14px;font-weight:700;">' + aScore + ' – ' + bScore + '</div>'
+            : '<div style="font-size:12px;color:#475569;">Not started</div>') +
+        '</div>' +
+      '</div>';
+    }).join("");
   }
 
   function openCompRecaps() {
@@ -8739,8 +8770,8 @@ ${closer}`;
   window.deleteCompetition = deleteCompetition;
   window.saveCompetition = saveCompetition;
   window.openCompetitionMenu = openCompetitionMenu;
-  window.openCompMatchHome = openCompMatchHome;
   window.openCompRecaps = openCompRecaps;
+  window.openMatchEditor = openMatchEditor;
   window.setNumTeams = setNumTeams;
   window.openTeamEdit = openTeamEdit;
   window.openTeamSetup = openTeamSetup;
