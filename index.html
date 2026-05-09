@@ -1268,16 +1268,14 @@
 
   <!-- ── COMPETITION HOME ──────────────────────────────────────────────────── -->
   <div id="competitionScreen" class="hidden secondary-screen">
-    <div style="position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgba(13,27,53,0.98);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(55,89,132,0.9);margin-bottom:10px;">
-      <button onclick="goTripHome()" class="secondary" style="margin:0;flex-shrink:0;padding:8px 14px;">Back</button>
-      <h2 id="competitionTitle" style="margin:0;flex:1;text-align:center;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Competition</h2>
-      <div class="trip-menu-wrap" style="flex-shrink:0;margin:0;">
-        <button onclick="openCompetitionMenu(event)" class="trip-menu-btn">☰</button>
-        <div id="competitionMenu" class="trip-menu hidden">
-          <div id="compTeamsMenuItem"></div>
-          <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
-          <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
-        </div>
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2 id="competitionTitle">Competition</h2>
+      <button onclick="openCompetitionMenu(event)" class="secondary" style="position:absolute;right:16px;top:14px;width:auto;padding:8px 14px;margin:0;">☰</button>
+      <div id="competitionMenu" class="trip-menu hidden" style="position:absolute;right:16px;top:56px;z-index:1001;">
+        <div id="compTeamsMenuItem"></div>
+        <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
+        <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
       </div>
     </div>
     <div class="card score-card">
