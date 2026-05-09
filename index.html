@@ -5792,13 +5792,16 @@ ${closer}`;
         })
       });
       const data = await res.json();
-      const text = (data.text || data.content || "").trim();
+      const text = (data.text || "").trim();
 
       console.log("=== OCR RESPONSE ===");
       console.log("HTTP status:", res.status);
       console.log("Response text length:", text.length);
       console.log("Response preview:", text.slice(0, 500));
-      if (data.error) console.error("API error:", data.error);
+      if (data.error) {
+        console.error("API error:", data.error);
+        throw new Error("API error: " + data.error.slice(0, 200));
+      }
 
       // Try multiple parsing strategies
       let result = null;
