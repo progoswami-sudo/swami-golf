@@ -1677,7 +1677,7 @@
         Nassau scoring tracks three sub-matches: Front 9, Back 9, and Overall.
       </div>
 
-      <button onclick="saveMatch()">Save Match</button>
+      <button onclick="try{saveMatch()}catch(e){alert('saveMatch error: '+e.message)}">Save Match</button>
       <div id="confidenceMeterCard" class="dynamic-point-card hidden">
         <h3>🧠 Swami's Prediction</h3>
         <div id="confidenceMeterText" class="pulse-text" style="margin-top:8px;line-height:1.5;"></div>
