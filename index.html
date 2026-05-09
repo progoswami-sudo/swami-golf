@@ -1256,31 +1256,33 @@
         View Trip Itinerary
       </div>
 
-      <div class="card score-card" onclick="openMatchHome()">
-        <div class="scoreboard">
-          <div>
-            <div id="teamAName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('A')">Team A</div>
-            <div class="score-click-zone">
-              <div id="teamAScore" class="score">0</div>
-            </div>
-          </div>
+      <div id="competitionTiles" style="margin-top:10px;"></div>
 
-          <div class="score-click-zone">VS</div>
-
-          <div>
-            <div id="teamBName" class="team-name" onclick="event.stopPropagation(); openTeamRoster('B')">Team B</div>
-            <div class="score-click-zone">
-              <div id="teamBScore" class="score">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <div class="feed-title">Swami Pulse</div>
         <div class="feed-subtitle">Latest signals from the trip</div>
         <div id="swamiPulse" class="pulse-grid"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── COMPETITION HOME ──────────────────────────────────────────────────── -->
+  <div id="competitionScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goTripHome()" class="secondary">Back</button>
+      <h2 id="competitionTitle">Competition</h2>
+      <button onclick="openCompetitionMenu(event)" style="width:auto;padding:8px 14px;margin:0;font-size:18px;">☰</button>
+    </div>
+    <div id="competitionMenu" class="trip-menu hidden" style="right:12px;top:56px;">
+      <div class="home-menu-item" onclick="openCompMatchHome()">Matches</div>
+      <div class="home-menu-item" onclick="openCompRecaps()">Recaps</div>
+      <div class="home-menu-item" onclick="editCompetition()">Edit Competition</div>
+      <div class="home-menu-item" onclick="deleteCompetition()" style="color:#fecaca;">Delete Competition</div>
+    </div>
+    <div class="card score-card">
+      <div id="compScoreboard" class="scoreboard"></div>
+    </div>
+    <div id="compMatchSummary" style="padding:0 12px;"></div>
   </div>
 
 
@@ -1748,16 +1750,21 @@
 
   <div id="teamScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goTripHome()" class="secondary">Back</button>
-      <h2>Team Names</h2>
+      <button id="compSetupBackBtn" onclick="goTripHome()" class="secondary">Back</button>
+      <h2 id="compSetupTitle">New Competition</h2>
     </div>
     <div class="card">
-      <label class="form-label" for="teamAInput">Team A Name</label>
-      <input id="teamAInput" placeholder="Team A Name"/>
-      <label class="form-label" for="teamBInput">Team B Name</label>
-      <input id="teamBInput" placeholder="Team B Name"/>
-      <button onclick="saveTeams()">Save</button>
-      <button onclick="goTripHome()" class="secondary">Back</button>
+      <label class="form-label" for="compNameInput">Competition Name</label>
+      <input id="compNameInput" placeholder="e.g. Friday Ryder Cup, Saturday Skins"/>
+
+      <label class="form-label" style="margin-top:16px;">Number of Teams</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="numTeams2" onclick="setNumTeams(2)" style="flex:1;margin:0;padding:10px;">2</button>
+        <button id="numTeams3" onclick="setNumTeams(3)" class="secondary" style="flex:1;margin:0;padding:10px;">3</button>
+        <button id="numTeams4" onclick="setNumTeams(4)" class="secondary" style="flex:1;margin:0;padding:10px;">4</button>
+      </div>
+      <div id="teamNameInputs"></div>
+      <button id="saveTeamsBtn" onclick="saveCompetition()" style="margin-top:16px;">Save</button>
     </div>
   </div>
 
@@ -2072,6 +2079,9 @@
   const storage = getStorage(app, "gs://swami-golf.firebasestorage.app");
 
   let activeTripId = "pinehurst2026";
+  let activeCompetitionId = null;
+  let activeCompetitionData = {};
+  let competitions = [];
   let currentUser = null;
   let activeTripData = {};
   let players = [];
@@ -2772,7 +2782,19 @@ Respond ONLY with valid JSON, nothing else:
     return collection(db, "trips", tripId, "feedPosts");
   }
 
-  function matchesCollection(tripId = activeTripId) {
+  function competitionsCollection(tripId = activeTripId) {
+    return collection(db, "trips", tripId, "competitions");
+  }
+
+  function competitionDocRef(compId = activeCompetitionId, tripId = activeTripId) {
+    return doc(db, "trips", tripId, "competitions", compId);
+  }
+
+  function matchesCollection(tripId = activeTripId, compId = activeCompetitionId) {
+    if (compId) {
+      return collection(db, "trips", tripId, "competitions", compId, "matches");
+    }
+    // Legacy fallback — direct trip-level matches
     return collection(db, "trips", tripId, "matches");
   }
 
@@ -3323,6 +3345,7 @@ Respond ONLY with valid JSON, nothing else:
           ...docSnap.data()
         }));
         renderMatchList();
+        renderScoreboard();
         renderSwamiPulse();
         renderRecapControls();
       })
@@ -3353,6 +3376,13 @@ Respond ONLY with valid JSON, nothing else:
       onSnapshot(paymentsCollection(tripId), snapshot => {
         payments = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
         renderExpenseBalances();
+      })
+    );
+
+    unsubscribers.push(
+      onSnapshot(competitionsCollection(tripId), snapshot => {
+        competitions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderCompetitionTiles();
       })
     );
 
@@ -3434,6 +3464,7 @@ Respond ONLY with valid JSON, nothing else:
       "wagersScreen",
       "wagerEditorScreen",
       "settlementScreen",
+      "competitionScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -5128,9 +5159,14 @@ ${closer}`;
   async function openTripHome(tripId = activeTripId) {
     try {
       activeTripId = tripId;
+      // Reset competition context when going back to trip home
+      activeCompetitionId = null;
+      activeCompetitionData = {};
+      matches = [];
+      if (window._compMatchUnsub) { window._compMatchUnsub(); window._compMatchUnsub = null; }
+
       document.getElementById("syncStatus").style.display = "none";
 
-      // Load user's role for this trip
       currentTripRole = null;
       if ((currentUser && currentUser.uid)) {
         const memberSnap = await getDoc(doc(membersCollection(tripId), currentUser.uid));
@@ -5140,6 +5176,8 @@ ${closer}`;
       }
 
       await initializeTripIfNeeded(activeTripId);
+      // Migrate legacy matches if needed
+      await migrateMatchesToDefaultCompetition(tripId);
       subscribeToTrip(activeTripId);
       show("tripHome");
       renderSwamiPulse();
@@ -5163,7 +5201,8 @@ ${closer}`;
 
   function renderTripHeader() {
     document.getElementById("tripTitle").innerText =
-      activeTripData.name || trips[activeTripId].name;
+      (activeTripData && activeTripData.name) || (trips[activeTripId] && trips[activeTripId].name) || "Golf Trip";
+    renderScoreboard();
   }
 
 
@@ -5312,9 +5351,14 @@ ${closer}`;
     const update = team === "A" ? { teamA: newName.trim() } : { teamB: newName.trim() };
     updateDoc(tripDocRef(), update).then(() => {
       activeTripData = { ...activeTripData, ...update };
-      const el = document.getElementById(team === "A" ? "teamAName" : "teamBName");
-      if (el) el.innerText = newName.trim();
-      // Also refresh roster title if on roster screen
+      // Update teams array too
+      if (activeTripData.teams) {
+        const teams = activeTripData.teams.map(t =>
+          t.id === team ? { ...t, name: newName.trim() } : t
+        );
+        activeTripData.teams = teams;
+      }
+      renderScoreboard();
       const rosterTitle = document.getElementById("teamRosterTitle");
       if (rosterTitle && activeTeamRosterKey === team) rosterTitle.innerText = newName.trim();
     });
@@ -5471,69 +5515,323 @@ ${closer}`;
     }
   }
 
-  async function saveTeams() {
-    const teamA = document.getElementById("teamAInput").value || "Team A";
-    const teamB = document.getElementById("teamBInput").value || "Team B";
+  // ── COMPETITIONS ────────────────────────────────────────────────────────────
 
-    const oldTeamA = activeTripData.teamA || "Team A";
-    const oldTeamB = activeTripData.teamB || "Team B";
+  let _editingCompetitionId = null;
 
-    await updateDoc(tripDocRef(), {
-      teamA,
-      teamB,
-      updatedAt: new Date().toISOString()
-    });
-
-    await updatePlayerTeamsAfterRename(oldTeamA, teamA, oldTeamB, teamB);
-    await addSwamiPost("teams", `${teamA} vs. ${teamB}`);
-
-    openSettings();
+  function getTeams() {
+    if (activeCompetitionData && activeCompetitionData.teams && activeCompetitionData.teams.length) {
+      return activeCompetitionData.teams;
+    }
+    // Legacy trip-level teams fallback
+    if (activeTripData && activeTripData.teams && activeTripData.teams.length) {
+      return activeTripData.teams;
+    }
+    return [
+      { id: "A", name: (activeTripData && activeTripData.teamA) || "Team A" },
+      { id: "B", name: (activeTripData && activeTripData.teamB) || "Team B" }
+    ];
   }
 
-  async function updatePlayerTeamsAfterRename(oldTeamA, newTeamA, oldTeamB, newTeamB) {
-    const batch = writeBatch(db);
+  function computeTeamScores() {
+    const teams = getTeams();
+    const scores = {};
+    teams.forEach(t => { scores[t.id] = 0; });
+    matches.forEach(match => {
+      const aScore = Number(match.teamAScore || match.overallA || 0);
+      const bScore = Number(match.teamBScore || match.overallB || 0);
+      if (aScore === 0 && bScore === 0) return;
+      if (aScore > bScore)      { scores["A"] = (scores["A"] || 0) + 1; }
+      else if (bScore > aScore) { scores["B"] = (scores["B"] || 0) + 1; }
+      else { scores["A"] = (scores["A"] || 0) + 0.5; scores["B"] = (scores["B"] || 0) + 0.5; }
+    });
+    return scores;
+  }
 
-    players.forEach(player => {
-      let updatedTeam = player.team;
+  function renderCompetitionTiles() {
+    const el = document.getElementById("competitionTiles");
+    if (!el) return;
 
-      if (player.team === oldTeamA) updatedTeam = newTeamA;
-      if (player.team === oldTeamB) updatedTeam = newTeamB;
+    if (!competitions.length) {
+      el.innerHTML = '<div class="card" style="text-align:center;padding:24px;">' +
+        '<div style="font-size:13px;color:#64748b;margin-bottom:16px;">No competitions yet. Create one to start tracking matches.</div>' +
+        (isAdmin() ? '<button onclick="openNewCompetition()" style="width:auto;padding:10px 24px;">+ New Competition</button>' : '') +
+        '</div>';
+      return;
+    }
 
-      if (updatedTeam !== player.team) {
-        batch.update(doc(db, "trips", activeTripId, "players", player.id), {
-          team: updatedTeam
+    el.innerHTML = competitions
+      .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""))
+      .map(comp => {
+        const teams = comp.teams || [];
+        const teamLine = teams.map(t => escapeHtml(t.name)).join(" vs ");
+        return '<div class="card score-card" style="cursor:pointer;margin-bottom:10px;" onclick="openCompetition(\'' + escapeAttr(comp.id) + '\')">' +
+          '<div style="font-size:16px;font-weight:700;margin-bottom:6px;">' + escapeHtml(comp.name || "Competition") + '</div>' +
+          '<div style="font-size:13px;color:#93c5fd;">' + teamLine + '</div>' +
+        '</div>';
+      }).join("") +
+      (isAdmin() ? '<button onclick="openNewCompetition()" class="secondary" style="width:100%;margin-top:6px;">+ New Competition</button>' : '');
+  }
+
+  async function migrateMatchesToDefaultCompetition(tripId) {
+    // Check if there are trip-level matches but no competitions yet
+    try {
+      const legacyMatchesSnap = await getDocs(collection(db, "trips", tripId, "matches"));
+      const compsSnap = await getDocs(competitionsCollection(tripId));
+      if (legacyMatchesSnap.empty || !compsSnap.empty) return;
+
+      console.log("Migrating", legacyMatchesSnap.docs.length, "matches to default competition");
+
+      // Create default competition using existing trip teams
+      const tripSnap = await getDoc(doc(db, "trips", tripId));
+      const tripData = tripSnap.exists() ? tripSnap.data() : {};
+      const teams = tripData.teams || [
+        { id: "A", name: tripData.teamA || "Team A" },
+        { id: "B", name: tripData.teamB || "Team B" }
+      ];
+
+      const compRef = await addDoc(competitionsCollection(tripId), {
+        name: "Main Event",
+        teams,
+        createdAt: new Date().toISOString(),
+        createdBy: (currentUser && currentUser.uid) || "",
+        migrated: true
+      });
+
+      // Copy each match to the new competition
+      const batch = writeBatch(db);
+      legacyMatchesSnap.docs.forEach(matchDoc => {
+        const newRef = doc(collection(db, "trips", tripId, "competitions", compRef.id, "matches"));
+        batch.set(newRef, { ...matchDoc.data(), legacyId: matchDoc.id });
+      });
+      await batch.commit();
+      console.log("Migration complete");
+    } catch(e) {
+      console.warn("Migration skipped:", e.message);
+    }
+  }
+
+  function openNewCompetition() {
+    _editingCompetitionId = null;
+    const title = document.getElementById("compSetupTitle");
+    const backBtn = document.getElementById("compSetupBackBtn");
+    const nameInput = document.getElementById("compNameInput");
+    if (title) title.textContent = "New Competition";
+    if (backBtn) backBtn.onclick = goTripHome;
+    if (nameInput) nameInput.value = "";
+    _setupNumTeams = 2;
+    setNumTeams(2);
+    const defaults = ["Team A", "Team B"];
+    renderTeamNameInputs(2, defaults);
+    show("teamScreen");
+  }
+
+  function editCompetition() {
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.add("hidden");
+    _editingCompetitionId = activeCompetitionId;
+    const title = document.getElementById("compSetupTitle");
+    const backBtn = document.getElementById("compSetupBackBtn");
+    const nameInput = document.getElementById("compNameInput");
+    if (title) title.textContent = "Edit Competition";
+    if (backBtn) backBtn.onclick = () => show("competitionScreen");
+    if (nameInput) nameInput.value = activeCompetitionData.name || "";
+    const teams = getTeams();
+    _setupNumTeams = teams.length;
+    setNumTeams(teams.length);
+    renderTeamNameInputs(teams.length, teams.map(t => t.name));
+    show("teamScreen");
+  }
+
+  async function saveCompetition() {
+    const btn = document.getElementById("saveTeamsBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+    const name = (document.getElementById("compNameInput").value || "").trim() || "Competition";
+    const inputs = document.querySelectorAll(".team-name-input");
+    const defaults = ["Team A", "Team B", "Team C", "Team D"];
+    const newTeams = Array.from(inputs).map((inp, i) => ({
+      id: ["A","B","C","D"][i],
+      name: inp.value.trim() || defaults[i]
+    }));
+
+    try {
+      if (_editingCompetitionId) {
+        await updateDoc(competitionDocRef(_editingCompetitionId), {
+          name, teams: newTeams, updatedAt: new Date().toISOString()
         });
+        // If editing current active comp, refresh its data
+        if (_editingCompetitionId === activeCompetitionId) {
+          activeCompetitionData = { ...activeCompetitionData, name, teams: newTeams };
+          renderCompScoreboard();
+          document.getElementById("competitionTitle").textContent = name;
+        }
+        show("competitionScreen");
+      } else {
+        const compRef = await addDoc(competitionsCollection(), {
+          name, teams: newTeams,
+          createdAt: new Date().toISOString(),
+          createdBy: (currentUser && currentUser.uid) || ""
+        });
+        await openCompetition(compRef.id);
       }
+    } catch(e) {
+      alert("Error saving: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+    }
+  }
+
+  // Legacy saveTeams wrapper
+  async function saveTeams() { await saveCompetition(); }
+
+  async function deleteCompetition() {
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.add("hidden");
+    if (!confirm("Delete this competition and all its matches?")) return;
+    try {
+      // Delete all matches first
+      const matchSnap = await getDocs(matchesCollection());
+      const batch = writeBatch(db);
+      matchSnap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      await deleteDoc(competitionDocRef());
+      goTripHome();
+    } catch(e) {
+      alert("Error deleting: " + e.message);
+    }
+  }
+
+  async function openCompetition(compId) {
+    activeCompetitionId = compId;
+    const snap = await getDoc(competitionDocRef(compId));
+    if (snap.exists()) {
+      activeCompetitionData = { id: compId, ...snap.data() };
+    }
+    document.getElementById("competitionTitle").textContent = activeCompetitionData.name || "Competition";
+
+    // Subscribe to this competition's matches
+    if (window._compMatchUnsub) window._compMatchUnsub();
+    window._compMatchUnsub = onSnapshot(matchesCollection(), snapshot => {
+      matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderMatchList();
+      renderCompScoreboard();
+      renderCompMatchSummary();
     });
 
-    await batch.commit();
+    show("competitionScreen");
+    renderCompScoreboard();
+    renderCompMatchSummary();
   }
+
+  function openCompetitionMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.toggle("hidden");
+  }
+
+  function renderCompScoreboard() {
+    const el = document.getElementById("compScoreboard");
+    if (!el) return;
+    const teams = getTeams();
+    const scores = computeTeamScores();
+    const fmt = s => s === undefined ? "0" : (s % 1 === 0 ? String(s) : s.toFixed(1));
+
+    if (teams.length === 2) {
+      el.innerHTML =
+        '<div><div class="team-name" onclick="event.stopPropagation();openTeamRoster(\'A\')">' + escapeHtml(teams[0].name) + '</div>' +
+        '<div class="score-click-zone"><div class="score">' + fmt(scores["A"]) + '</div></div></div>' +
+        '<div class="score-click-zone">VS</div>' +
+        '<div><div class="team-name" onclick="event.stopPropagation();openTeamRoster(\'B\')">' + escapeHtml(teams[1].name) + '</div>' +
+        '<div class="score-click-zone"><div class="score">' + fmt(scores["B"]) + '</div></div></div>';
+    } else {
+      const sorted = [...teams].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+      el.style.flexDirection = "column";
+      el.innerHTML = sorted.map((t, i) =>
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">' +
+          '<div class="team-name" style="cursor:pointer;" onclick="event.stopPropagation();openTeamRoster(\'' + escapeAttr(t.id) + '\')">' +
+            ['🥇','🥈','🥉',''][i] + ' ' + escapeHtml(t.name) +
+          '</div>' +
+          '<div class="score">' + fmt(scores[t.id]) + '</div>' +
+        '</div>'
+      ).join("");
+    }
+  }
+
+  function renderCompMatchSummary() {
+    const el = document.getElementById("compMatchSummary");
+    if (!el) return;
+    const total = matches.length;
+    const complete = matches.filter(m => m.isComplete || Number(m.teamAScore||0)+Number(m.teamBScore||0) > 0).length;
+    el.innerHTML = '<div style="padding:8px 0;font-size:13px;color:#64748b;">' +
+      total + ' match' + (total !== 1 ? 'es' : '') +
+      (total > 0 ? ' · ' + complete + ' complete' : '') +
+      ' · <span style="color:#60a5fa;cursor:pointer;" onclick="openCompMatchHome()">View all →</span>' +
+    '</div>';
+  }
+
+  // Redirect openMatchHome to go through competition context
+  function openCompMatchHome() {
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.add("hidden");
+    openMatchHome();
+  }
+
+  function openCompRecaps() {
+    const menu = document.getElementById("competitionMenu");
+    if (menu) menu.classList.add("hidden");
+    openRecaps();
+  }
+
+  // openTeamSetup now handled by openNewCompetition/editCompetition
+  function openTeamSetup() { openNewCompetition(); }
+  function openTeamEdit()   { editCompetition(); }
+
+  let _setupNumTeams = 2;
+
+  function setNumTeams(n) {
+    _setupNumTeams = n;
+    [2,3,4].forEach(i => {
+      const btn = document.getElementById("numTeams" + i);
+      if (btn) btn.className = i === n ? "" : "secondary";
+    });
+    renderTeamNameInputs(n);
+  }
+
+  function renderTeamNameInputs(n, prefill) {
+    const defaults = ["Team A", "Team B", "Team C", "Team D"];
+    const el = document.getElementById("teamNameInputs");
+    if (!el) return;
+    el.innerHTML = Array.from({length: n}, (_, i) => {
+      const val = (prefill && prefill[i]) || defaults[i];
+      return '<label class="form-label" style="margin-top:' + (i > 0 ? '12px' : '0') + ';">Team ' + (i+1) + ' Name</label>' +
+        '<input class="team-name-input" data-index="' + i + '" value="' + escapeHtml(val) + '" placeholder="' + defaults[i] + '"/>';
+    }).join("");
+  }
+
+  function renderScoreboard() { renderCompScoreboard(); }
 
   function loadTeams() {
-    document.getElementById("teamAName").innerText = activeTripData.teamA || "Team A";
-    document.getElementById("teamBName").innerText = activeTripData.teamB || "Team B";
+    renderScoreboard();
   }
 
   function loadScores() {
-    document.getElementById("teamAScore").innerText = activeTripData.teamAScore || "0";
-    document.getElementById("teamBScore").innerText = activeTripData.teamBScore || "0";
+    renderScoreboard();
   }
 
   function loadInputs() {
-    document.getElementById("teamAInput").value = activeTripData.teamA || "";
-    document.getElementById("teamBInput").value = activeTripData.teamB || "";
+    // Legacy — no longer needed since teamScreen is now dynamic
   }
 
   function loadTeamDropdown(selectedValue = "") {
-    const teamA = (activeTripData && activeTripData.teamA) || "Team A";
-    const teamB = (activeTripData && activeTripData.teamB) || "Team B";
+    const teams = getTeams();
     const select = document.getElementById("playerTeam");
     if (!select) return;
-    select.innerHTML = `
-      <option value="">No team assigned</option>
-      <option value="A" ${selectedValue === "A" ? "selected" : ""}>${escapeHtml(teamA)}</option>
-      <option value="B" ${selectedValue === "B" ? "selected" : ""}>${escapeHtml(teamB)}</option>
-    `;
+    select.innerHTML = '<option value="">No team assigned</option>' +
+      teams.map(t =>
+        '<option value="' + escapeAttr(t.name) + '"' + (selectedValue === t.name || selectedValue === t.id ? ' selected' : '') + '>' +
+        escapeHtml(t.name) + '</option>'
+      ).join("");
   }
 
   function loadTeamDropdownIfVisible() {
@@ -5547,8 +5845,7 @@ ${closer}`;
   }
 
   function openTeamEdit() {
-    show("teamScreen");
-    loadInputs();
+    openTeamSetup();
   }
 
   function openPlayerList() {
@@ -8389,7 +8686,18 @@ ${closer}`;
   window.openSettings = openSettings;
   window.openImportScreen = openImportScreen;
   window.goTripHome = goTripHome;
+  window.openNewCompetition = openNewCompetition;
+  window.openCompetition = openCompetition;
+  window.editCompetition = editCompetition;
+  window.deleteCompetition = deleteCompetition;
+  window.saveCompetition = saveCompetition;
+  window.openCompetitionMenu = openCompetitionMenu;
+  window.openCompMatchHome = openCompMatchHome;
+  window.openCompRecaps = openCompRecaps;
+  window.setNumTeams = setNumTeams;
   window.openTeamEdit = openTeamEdit;
+  window.openTeamSetup = openTeamSetup;
+  window.saveTeams = saveTeams;
   window.openPlayerList = openPlayerList;
   window.openPlayer = openPlayer;
   window.saveTeams = saveTeams;
