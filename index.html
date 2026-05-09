@@ -1711,7 +1711,7 @@
   <!-- ── SCAN SCORECARD ──────────────────────────────────────────────────── -->
   <div id="scanScorecardScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="openScoreEntry(activeScorecardMatchId)" class="secondary">Back</button>
+      <button onclick="goBackFromScan()" class="secondary">Back</button>
       <h2>Scan Scorecard</h2>
     </div>
     <div class="card">
@@ -5711,6 +5711,10 @@ ${closer}`;
     reader.readAsDataURL(file);
   }
 
+  function goBackFromScan() {
+    openScoreEntry(activeScorecardMatchId);
+  }
+
   async function runScorecardScan() {
     if (!scanImageBase64) return;
 
@@ -5718,40 +5722,37 @@ ${closer}`;
     if (btn) { btn.disabled = true; btn.textContent = "Reading scores..."; }
 
     const match = matches.find(m => m.id === activeScorecardMatchId);
-    if (!match) { alert("No active match found."); return; }
+    if (!match) { alert("No active match found."); if (btn) { btn.disabled = false; btn.textContent = "Read Scores with AI"; } return; }
 
-    // Build player context for matching
-    const matchPlayers = (match.players || []).map(pid => {
-      const p = players.find(x => x.id === pid);
-      return p ? { id: p.id, name: p.name, nickname: p.nickname || "" } : null;
-    }).filter(Boolean);
+    const matchPlayers = (match.players || match.teamAPlayerIds || [])
+      .concat(match.teamBPlayerIds || [])
+      .map(pid => players.find(x => x.id === pid))
+      .filter(Boolean)
+      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
 
     const playerContext = matchPlayers.map(p =>
-      p.nickname ? p.name + ' (also known as "' + p.nickname + '")' : p.name
+      p.nickname ? p.name + ' (aka "' + p.nickname + '")' : p.name
     ).join(", ");
 
-    const holeCount = (match.scorecardData && match.scorecardData.holes)
-      ? match.scorecardData.holes.length : 18;
+    const holes = (match.scorecardData && match.scorecardData.holes) || [];
+    const holeCount = holes.length || 18;
 
     const prompt = 'This is a golf scorecard. Extract the scores for each player for each hole.\n\n' +
-      'The players in this match are: ' + playerContext + '\n\n' +
-      'Return ONLY a JSON object with this exact structure (no markdown, no explanation):\n' +
+      'Players in this match: ' + playerContext + '\n\n' +
+      'Return ONLY a JSON object, no markdown, no explanation:\n' +
       '{\n' +
       '  "players": [\n' +
       '    {\n' +
       '      "name": "name as written on scorecard",\n' +
-      '      "matched": "exact player name from the list above, or null if no match",\n' +
-      '      "scores": { "1": 4, "2": 5, "3": 3, ... } (hole number as string key, score as integer)\n' +
+      '      "matched": "exact player name from the list above, or null if unclear",\n' +
+      '      "scores": {"1": 4, "2": 5, ...}\n' +
       '    }\n' +
       '  ],\n' +
       '  "confidence": "high" or "low"\n' +
       '}\n\n' +
-      'Rules:\n' +
-      '- Match names loosely (Frank = Frank McGolf, etc.)\n' +
-      '- Only include holes you can clearly read\n' +
-      '- If a score is unclear, omit that hole\n' +
-      '- Scores should be integers (no letters like X or DNF)\n' +
-      '- The scorecard has ' + holeCount + ' holes';
+      'Rules: Match names loosely. Only include holes you can clearly read. Scores must be integers. ' +
+      'If a score is illegible, omit that hole rather than guessing. ' +
+      'The scorecard has ' + holeCount + ' holes.';
 
     try {
       const res = await fetch("/api/swami", {
@@ -5759,46 +5760,87 @@ ${closer}`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          maxTokens: 1500,
+          maxTokens: 2000,
           imageBase64: scanImageBase64,
           imageMediaType: "image/jpeg"
         })
       });
       const data = await res.json();
-      const text = data.text || "";
+      const text = (data.text || data.content || "").trim();
 
-      // Parse JSON from response
+      console.log("Scan raw response:", text.slice(0, 300));
+
+      // Try multiple parsing strategies
+      let result = null;
+
+      // Strategy 1: find JSON object in response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("Could not parse response");
-      const result = JSON.parse(jsonMatch[0]);
+      if (jsonMatch) {
+        try { result = JSON.parse(jsonMatch[0]); } catch(e) { console.warn("JSON parse 1 failed:", e.message); }
+      }
 
-      // Build extracted scores keyed by player ID
+      // Strategy 2: strip markdown fences and retry
+      if (!result) {
+        const stripped = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        try { result = JSON.parse(stripped); } catch(e) { console.warn("JSON parse 2 failed:", e.message); }
+      }
+
+      // Strategy 3: if response has player names and numbers, build partial result
+      if (!result && matchPlayers.length) {
+        console.warn("Could not parse JSON, showing empty review screen for manual entry");
+        result = {
+          players: matchPlayers.map(p => ({ name: p.name, matched: p.name, scores: {} })),
+          confidence: "low",
+          parseError: true
+        };
+      }
+
+      if (!result) throw new Error("Could not extract any data from response");
+
+      // Build extracted scores
       scanExtractedScores = {};
       const unmatched = [];
 
       (result.players || []).forEach(p => {
-        if (p.matched) {
-          const player = matchPlayers.find(mp =>
-            mp.name.toLowerCase() === p.matched.toLowerCase()
-          );
-          if (player) {
-            scanExtractedScores[player.id] = p.scores || {};
-          }
-        } else {
+        const targetName = p.matched || p.name;
+        if (!targetName) return;
+        const player = matchPlayers.find(mp =>
+          mp.name.toLowerCase() === targetName.toLowerCase() ||
+          (mp.nickname && mp.nickname.toLowerCase() === targetName.toLowerCase())
+        );
+        if (player) {
+          scanExtractedScores[player.id] = p.scores || {};
+        } else if (p.name) {
           unmatched.push(p.name);
         }
       });
 
+      // If no scores extracted, still show review screen with empty cells for manual entry
+      if (Object.keys(scanExtractedScores).length === 0) {
+        matchPlayers.forEach(p => { scanExtractedScores[p.id] = {}; });
+      }
+
       scanEditedScores = JSON.parse(JSON.stringify(scanExtractedScores));
-      showScanReview(matchPlayers, unmatched, result.confidence);
+
+      const warningMsg = result.parseError
+        ? "Could not read the image automatically — enter scores manually below."
+        : null;
+
+      showScanReview(matchPlayers, unmatched, result.confidence, warningMsg);
 
     } catch(e) {
-      alert("Error reading scorecard: " + e.message + "\n\nTry a clearer photo.");
+      console.error("Scan error:", e);
+      // Even on total failure, open the review screen for manual entry
+      scanExtractedScores = {};
+      matchPlayers.forEach(p => { scanExtractedScores[p.id] = {}; });
+      scanEditedScores = JSON.parse(JSON.stringify(scanExtractedScores));
+      showScanReview(matchPlayers, [], "low", "Could not read the scorecard automatically. You can enter scores manually below.");
+    } finally {
       if (btn) { btn.disabled = false; btn.textContent = "Read Scores with AI"; }
     }
   }
 
-  function showScanReview(matchPlayers, unmatched, confidence) {
+  function showScanReview(matchPlayers, unmatched, confidence, warningMsg) {
     show("scanReviewScreen");
 
     const match = matches.find(m => m.id === activeScorecardMatchId);
@@ -5860,7 +5902,9 @@ ${closer}`;
 
     html += '</tbody></table></div>';
 
-    if (confidence === "low") {
+    if (warningMsg) {
+      html += '<div style="margin-top:10px;padding:8px;background:#451a03;border-radius:8px;font-size:12px;color:#fcd34d;">⚠️ ' + escapeHtml(warningMsg) + '</div>';
+    } else if (confidence === "low") {
       html += '<div style="margin-top:10px;padding:8px;background:#451a03;border-radius:8px;font-size:12px;color:#fcd34d;">⚠️ Low confidence read — please check scores carefully</div>';
     }
 
@@ -9197,6 +9241,7 @@ ${closer}`;
   window.goCompetitionScreen = goCompetitionScreen;
   window.goTeamRosterScreen = goTeamRosterScreen;
   window.openScanScorecard = openScanScorecard;
+  window.goBackFromScan = goBackFromScan;
   window.handleScanUpload = handleScanUpload;
   window.runScorecardScan = runScorecardScan;
   window.editScanScore = editScanScore;
