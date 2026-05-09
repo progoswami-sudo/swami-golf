@@ -1734,7 +1734,7 @@
   <!-- ── SCAN REVIEW ──────────────────────────────────────────────────────── -->
   <div id="scanReviewScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="show('scanScorecardScreen')" class="secondary">Back</button>
+      <button onclick="goBackToScanScorecardScreen()" class="secondary">Back</button>
       <h2>Review Scores</h2>
     </div>
     <div class="card">
@@ -5688,7 +5688,8 @@ ${closer}`;
   }
 
   function goBackToScanScorecardScreen() {
-    show("scanScorecardScreen");
+    document.querySelectorAll(".secondary-screen").forEach(function(s){s.classList.add("hidden");});
+    document.getElementById("scanScorecardScreen").classList.remove("hidden");
   }
 
   function handleScanUpload(event) {
@@ -5967,7 +5968,7 @@ ${closer}`;
       await addSwamiPost("scoreUpdate", "Scorecard scanned and scores imported");
 
       // Return to scorecard
-      openScoreEntry(activeScorecardMatchId);
+      openEnterScore(activeScorecardMatchId);
     } catch(e) {
       alert("Error saving scores: " + e.message);
       if (btn) { btn.disabled = false; btn.textContent = "✓ Accept All"; }
@@ -6280,7 +6281,7 @@ ${closer}`;
       const aScore = Number(match.teamAScore || match.overallA || 0);
       const bScore = Number(match.teamBScore || match.overallB || 0);
       const hasScore = aScore > 0 || bScore > 0;
-      return '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openScoreEntry(\'' + escapeAttr(match.id) + '\')">' +
+      return '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openEnterScore(\'' + escapeAttr(match.id) + '\')">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;">' +
           '<div style="font-size:14px;font-weight:600;">' + escapeHtml(match.courseName || match.course || "Match") + '</div>' +
           '<div style="font-size:12px;color:#64748b;">' + (match.matchDate || "") + '</div>' +
