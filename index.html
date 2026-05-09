@@ -1656,11 +1656,11 @@
         <option value="Net">Net</option>
       </select>
 
-      <label class="form-label" id="matchTeamALabel">Team A Players</label>
-      <div id="matchTeamAPlayers" style="border:1px solid #375984;border-radius:10px;padding:8px;max-height:150px;overflow-y:auto;"></div>
+      <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
+      <select id="matchTeamAPlayers" class="multi-select" multiple></select>
 
-      <label class="form-label" id="matchTeamBLabel" style="margin-top:12px;">Team B Players</label>
-      <div id="matchTeamBPlayers" style="border:1px solid #375984;border-radius:10px;padding:8px;max-height:150px;overflow-y:auto;"></div>
+      <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B</label>
+      <select id="matchTeamBPlayers" class="multi-select" multiple></select>
 
       <label class="form-label" for="matchValueType">Points / Cash</label>
       <select id="matchValueType" onchange="renderMatchValueFields()">
@@ -3951,33 +3951,26 @@ Max 80 words total.`;
   }
 
   function getMultiSelectValues(elementId) {
-    const el = document.getElementById(elementId);
-    if (!el) return [];
-    return Array.from(el.querySelectorAll("input[type=checkbox]:checked")).map(cb => cb.value);
+    return Array.from(document.getElementById(elementId).selectedOptions).map(option => option.value);
   }
 
   function setMultiSelectValues(elementId, values) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
     const valueSet = new Set(values || []);
-    el.querySelectorAll("input[type=checkbox]").forEach(cb => {
-      cb.checked = valueSet.has(cb.value);
+    Array.from(document.getElementById(elementId).options).forEach(option => {
+      option.selected = valueSet.has(option.value);
     });
   }
 
   function fillPlayerSelect(elementId, playerList) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    if (!playerList.length) {
-      el.innerHTML = '<div style="font-size:13px;color:#64748b;padding:6px;">No players assigned to this team.</div>';
-      return;
-    }
-    el.innerHTML = playerList.map(player =>
-      '<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:14px;">' +
-      '<input type="checkbox" value="' + escapeAttr(player.id) + '" style="width:18px;height:18px;flex-shrink:0;">' +
-      '<span>' + escapeHtml(player.name) + (player.handicapIndex ? ' <span style="color:#64748b;font-size:12px;">(HI ' + escapeHtml(String(player.handicapIndex)) + ')</span>' : '') + '</span>' +
-      '</label>'
-    ).join("");
+    const select = document.getElementById(elementId);
+    if (!select) return;
+    select.innerHTML = "";
+    playerList.forEach(player => {
+      const option = document.createElement("option");
+      option.value = player.id;
+      option.textContent = player.name + (player.handicapIndex ? " (HI " + player.handicapIndex + ")" : "");
+      select.appendChild(option);
+    });
   }
 
   async function saveMatch() {
@@ -4012,7 +4005,7 @@ Max 80 words total.`;
       matchDate, course, tees, courseId, teeId,
       teeRating: selectedTee ? selectedTee.rating : null,
       teeSlope: selectedTee ? selectedTee.slope : null,
-      teeYardage: selectedTee ? selectedTee.totalYardage : null,
+      teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
       numberOfHoles, startingHole, round, format, scoringType, valueType, valueSettings,
       teamAPlayerIds, teamBPlayerIds,
       teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
