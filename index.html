@@ -119,8 +119,11 @@
       align-items: center;
     }
 
-    .team-name {
-      font-weight: bold;
+    .subtotal-cell {
+      font-weight: 700;
+      background: rgba(15,36,66,0.8);
+      min-width: 36px;
+    }
       font-size: 17px;
       user-select: none;
       -webkit-user-select: none;
@@ -1695,7 +1698,7 @@
         <span class="sc-birdie" style="width:18px;height:18px;font-size:10px;">B</span>
         <span class="sc-bogey" style="width:18px;height:18px;font-size:10px;">B</span>
         <button id="scorecardViewToggle" onclick="toggleScorecardView()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Gross</button>
-        <button onclick="openScanScorecard()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">📷 Scan</button>
+        <button onclick="openScanScorecard()" class="secondary" style="width:auto;padding:6px 10px;margin:0;margin-left:auto;font-size:12px;">📷 Scan</button>
       </div>
     </div>
     <div class="card">
@@ -4087,67 +4090,293 @@ Max 80 words total.`;
   }
 
   function renderMatchCard(match) {
-    const teamAName = activeTripData.teamA || "Team A";
-    const teamBName = activeTripData.teamB || "Team B";
+    const teams = getTeams();
+    const teamAName = (teams[0] && teams[0].name) || activeTripData.teamA || "Team A";
+    const teamBName = (teams[1] && teams[1].name) || activeTripData.teamB || "Team B";
     const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
     const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
-    const isNassau = match.format === "Best Ball (Nassau)";
+    const isNassau = (match.format || "").includes("Nassau") || (match.format || "").includes("Best Ball");
+    const status = nassauStatusLabel(match);
+    const isComplete = !!match.isComplete;
+    const isStarted = status !== "Not Started";
 
-    return `
-      <div class="match-scorecard">
-        <div class="match-scorecard-header">
-          <div>
-            <div class="match-title">${escapeHtml(match.course || "Golf Course TBD")}</div>
-            <div class="match-detail">
-              ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}<br>
-              ${escapeHtml(match.format || "")} • ${escapeHtml(match.scoringType || "Gross")} • ${escapeHtml(match.valueType || "Points")}<br>
-              ${escapeHtml(match.tees || "Tees TBD")} • ${escapeHtml(match.numberOfHoles || "18")} holes • Start ${escapeHtml(match.startingHole || "1")}
-            </div>
-          </div>
-          <button class="match-gear" onclick="toggleMatchMenu('${match.id}')">⚙️</button>
-        </div>
+    // Compute live Nassau scores
+    const nassau = isNassau && isStarted ? computeNassau(match) : null;
 
-        <div id="matchMenu-${match.id}" class="match-actions-menu hidden">
-          <button onclick="openMatchSetup('${match.id}')" class="secondary">Edit Match</button>
-          <button onclick="openMatchSetup(null, '${match.id}')" class="secondary">Copy Match</button>
-          <button onclick="deleteMatch('${match.id}')" class="danger">Delete Match</button>
-        </div>
+    function segCell(seg, team) {
+      if (!nassau) {
+        const storedVal = team === "a"
+          ? (seg === "front" ? match.frontA : seg === "back" ? match.backA : match.overallA)
+          : (seg === "front" ? match.frontB : seg === "back" ? match.backB : match.overallB);
+        return '<td>' + escapeHtml(storedVal || "—") + '</td>';
+      }
+      const s = nassau[seg === "front" ? "front" : seg === "back" ? "back" : "overall"];
+      const disp = nassauSegmentDisplay(s, isComplete);
+      const val = team === "a" ? disp.a : disp.b;
+      const isUp = team === "a" ? disp.aUp : disp.bUp;
+      const isWon = team === "a" ? disp.aWon : disp.bWon;
+      const color = (isUp || isWon) ? "#4ade80" : (disp.tied ? "#93c5fd" : "#f87171");
+      return '<td style="color:' + color + ';font-weight:700;">' + escapeHtml(val || "—") + '</td>';
+    }
 
-        <div class="match-scorecard-body">
-          <div class="match-detail">
-            <strong>${escapeHtml(teamAName)}:</strong> <span style="color:#93c5fd;font-weight:600;">${escapeHtml(teamAPlayers)}</span><br>
-            <strong>${escapeHtml(teamBName)}:</strong> <span style="color:#86efac;font-weight:600;">${escapeHtml(teamBPlayers)}</span>
-          </div>
+    const statusColor = isComplete ? "#4ade80" : isStarted ? "#fbbf24" : "#64748b";
+    const statusDot = isComplete ? "✓" : isStarted ? "●" : "○";
 
-          ${renderMatchValueSummary(match)}
+    return '<div class="match-scorecard">' +
+      '<div class="match-scorecard-header">' +
+        '<div>' +
+          '<div class="match-title">' + escapeHtml(match.course || "Golf Course TBD") + '</div>' +
+          '<div class="match-detail">' +
+            escapeHtml(formatMatchDate(match.matchDate)) + ' • Round ' + escapeHtml(match.round || "1") + '<br>' +
+            escapeHtml(match.format || "") + ' • ' + escapeHtml(match.scoringType || "Gross") + ' • ' + escapeHtml(match.valueType || "Points") + '<br>' +
+            escapeHtml(match.tees || "Tees TBD") + ' • ' + escapeHtml(match.numberOfHoles || "18") + ' holes' +
+          '</div>' +
+        '</div>' +
+        '<button class="match-gear" onclick="toggleMatchMenu(\'' + escapeAttr(match.id) + '\')">⚙️</button>' +
+      '</div>' +
 
-          ${
-            isNassau
-              ? `
-                <table class="scorecard-table">
-                  <tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr>
-                  <tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.frontA || "0")}</td><td>${escapeHtml(match.backA || "0")}</td><td>${escapeHtml(match.overallA || "0")}</td></tr>
-                  <tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.frontB || "0")}</td><td>${escapeHtml(match.backB || "0")}</td><td>${escapeHtml(match.overallB || "0")}</td></tr>
-                </table>
-              `
-              : `
-                <table class="scorecard-table">
-                  <tr><th></th><th>Score</th></tr>
-                  <tr><th>${escapeHtml(teamAName)}</th><td>${escapeHtml(match.teamAScore || "0")}</td></tr>
-                  <tr><th>${escapeHtml(teamBName)}</th><td>${escapeHtml(match.teamBScore || "0")}</td></tr>
-                </table>
-              `
-          }
+      '<div id="matchMenu-' + escapeAttr(match.id) + '" class="match-actions-menu hidden">' +
+        '<button onclick="openMatchSetup(\'' + escapeAttr(match.id) + '\')" class="secondary">Edit Match</button>' +
+        '<button onclick="openMatchSetup(null, \'' + escapeAttr(match.id) + '\')" class="secondary">Copy Match</button>' +
+        '<button onclick="deleteMatch(\'' + escapeAttr(match.id) + '\')" class="danger">Delete Match</button>' +
+      '</div>' +
 
-          <button class="enter-score-btn" onclick="openEnterScore('${match.id}')">Scorecard</button>
-        </div>
-      </div>
-    `;
+      '<div class="match-scorecard-body">' +
+        // Status line
+        '<div style="font-size:12px;margin-bottom:8px;">' +
+          '<span style="color:' + statusColor + ';font-weight:600;">' + statusDot + ' ' + escapeHtml(status) + '</span>' +
+        '</div>' +
+
+        '<div class="match-detail">' +
+          '<strong>' + escapeHtml(teamAName) + ':</strong> <span style="color:#93c5fd;font-weight:600;">' + escapeHtml(teamAPlayers) + '</span><br>' +
+          '<strong>' + escapeHtml(teamBName) + ':</strong> <span style="color:#86efac;font-weight:600;">' + escapeHtml(teamBPlayers) + '</span>' +
+        '</div>' +
+
+        renderMatchValueSummary(match) +
+
+        (isNassau
+          ? '<table class="scorecard-table">' +
+              '<tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr>' +
+              '<tr><th>' + escapeHtml(teamAName) + '</th>' + segCell("front","a") + segCell("back","a") + segCell("overall","a") + '</tr>' +
+              '<tr><th>' + escapeHtml(teamBName) + '</th>' + segCell("front","b") + segCell("back","b") + segCell("overall","b") + '</tr>' +
+            '</table>'
+          : '<table class="scorecard-table">' +
+              '<tr><th></th><th>Score</th></tr>' +
+              '<tr><th>' + escapeHtml(teamAName) + '</th><td>' + escapeHtml(match.teamAScore || "—") + '</td></tr>' +
+              '<tr><th>' + escapeHtml(teamBName) + '</th><td>' + escapeHtml(match.teamBScore || "—") + '</td></tr>' +
+            '</table>'
+        ) +
+
+        '<div style="display:flex;gap:8px;margin-top:8px;">' +
+          '<button class="enter-score-btn" style="flex:1;" onclick="openEnterScore(\'' + escapeAttr(match.id) + '\')">Scorecard</button>' +
+          (!isComplete && isStarted
+            ? '<button class="secondary" style="flex:1;background:#166534;border-color:#4ade80;color:#4ade80;" onclick="completeMatch(\'' + escapeAttr(match.id) + '\')">✓ Complete</button>'
+            : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }
 
 
+  // ── NASSAU SCORING ENGINE ────────────────────────────────────────────────────
+
+  function computeNassau(match) {
+    // Returns { front, back, overall } each as { aUp, aWins, bWins, holesPlayed, complete, dominated }
+    const holes = getScorecardForMatch(match).holes || [];
+    const tee = getTeeForMatch(match);
+    const aIds = match.teamAPlayerIds || [];
+    const bIds = match.teamBPlayerIds || [];
+    const holeScores = match.holeScores || {};
+    const isNet = (match.scoringType || "Gross") === "Net";
+
+    // Build stroke maps for net scoring
+    const allIds = aIds.concat(bIds);
+    const chs = {};
+    const validChs = allIds.map(id => {
+      const p = players.find(x => x.id === id);
+      return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+    }).filter(x => x !== null);
+    const lowCh = validChs.length ? Math.min.apply(null, validChs) : null;
+    const strokeMaps = {};
+    allIds.forEach(id => {
+      const p = players.find(x => x.id === id);
+      const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+      strokeMaps[id] = calculateStrokeMap(strokes, holes);
+    });
+
+    function getBestScore(teamIds, hole) {
+      const scores = teamIds.map(id => {
+        const raw = Number((holeScores[id] || {})[hole.hole]);
+        if (!raw) return null;
+        return raw - (isNet ? (strokeMaps[id] && strokeMaps[id][hole.hole] || 0) : 0);
+      }).filter(s => s !== null);
+      return scores.length ? Math.min.apply(null, scores) : null;
+    }
+
+    function holeComplete(hole) {
+      // A hole counts only when every player has a score
+      const allPlayers = aIds.concat(bIds);
+      return allPlayers.every(id => Number((holeScores[id] || {})[hole.hole]) > 0);
+    }
+
+    function computeSegment(segHoles) {
+      let aWins = 0, bWins = 0, halves = 0;
+      let played = 0;
+      segHoles.forEach(hole => {
+        if (!holeComplete(hole)) return;
+        played++;
+        const a = getBestScore(aIds, hole);
+        const b = getBestScore(bIds, hole);
+        if (a === null || b === null) return;
+        if (a < b) aWins++;
+        else if (b < a) bWins++;
+        else halves++;
+      });
+      const remaining = segHoles.length - played;
+      const aUp = aWins - bWins;
+      // Check for early clinch (can't be caught)
+      const dominated = Math.abs(aUp) > remaining;
+      return { aUp, aWins, bWins, halves, holesPlayed: played, total: segHoles.length, remaining, dominated };
+    }
+
+    const frontHoles = holes.filter(h => Number(h.hole) <= 9);
+    const backHoles  = holes.filter(h => Number(h.hole) >= 10);
+
+    return {
+      front:   computeSegment(frontHoles),
+      back:    computeSegment(backHoles),
+      overall: computeSegment(holes)
+    };
+  }
+
+  function nassauStatusLabel(match) {
+    const holeScores = match.holeScores || {};
+    const holes = getScorecardForMatch(match).holes || [];
+    const allIds = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
+
+    if (match.isComplete) return "Completed";
+
+    let thru = 0;
+    holes.forEach(hole => {
+      if (allIds.every(id => Number((holeScores[id] || {})[hole.hole]) > 0)) thru++;
+    });
+
+    if (thru === 0) return "Not Started";
+    return "In Progress | Thru " + thru;
+  }
+
+  function nassauSegmentDisplay(seg, isComplete, segResult) {
+    // segResult: { aLabel, bLabel } for completed display
+    if (!seg || seg.holesPlayed === 0) return { a: "—", b: "—" };
+
+    if (isComplete || seg.dominated) {
+      // Show final result
+      if (segResult) return segResult;
+      const margin = Math.abs(seg.aUp);
+      const rem = seg.remaining;
+      const holesLeft = seg.total - seg.holesPlayed;
+      if (seg.aUp === 0) return { a: "E", b: "E" };
+      const winner = seg.aUp > 0 ? "a" : "b";
+      let label;
+      if (holesLeft === 0) {
+        label = margin === 0 ? "E" : margin + " UP";
+      } else {
+        label = margin + "&" + holesLeft;
+      }
+      return {
+        a: seg.aUp > 0 ? label : (seg.aUp === 0 ? "E" : label),
+        b: seg.aUp < 0 ? label : (seg.aUp === 0 ? "E" : label),
+        aWon: seg.aUp > 0,
+        bWon: seg.aUp < 0,
+        tied: seg.aUp === 0
+      };
+    }
+
+    // In progress — show UP/DOWN/E
+    const margin = Math.abs(seg.aUp);
+    if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
+    const upLabel = "▲ " + margin;
+    const downLabel = "▼ " + margin;
+    return {
+      a: seg.aUp > 0 ? upLabel : downLabel,
+      b: seg.aUp < 0 ? upLabel : downLabel,
+      aUp: seg.aUp > 0,
+      bUp: seg.aUp < 0
+    };
+  }
+
+  function nassauValueDisplay(match, seg, valueSettings) {
+    // Returns the point/$ value for winner of this segment
+    if (!valueSettings) return "";
+    const nassauVal = Number(valueSettings["Nassau"] || valueSettings["Per Nassau"] || 0);
+    const wagerVal = Number(valueSettings["Wager"] || valueSettings["Amount"] || 0);
+    const val = nassauVal || wagerVal;
+    if (!val) return "";
+    const isWager = (match.valueType || "") === "Wager";
+    return isWager ? "$" + val.toFixed(2) : val + " pt" + (val !== 1 ? "s" : "");
+  }
+
+  async function completeMatch(matchId) {
+    if (!confirm("Mark this match as complete? The result will be locked in and count toward team points.")) return;
+
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    const nassau = computeNassau(match);
+    const teams = getTeams();
+    const teamAName = (teams[0] && teams[0].name) || "Team A";
+    const teamBName = (teams[1] && teams[1].name) || "Team B";
+
+    function finalLabel(seg) {
+      if (seg.holesPlayed === 0) return "E";
+      const margin = Math.abs(seg.aUp);
+      const remaining = seg.total - seg.holesPlayed;
+      if (seg.aUp === 0) return "E";
+      if (remaining === 0) return margin + " UP";
+      return margin + "&" + remaining;
+    }
+
+    const frontLabel = finalLabel(nassau.front);
+    const backLabel  = finalLabel(nassau.back);
+    const overallLabel = finalLabel(nassau.overall);
+
+    // Team A perspective
+    const frontA = nassau.front.aUp >= 0 ? frontLabel : frontLabel;
+    const frontB = nassau.front.aUp <= 0 ? frontLabel : frontLabel;
+
+    // Points: winner of each segment gets 1 point
+    const frontPts  = nassau.front.aUp > 0  ? [1,0] : nassau.front.aUp < 0  ? [0,1] : [0.5,0.5];
+    const backPts   = nassau.back.aUp > 0   ? [1,0] : nassau.back.aUp < 0   ? [0,1] : [0.5,0.5];
+    const overallPts = nassau.overall.aUp > 0 ? [1,0] : nassau.overall.aUp < 0 ? [0,1] : [0.5,0.5];
+
+    const totalA = frontPts[0] + backPts[0] + overallPts[0];
+    const totalB = frontPts[1] + backPts[1] + overallPts[1];
+
+    const updates = {
+      isComplete: true,
+      completedAt: new Date().toISOString(),
+      frontA:   nassau.front.aUp > 0  ? frontLabel : nassau.front.aUp < 0  ? frontLabel : "E",
+      frontB:   nassau.front.aUp < 0  ? frontLabel : nassau.front.aUp > 0  ? frontLabel : "E",
+      backA:    nassau.back.aUp > 0   ? backLabel  : nassau.back.aUp < 0   ? backLabel  : "E",
+      backB:    nassau.back.aUp < 0   ? backLabel  : nassau.back.aUp > 0   ? backLabel  : "E",
+      overallA: nassau.overall.aUp > 0 ? overallLabel : nassau.overall.aUp < 0 ? overallLabel : "E",
+      overallB: nassau.overall.aUp < 0 ? overallLabel : nassau.overall.aUp > 0 ? overallLabel : "E",
+      teamAScore: String(totalA),
+      teamBScore: String(totalB),
+      updatedAt: new Date().toISOString()
+    };
+
+    await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", matchId), updates);
+
+    const resultSummary = teamAName + " " + overallLabel + (nassau.overall.aUp > 0 ? " vs " + teamBName : " to " + teamBName);
+    await addSwamiPost("matchComplete", resultSummary);
+    renderMatchList();
+  }
+
+  // ── END NASSAU ENGINE ────────────────────────────────────────────────────────
+
   function getTeeForMatch(match) {
-    const courseKey = match.courseId || normalizeCourseKey(match.course || "");
     const teeKey = match.teeId || normalizeCourseKey(match.tees || "");
     const course = courseLibrary[courseKey];
     if (!course || !course.tees) return null;
@@ -4608,6 +4837,9 @@ Max 80 words total.`;
     const inHoles = holes.filter(function(hole) { return Number(hole.hole) >= 10; });
     const sum = function(arr, field) { return arr.reduce(function(total, hole) { return total + (Number(hole[field]) || 0); }, 0); };
 
+    // Compute Nassau for live display
+    const nassau = computeNassau(match);
+
     function netScore(playerId, hole) {
       const gross = getScoreValue(match, playerId, hole);
       if (!gross) return "";
@@ -4619,25 +4851,29 @@ Max 80 words total.`;
       return vals.length ? Math.min.apply(null, vals) : "";
     }
 
-    function teamCells(teamIds, oppIds, prefix) {
+    function nassauCell(seg, isA) {
+      const disp = nassauSegmentDisplay(seg, match.isComplete);
+      const val = isA ? disp.a : disp.b;
+      const isUp = isA ? disp.aUp : disp.bUp;
+      const isWon = isA ? disp.aWon : disp.bWon;
+      if (!val || val === "—") return val || "—";
+      const color = (isUp || isWon) ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
+      return '<span style="color:' + color + ';font-weight:700;">' + val + '</span>';
+    }
+
+    function teamCells(teamIds, oppIds, prefix, isA) {
       let out = "";
       holes.forEach(function(hole) {
         const val = teamScore(teamIds, hole);
         const opp = teamScore(oppIds, hole);
         const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
-        out += `<td id="tscore-${prefix}-${hole.hole}" class="${cls}">${val}</td>`;
+        out += '<td id="tscore-' + prefix + '-' + hole.hole + '" class="' + cls + '">' + val + '</td>';
         if (Number(hole.hole) === 9) {
-          const outTotal = outHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
-          const oppOut = outHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
-          out += `<td id="tscore-${prefix}-out" class="${outTotal && oppOut && outTotal < oppOut ? "team-score-win" : ""}">${outTotal || ""}</td>`;
+          out += '<td id="tscore-' + prefix + '-out" class="subtotal-cell">' + nassauCell(nassau.front, isA) + '</td>';
         }
       });
-      const inTotal = inHoles.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
-      const oppIn = inHoles.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
-      const total = holes.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0);
-      const oppTotal = holes.reduce(function(t, h) { return t + (Number(teamScore(oppIds, h)) || 0); }, 0);
-      out += `<td id="tscore-${prefix}-in" class="${inTotal && oppIn && inTotal < oppIn ? "team-score-win" : ""}">${inTotal || ""}</td>`;
-      out += `<td id="tscore-${prefix}-tot" class="${total && oppTotal && total < oppTotal ? "team-score-win" : ""}">${total || ""}</td>`;
+      out += '<td id="tscore-' + prefix + '-in" class="subtotal-cell">' + nassauCell(nassau.back, isA) + '</td>';
+      out += '<td id="tscore-' + prefix + '-tot" class="subtotal-cell">' + nassauCell(nassau.overall, isA) + '</td>';
       return out;
     }
 
@@ -4708,7 +4944,7 @@ Max 80 words total.`;
 
     teamAPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
     if (teamAPlayers.length) {
-      playerRows += `<tr class="team-score-row"><td style="color:#93c5fd;font-weight:700;padding-left:6px;">${escapeHtml(teamAName)}</td>${teamCells(teamAIds, teamBIds, "ta")}</tr>`;
+      playerRows += `<tr class="team-score-row"><td style="color:#93c5fd;font-weight:700;padding-left:6px;">${escapeHtml(teamAName)}</td>${teamCells(teamAIds, teamBIds, "ta", true)}</tr>`;
     }
 
     // Double separator between teams
@@ -4719,7 +4955,7 @@ Max 80 words total.`;
 
     teamBPlayers.forEach(p => { playerRows += buildPlayerRow(p); });
     if (teamBPlayers.length) {
-      playerRows += `<tr class="team-score-row"><td style="color:#86efac;font-weight:700;padding-left:6px;">${escapeHtml(teamBName)}</td>${teamCells(teamBIds, teamAIds, "tb")}</tr>`;
+      playerRows += `<tr class="team-score-row"><td style="color:#86efac;font-weight:700;padding-left:6px;">${escapeHtml(teamBName)}</td>${teamCells(teamBIds, teamAIds, "tb", false)}</tr>`;
     }
 
     unassigned.forEach(p => { playerRows += buildPlayerRow(p); });
@@ -9260,6 +9496,7 @@ ${closer}`;
   window.openUserProfile = openUserProfile;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
+  window.completeMatch = completeMatch;
   window.openMatchHome = openMatchHome;
   window.openMatchSetup = openMatchSetup;
   window.handleMatchFormatChange = handleMatchFormatChange;
