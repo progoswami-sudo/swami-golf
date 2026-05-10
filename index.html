@@ -1695,6 +1695,7 @@
         <span class="sc-birdie" style="width:18px;height:18px;font-size:10px;">B</span>
         <span class="sc-bogey" style="width:18px;height:18px;font-size:10px;">B</span>
         <button id="scorecardViewToggle" onclick="toggleScorecardView()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Gross</button>
+        <button onclick="openScanScorecard()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">📷 Scan</button>
       </div>
     </div>
     <div class="card">
@@ -1702,7 +1703,6 @@
       <div id="scoreEntryTableWrap" style="min-height:40px;"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="openMoments()" class="secondary" style="flex:1;">Match Moments</button>
-        <button onclick="openScanScorecard()" class="secondary" style="flex:1;">📷 Scan Scores</button>
         <button onclick="openScorecardPhotoCapture()" class="secondary" style="flex:1;">📷 Photo</button>
       </div>
     </div>
@@ -1750,8 +1750,9 @@
       <button id="acceptScanBtn" onclick="acceptScannedScores()" style="flex:1;">✓ Accept All</button>
     </div>
   </div>
+
+  <div id="holeDetailScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="closeHoleDetail()" class="secondary">Back</button>
       <h2 id="holeDetailTitle">Hole 1</h2>
       <div id="holeDetailNav" style="display:flex;gap:6px;">
         <button onclick="navHoleDetail(-1)" class="secondary" style="width:auto;padding:8px 12px;margin-top:0;">◀</button>
@@ -5910,54 +5911,69 @@ ${closer}`;
       ? holes.map(h => h.hole)
       : Array.from({length: 18}, (_, i) => i + 1);
 
+    const frontNums = holeNums.filter(h => h <= 9);
+    const backNums  = holeNums.filter(h => h >= 10);
+    const hasBack   = backNums.length > 0;
+
     const table = document.getElementById("scanReviewTable");
     if (!table) return;
 
-    // Build review grid
+    const thStyle = 'text-align:center;padding:4px 2px;color:#64748b;min-width:28px;';
+    const thSubtotal = 'text-align:center;padding:4px 5px;color:#93c5fd;font-weight:700;min-width:32px;background:#0a1f3d;';
+
+    // Header
     let html = '<div style="overflow-x:auto;">' +
       '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
       '<thead><tr>' +
       '<th style="text-align:left;padding:6px 4px;color:#64748b;border-bottom:1px solid #1e3a5f;">Player</th>';
 
-    holeNums.forEach(h => {
-      const holePar = holes.find(x => x.hole === h);
-      html += '<th style="text-align:center;padding:4px 2px;color:#64748b;min-width:28px;">' + h + '</th>';
-    });
-    html += '<th style="text-align:center;padding:4px;color:#64748b;">Tot</th></tr></thead><tbody>';
+    frontNums.forEach(h => { html += '<th style="' + thStyle + '">' + h + '</th>'; });
+    html += '<th style="' + thSubtotal + '">OUT</th>';
+    if (hasBack) {
+      backNums.forEach(h => { html += '<th style="' + thStyle + '">' + h + '</th>'; });
+      html += '<th style="' + thSubtotal + '">IN</th>';
+    }
+    html += '<th style="' + thSubtotal + '">TOT</th></tr></thead><tbody>';
 
     matchPlayers.forEach(player => {
       const playerScores = scanEditedScores[player.id] || {};
       const hasScores = Object.keys(playerScores).length > 0;
-      const rowBg = hasScores ? "" : "opacity:0.5;";
 
-      html += '<tr style="' + rowBg + '">' +
-        '<td style="padding:6px 4px;font-weight:600;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;">' +
-          escapeHtml(player.name) +
-        '</td>';
+      html += '<tr style="' + (hasScores ? '' : 'opacity:0.5;') + '">' +
+        '<td style="padding:6px 4px;font-weight:600;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;">' +
+          escapeHtml(player.name) + '</td>';
 
-      let total = 0;
-      holeNums.forEach(h => {
+      let outTotal = 0, inTotal = 0;
+
+      const renderCell = (h) => {
         const score = playerScores[String(h)];
         const holeData = holes.find(x => x.hole === h);
         const par = holeData ? holeData.par : null;
-        let cellColor = "#0f2442";
+        let bg = "#0f2442";
         if (score && par) {
-          if (score <= par - 2) cellColor = "#854d0e";      // eagle
-          else if (score === par - 1) cellColor = "#166534"; // birdie
-          else if (score === par + 1) cellColor = "#7f1d1d"; // bogey
-          else if (score >= par + 2) cellColor = "#450a0a";  // double+
+          if (score <= par - 2)      bg = "#854d0e";
+          else if (score === par-1)  bg = "#166534";
+          else if (score === par+1)  bg = "#7f1d1d";
+          else if (score >= par+2)   bg = "#450a0a";
         }
-        if (score) total += score;
-
-        html += '<td style="text-align:center;padding:2px;min-width:28px;">' +
+        if (score) { if (h <= 9) outTotal += score; else inTotal += score; }
+        return '<td style="text-align:center;padding:2px;min-width:28px;">' +
           '<button onclick="editScanScore(\'' + escapeAttr(player.id) + '\',' + h + ',this)" ' +
           'style="width:26px;height:26px;padding:0;margin:0;border-radius:6px;font-size:12px;font-weight:600;' +
-          'background:' + cellColor + ';border:1px solid #375984;">' +
-          (score || '—') +
-          '</button></td>';
-      });
+          'background:' + bg + ';border:1px solid #375984;">' +
+          (score || '—') + '</button></td>';
+      };
 
-      html += '<td style="text-align:center;font-weight:700;padding:4px;">' + (total || '—') + '</td>';
+      frontNums.forEach(h => { html += renderCell(h); });
+      html += '<td style="text-align:center;font-weight:700;padding:4px;color:#93c5fd;">' + (outTotal || '—') + '</td>';
+
+      if (hasBack) {
+        backNums.forEach(h => { html += renderCell(h); });
+        html += '<td style="text-align:center;font-weight:700;padding:4px;color:#93c5fd;">' + (inTotal || '—') + '</td>';
+      }
+
+      const tot = outTotal + inTotal;
+      html += '<td style="text-align:center;font-weight:700;padding:4px;">' + (tot || '—') + '</td>';
       html += '</tr>';
     });
 
