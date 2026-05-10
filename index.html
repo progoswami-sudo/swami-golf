@@ -1762,6 +1762,7 @@
 
   <div id="holeDetailScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
+      <button onclick="closeHoleDetail()" class="secondary">Back</button>
       <h2 id="holeDetailTitle">Hole 1</h2>
       <div id="holeDetailNav" style="display:flex;gap:6px;">
         <button onclick="navHoleDetail(-1)" class="secondary" style="width:auto;padding:8px 12px;margin-top:0;">◀</button>
@@ -1780,7 +1781,7 @@
       <div id="momentsMatchInfo" class="match-detail"></div>
       <label class="form-label" for="momentText">Add Moment</label>
       <textarea id="momentText" placeholder="Example: Frank hit the clubhouse with a wedge. Again."></textarea>
-      <button onclick="saveMoment()" class="backup">Save Moment</button>
+      <button id="saveMomentBtn" onclick="saveMoment()">Save Moment</button>
       <div id="momentsList" class="moments-list"></div>
     </div>
   </div>
@@ -4111,18 +4112,25 @@ Max 80 words total.`;
     const nassau = isNassau && isStarted ? computeNassau(match) : null;
 
     function segCell(seg, team) {
-      if (!nassau) {
-        const storedVal = team === "a"
+      // For completed matches, use stored values written by completeMatch()
+      if (isComplete) {
+        const val = team === "a"
           ? (seg === "front" ? match.frontA : seg === "back" ? match.backA : match.overallA)
           : (seg === "front" ? match.frontB : seg === "back" ? match.backB : match.overallB);
-        return '<td>' + escapeHtml(storedVal || "—") + '</td>';
+        const display = val || "E";
+        const won = display.startsWith("+");
+        const lost = display.startsWith("-");
+        const tied = display === "E";
+        const color = won ? "#4ade80" : lost ? "#f87171" : tied ? "#93c5fd" : "#4ade80";
+        return '<td style="color:' + color + ';font-weight:700;">' + escapeHtml(display) + '</td>';
       }
+      // In progress — live Nassau display
+      if (!nassau) return '<td>—</td>';
       const s = nassau[seg === "front" ? "front" : seg === "back" ? "back" : "overall"];
-      const disp = nassauSegmentDisplay(s, isComplete);
+      const disp = nassauSegmentDisplay(s, false);
       const val = team === "a" ? disp.a : disp.b;
       const isUp = team === "a" ? disp.aUp : disp.bUp;
-      const isWon = team === "a" ? disp.aWon : disp.bWon;
-      const color = (isUp || isWon) ? "#4ade80" : (disp.tied ? "#93c5fd" : "#f87171");
+      const color = isUp ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
       return '<td style="color:' + color + ';font-weight:700;">' + escapeHtml(val || "—") + '</td>';
     }
 
@@ -4314,7 +4322,7 @@ Max 80 words total.`;
   }
 
   async function completeMatch(matchId) {
-    if (!confirm("Mark this match as complete? The result will be locked in and count toward team points.")) return;
+    if (!confirm("Mark this match as complete? The result will be locked in.")) return;
 
     const match = matches.find(m => m.id === matchId);
     if (!match) return;
@@ -4323,50 +4331,70 @@ Max 80 words total.`;
     const teams = getTeams();
     const teamAName = (teams[0] && teams[0].name) || "Team A";
     const teamBName = (teams[1] && teams[1].name) || "Team B";
+    const isWager = (match.valueType || "").toLowerCase() === "wager" ||
+                    (match.valueType || "").toLowerCase() === "cash";
+    const vs = match.valueSettings || {};
 
-    function finalLabel(seg) {
-      if (seg.holesPlayed === 0) return "E";
+    // Get per-segment values
+    const frontVal   = Number(vs["Front 9"] || vs["Front"] || vs["Nassau"] || 0);
+    const backVal    = Number(vs["Back 9"]  || vs["Back"]  || vs["Nassau"] || 0);
+    const overallVal = Number(vs["Overall"] || vs["Nassau"] || vs["Total"] || 0);
+
+    function segLabel(seg, segVal) {
+      if (seg.holesPlayed === 0) return { a: "E", b: "E" };
       const margin = Math.abs(seg.aUp);
-      const remaining = seg.total - seg.holesPlayed;
-      if (seg.aUp === 0) return "E";
-      if (remaining === 0) return margin + " UP";
-      return margin + "&" + remaining;
+      const holesLeft = seg.total - seg.holesPlayed;
+      const scoreLabel = seg.aUp === 0 ? "E" :
+        (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
+
+      if (isWager && segVal > 0) {
+        // Show $ won by winner, $ owed by loser
+        const winLabel  = "+$" + segVal.toFixed(2);
+        const loseLabel = "-$" + segVal.toFixed(2);
+        if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
+        return {
+          a: seg.aUp > 0 ? winLabel : loseLabel,
+          b: seg.aUp < 0 ? winLabel : loseLabel,
+          aWon: seg.aUp > 0, bWon: seg.aUp < 0
+        };
+      } else {
+        if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
+        return {
+          a: scoreLabel, b: scoreLabel,
+          aWon: seg.aUp > 0, bWon: seg.aUp < 0
+        };
+      }
     }
 
-    const frontLabel = finalLabel(nassau.front);
-    const backLabel  = finalLabel(nassau.back);
-    const overallLabel = finalLabel(nassau.overall);
+    const frontDisp   = segLabel(nassau.front,   frontVal);
+    const backDisp    = segLabel(nassau.back,     backVal);
+    const overallDisp = segLabel(nassau.overall,  overallVal);
 
-    // Team A perspective
-    const frontA = nassau.front.aUp >= 0 ? frontLabel : frontLabel;
-    const frontB = nassau.front.aUp <= 0 ? frontLabel : frontLabel;
-
-    // Points: winner of each segment gets 1 point
-    const frontPts  = nassau.front.aUp > 0  ? [1,0] : nassau.front.aUp < 0  ? [0,1] : [0.5,0.5];
-    const backPts   = nassau.back.aUp > 0   ? [1,0] : nassau.back.aUp < 0   ? [0,1] : [0.5,0.5];
+    // Points for team scoreboard (only for non-wager)
+    const frontPts   = nassau.front.aUp > 0   ? [1,0] : nassau.front.aUp < 0   ? [0,1] : [0.5,0.5];
+    const backPts    = nassau.back.aUp > 0    ? [1,0] : nassau.back.aUp < 0    ? [0,1] : [0.5,0.5];
     const overallPts = nassau.overall.aUp > 0 ? [1,0] : nassau.overall.aUp < 0 ? [0,1] : [0.5,0.5];
-
     const totalA = frontPts[0] + backPts[0] + overallPts[0];
     const totalB = frontPts[1] + backPts[1] + overallPts[1];
 
     const updates = {
       isComplete: true,
       completedAt: new Date().toISOString(),
-      frontA:   nassau.front.aUp > 0  ? frontLabel : nassau.front.aUp < 0  ? frontLabel : "E",
-      frontB:   nassau.front.aUp < 0  ? frontLabel : nassau.front.aUp > 0  ? frontLabel : "E",
-      backA:    nassau.back.aUp > 0   ? backLabel  : nassau.back.aUp < 0   ? backLabel  : "E",
-      backB:    nassau.back.aUp < 0   ? backLabel  : nassau.back.aUp > 0   ? backLabel  : "E",
-      overallA: nassau.overall.aUp > 0 ? overallLabel : nassau.overall.aUp < 0 ? overallLabel : "E",
-      overallB: nassau.overall.aUp < 0 ? overallLabel : nassau.overall.aUp > 0 ? overallLabel : "E",
-      teamAScore: String(totalA),
-      teamBScore: String(totalB),
+      frontA:   frontDisp.a,   frontB:   frontDisp.b,
+      backA:    backDisp.a,    backB:    backDisp.b,
+      overallA: overallDisp.a, overallB: overallDisp.b,
+      teamAScore: isWager ? "0" : String(totalA),
+      teamBScore: isWager ? "0" : String(totalB),
       updatedAt: new Date().toISOString()
     };
 
     await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", matchId), updates);
 
-    const resultSummary = teamAName + " " + overallLabel + (nassau.overall.aUp > 0 ? " vs " + teamBName : " to " + teamBName);
-    await addSwamiPost("matchComplete", resultSummary);
+    const margin = Math.abs(nassau.overall.aUp);
+    const holesLeft = nassau.overall.total - nassau.overall.holesPlayed;
+    const resultScore = nassau.overall.aUp === 0 ? "E" : (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
+    const winner = nassau.overall.aUp > 0 ? teamAName : nassau.overall.aUp < 0 ? teamBName : "Tied";
+    await addSwamiPost("matchComplete", winner + " wins " + resultScore);
     renderMatchList();
   }
 
@@ -4731,7 +4759,7 @@ Max 80 words total.`;
         });
       });
 
-      await updateDoc(doc(db, "trips", activeTripId, "matches", holeDetailMatchId), {
+      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", holeDetailMatchId), {
         holeScores: updatedHoleScores,
         holeDetail: holeDetailData,
         updatedAt: new Date().toISOString()
@@ -5145,7 +5173,7 @@ Max 80 words total.`;
     if (!match) return alert("Match not found.");
     if (!text) return alert("Please enter a moment.");
 
-    const btn = document.querySelector("#momentsScreen button");
+    const btn = document.getElementById("saveMomentBtn");
     if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
 
     const moments = (match.moments || []).concat([{ text: text, createdAt: new Date().toISOString() }]);
@@ -5188,7 +5216,7 @@ Max 80 words total.`;
     if (!requireAdmin("delete matches")) return;
     if (!confirm("Delete this match?")) return;
     const match = matches.find(item => item.id === matchId);
-    await deleteDoc(doc(db, "trips", activeTripId, "matches", matchId));
+    await deleteDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", matchId));
     await addSwamiPost("matchDelete", match ? `${match.format} at ${match.course}` : "match");
   }
 
@@ -6339,12 +6367,15 @@ ${closer}`;
     const scores = {};
     teams.forEach(t => { scores[t.id] = 0; });
     matches.forEach(match => {
-      const aScore = Number(match.teamAScore || match.overallA || 0);
-      const bScore = Number(match.teamBScore || match.overallB || 0);
+      // Only count completed matches, and only Points (not Cash/Wager)
+      if (!match.isComplete) return;
+      if ((match.valueType || "").toLowerCase() === "wager" ||
+          (match.valueType || "").toLowerCase() === "cash") return;
+      const aScore = Number(match.teamAScore || 0);
+      const bScore = Number(match.teamBScore || 0);
       if (aScore === 0 && bScore === 0) return;
-      if (aScore > bScore)      { scores["A"] = (scores["A"] || 0) + 1; }
-      else if (bScore > aScore) { scores["B"] = (scores["B"] || 0) + 1; }
-      else { scores["A"] = (scores["A"] || 0) + 0.5; scores["B"] = (scores["B"] || 0) + 0.5; }
+      scores["A"] = (scores["A"] || 0) + aScore;
+      scores["B"] = (scores["B"] || 0) + bScore;
     });
     return scores;
   }
