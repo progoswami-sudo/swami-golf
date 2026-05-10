@@ -1711,6 +1711,9 @@
         <button onclick="openMoments()" class="secondary" style="flex:1;">Match Moments</button>
         <button onclick="openScorecardPhotoCapture()" class="secondary" style="flex:1;">📷 Photo</button>
       </div>
+      <div id="completeMatchBtnWrap" style="margin-top:8px;display:none;">
+        <button id="completeMatchBtn" onclick="completeCurrentMatch()" style="width:100%;">✓ Complete Match</button>
+      </div>
     </div>
   </div>
 
@@ -4173,9 +4176,6 @@ Max 80 words total.`;
 
         '<div style="display:flex;gap:8px;margin-top:8px;">' +
           '<button class="enter-score-btn" style="flex:1;" onclick="openEnterScore(\'' + escapeAttr(match.id) + '\')">Scorecard</button>' +
-          (!isComplete && isStarted
-            ? '<button class="secondary" style="flex:1;background:#166534;border-color:#4ade80;color:#4ade80;" onclick="completeMatch(\'' + escapeAttr(match.id) + '\')">✓ Complete</button>'
-            : '') +
         '</div>' +
       '</div>' +
     '</div>';
@@ -4274,34 +4274,22 @@ Max 80 words total.`;
     return "In Progress | Thru " + thru;
   }
 
-  function nassauSegmentDisplay(seg, isComplete, segResult) {
-    // segResult: { aLabel, bLabel } for completed display
+  function nassauSegmentDisplay(seg, isComplete) {
     if (!seg || seg.holesPlayed === 0) return { a: "—", b: "—" };
 
-    if (isComplete || seg.dominated) {
-      // Show final result
-      if (segResult) return segResult;
+    // Final result format only for truly completed matches
+    if (isComplete) {
       const margin = Math.abs(seg.aUp);
-      const rem = seg.remaining;
       const holesLeft = seg.total - seg.holesPlayed;
-      if (seg.aUp === 0) return { a: "E", b: "E" };
-      const winner = seg.aUp > 0 ? "a" : "b";
-      let label;
-      if (holesLeft === 0) {
-        label = margin === 0 ? "E" : margin + " UP";
-      } else {
-        label = margin + "&" + holesLeft;
-      }
+      if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
+      const label = holesLeft === 0 ? (margin + " UP") : (margin + "&" + holesLeft);
       return {
-        a: seg.aUp > 0 ? label : (seg.aUp === 0 ? "E" : label),
-        b: seg.aUp < 0 ? label : (seg.aUp === 0 ? "E" : label),
-        aWon: seg.aUp > 0,
-        bWon: seg.aUp < 0,
-        tied: seg.aUp === 0
+        a: label, b: label,
+        aWon: seg.aUp > 0, bWon: seg.aUp < 0, tied: false
       };
     }
 
-    // In progress — show UP/DOWN/E
+    // In progress (including dominated) — always show arrows
     const margin = Math.abs(seg.aUp);
     if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
     const upLabel = "▲ " + margin;
@@ -4410,8 +4398,21 @@ Max 80 words total.`;
   function openEnterScore(matchId) {
     activeScoreMatchId = matchId;
     show("scoreEntryScreen");
-    // Small delay to ensure Firebase data and DOM are both ready
-    setTimeout(renderScoreEntry, 50);
+    setTimeout(function() {
+      renderScoreEntry();
+      // Show Complete button if match is in progress but not yet complete
+      const match = matches.find(function(m) { return m.id === matchId; });
+      const wrap = document.getElementById("completeMatchBtnWrap");
+      if (wrap && match) {
+        const status = nassauStatusLabel(match);
+        const showBtn = !match.isComplete && status !== "Not Started";
+        wrap.style.display = showBtn ? "block" : "none";
+      }
+    }, 50);
+  }
+
+  function completeCurrentMatch() {
+    if (activeScoreMatchId) completeMatch(activeScoreMatchId);
   }
 
   function calculateStrokeMap(strokes, holes) {
@@ -9514,6 +9515,7 @@ ${closer}`;
   window.toggleHomeMenu = toggleHomeMenu;
   window.requestNotifications = requestNotifications;
   window.completeMatch = completeMatch;
+  window.completeCurrentMatch = completeCurrentMatch;
   window.openMatchHome = openMatchHome;
   window.openMatchSetup = openMatchSetup;
   window.handleMatchFormatChange = handleMatchFormatChange;
