@@ -6245,19 +6245,20 @@ ${closer}`;
   // ── VOICE / TEXT SCORE ENTRY ─────────────────────────────────────────────────
 
   function openVoiceEntry() {
+    // Sync match ID from scorecard context
+    activeScorecardMatchId = activeScoreMatchId;
     const input = document.getElementById("voiceTranscriptInput");
     const count = document.getElementById("voiceCharCount");
     if (input) input.value = "";
     if (count) count.textContent = "";
     show("voiceEntryScreen");
-    // Focus the textarea after a short delay to trigger keyboard on mobile
     setTimeout(function() {
       if (input) input.focus();
     }, 300);
   }
 
   function goBackFromVoice() {
-    openEnterScore(activeScorecardMatchId);
+    openEnterScore(activeScoreMatchId || activeScorecardMatchId);
   }
 
   function onVoiceInputChange() {
@@ -6393,8 +6394,8 @@ ${closer}`;
   let scanEditedScores = {};    // user edits on review screen
 
   function openScanScorecard() {
-    // Store current match id so we can return
-    activeScorecardMatchId = holeDetailMatchId || (matches[0] && matches[0].id) || null;
+    // Sync match ID from scorecard context
+    activeScorecardMatchId = activeScoreMatchId || holeDetailMatchId || (matches[0] && matches[0].id) || null;
     scanImageBase64 = null;
     scanExtractedScores = {};
     scanEditedScores = {};
@@ -6459,7 +6460,7 @@ ${closer}`;
   }
 
   function goBackFromScan() {
-    openEnterScore(activeScorecardMatchId);
+    openEnterScore(activeScoreMatchId || activeScorecardMatchId);
   }
 
   async function runScorecardScan() {
