@@ -5109,6 +5109,9 @@ Max 80 words total.`;
   }
 
   function openMoments() {
+    // Clear textarea so previous match's input doesn't carry over
+    const input = document.getElementById("momentText");
+    if (input) input.value = "";
     show("momentsScreen");
     renderMoments();
   }
@@ -5119,18 +5122,18 @@ Max 80 words total.`;
     const list = document.getElementById("momentsList");
     if (!match || !info || !list) return;
 
-    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • Round ${escapeHtml(match.round || "1")}`;
+    info.innerHTML = "<strong>" + escapeHtml(match.format || "Match") + "</strong><br>" + escapeHtml(match.course || "Course TBD") + " • Round " + escapeHtml(match.round || "1");
     const moments = match.moments || [];
 
     if (!moments.length) {
-      list.innerHTML = `<div class="empty-state">No moments captured yet. Swami is waiting for evidence.</div>`;
+      list.innerHTML = '<div class="empty-state">No moments captured yet. Swami is waiting for evidence.</div>';
       return;
     }
 
     list.innerHTML = moments.slice().sort(function(a, b) {
       return new Date(b.createdAt) - new Date(a.createdAt);
     }).map(function(moment) {
-      return `<div class="moment-item">${escapeHtml(moment.text)}<div class="feed-time">${formatFeedTime(moment.createdAt)}</div></div>`;
+      return '<div class="moment-item">' + escapeHtml(moment.text) + '<div class="feed-time">' + formatFeedTime(moment.createdAt) + '</div></div>';
     }).join("");
   }
 
@@ -5142,17 +5145,25 @@ Max 80 words total.`;
     if (!match) return alert("Match not found.");
     if (!text) return alert("Please enter a moment.");
 
-    const moments = match.moments || [];
-    moments.push({ text: text, createdAt: new Date().toISOString() });
+    const btn = document.querySelector("#momentsScreen button");
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
 
-    await updateDoc(doc(db, "trips", activeTripId, "matches", activeScoreMatchId), {
-      moments: moments,
-      updatedAt: new Date().toISOString()
-    });
+    const moments = (match.moments || []).concat([{ text: text, createdAt: new Date().toISOString() }]);
 
-    input.value = "";
-    await addSwamiPost("momentAdd", text);
-    renderMoments();
+    try {
+      // Use competition subcollection path
+      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", activeScoreMatchId), {
+        moments: moments,
+        updatedAt: new Date().toISOString()
+      });
+      if (input) input.value = "";
+      await addSwamiPost("momentAdd", text);
+      renderMoments();
+    } catch(e) {
+      alert("Error saving moment: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Save Moment"; }
+    }
   }
 
   function renderMatchValueSummary(match) {
