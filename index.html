@@ -1287,8 +1287,8 @@
     <div class="card score-card">
       <div id="compScoreboard" class="scoreboard"></div>
     </div>
-    <div id="compSwamiAlert" style="margin:0 12px 8px;padding:12px 14px;background:rgba(30,58,95,0.7);border:1px solid #375984;border-radius:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+    <div id="compSwamiAlert" class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <span style="font-size:16px;">🔮</span>
         <span style="font-size:11px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.05em;">Swami</span>
         <span id="compSwamiTime" style="font-size:11px;color:#475569;margin-left:auto;"></span>
@@ -4441,7 +4441,7 @@ Max 80 words total.`;
       });
       const data = await res.json();
       if (data.text && data.text.trim()) {
-        await addDoc(feedPostsCollection(), {
+        await addDoc(feedCollection(), {
           text: data.text.trim(),
           author: "Swami",
           isSwami: true,
@@ -4543,7 +4543,7 @@ Max 80 words total.`;
       if (!text) return;
 
       // Store as a feed post tagged with competitionId
-      await addDoc(feedPostsCollection(), {
+      await addDoc(feedCollection(), {
         text,
         author: "Swami",
         isSwami: true,
@@ -4624,7 +4624,7 @@ Max 80 words total.`;
       const text = (data.text || "").trim();
       if (!text) throw new Error("No response");
 
-      await addDoc(feedPostsCollection(), {
+      await addDoc(feedCollection(), {
         text,
         author: "Swami",
         isSwami: true,
@@ -4633,8 +4633,8 @@ Max 80 words total.`;
         type: "compAlert"
       });
     } catch(e) {
-      console.warn("Manual alert error:", e.message);
-      if (textEl) { textEl.style.color = "#f87171"; textEl.textContent = "Swami is unavailable. Try again."; }
+      console.error("Manual alert error:", e.message, e.stack);
+      if (textEl) { textEl.style.color = "#f87171"; textEl.textContent = "Error: " + e.message; }
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = "↻"; }
     }
