@@ -5833,6 +5833,9 @@ ${closer}`;
       scanExtractedScores = {};
       const unmatched = [];
 
+      console.log("matchPlayers:", matchPlayers.map(p => p.name));
+      console.log("result.players:", (result.players || []).map(p => p.name));
+
       // Build a fuzzy name matcher
       function findPlayerByName(nameFromCard) {
         if (!nameFromCard) return null;
