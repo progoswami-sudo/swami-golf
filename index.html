@@ -1287,6 +1287,14 @@
     <div class="card score-card">
       <div id="compScoreboard" class="scoreboard"></div>
     </div>
+    <div id="compSwamiAlert" style="display:none;margin:0 12px 4px;padding:12px 14px;background:rgba(30,58,95,0.7);border:1px solid #375984;border-radius:12px;cursor:pointer;" onclick="openTripFeed()">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">🔮</span>
+        <span style="font-size:11px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.05em;">Swami</span>
+        <span id="compSwamiTime" style="font-size:11px;color:#475569;margin-left:auto;"></span>
+      </div>
+      <div id="compSwamiText" style="font-size:13px;color:#e2e8f0;line-height:1.5;font-style:italic;"></div>
+    </div>
     <div class="card">
       <div class="mini-tile" onclick="openMatchSetup()">Set Up New Match</div>
       <div id="matchList"></div>
@@ -3391,6 +3399,7 @@ Respond ONLY with valid JSON, nothing else:
         renderSwamiPulse();
         updateTagBadge();
         renderTaggedMessages();
+        renderCompSwamiAlert(feedPosts);
       })
     );
 
@@ -4415,10 +4424,163 @@ Max 80 words total.`;
     const resultScore = nassau.overall.aUp === 0 ? "E" : (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
     const winner = nassau.overall.aUp > 0 ? teamAName : nassau.overall.aUp < 0 ? teamBName : "Tied";
     await addSwamiPost("matchComplete", winner + " wins " + resultScore);
+
+    // Fire a competition alert for match completion
+    const completionContext = "Match just completed: " + winner +
+      (nassau.overall.aUp === 0 ? " tied" : " won " + resultScore) +
+      " in a Best Ball Nassau at " + (match.course || "the course") + "." +
+      " Teams: " + teamAName + " vs " + teamBName + ".";
+    const completionPrompt = completionContext +
+      "\n\nOne sharp Swami line on the result — max 12 words. Text only, no memes.";
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: completionPrompt, maxTokens: 60 })
+      });
+      const data = await res.json();
+      if (data.text && data.text.trim()) {
+        await addDoc(feedPostsCollection(), {
+          text: data.text.trim(),
+          author: "Swami",
+          isSwami: true,
+          competitionId: activeCompetitionId,
+          matchId,
+          createdAt: new Date().toISOString(),
+          type: "compAlert"
+        });
+      }
+    } catch(e) { console.warn("Match complete alert error:", e.message); }
+
     renderMatchList();
   }
 
-  // ── END NASSAU ENGINE ────────────────────────────────────────────────────────
+  // ── COMPETITION SWAMI ALERTS ─────────────────────────────────────────────────
+
+  // Track which hole/match combos we've already commented on to avoid repeats
+  const _alertedHoles = new Set();
+
+  async function checkCompetitionAlert(match, updatedHoleScores, holeNum) {
+    if (!activeCompetitionId) return;
+
+    const alertKey = (match.id || "") + "-" + holeNum;
+    if (_alertedHoles.has(alertKey)) return; // already commented on this hole
+
+    const holes = getScorecardForMatch(match).holes || [];
+    const holeData = holes.find(h => h.hole === holeNum);
+    if (!holeData) return;
+
+    const par = Number(holeData.par || 4);
+    const aIds = match.teamAPlayerIds || [];
+    const bIds = match.teamBPlayerIds || [];
+    const allIds = aIds.concat(bIds);
+
+    // Only proceed if ALL players have a score for this hole
+    const hasAllScores = allIds.every(id => Number((updatedHoleScores[id] || {})[holeNum]) > 0);
+    if (!hasAllScores) return;
+
+    // Get scores for this hole
+    const scoreMap = {};
+    allIds.forEach(id => { scoreMap[id] = Number((updatedHoleScores[id] || {})[holeNum]); });
+
+    // Detect birdies (any player gross score = par - 1 or better)
+    const birdies = allIds.filter(id => scoreMap[id] > 0 && scoreMap[id] <= par - 1);
+
+    // Detect hole winner (best ball)
+    const aBest = aIds.map(id => scoreMap[id]).filter(s => s > 0);
+    const bBest = bIds.map(id => scoreMap[id]).filter(s => s > 0);
+    const aMin = aBest.length ? Math.min(...aBest) : null;
+    const bMin = bBest.length ? Math.min(...bBest) : null;
+    const holeWon = aMin !== null && bMin !== null && aMin !== bMin;
+
+    if (!holeWon && !birdies.length) return; // nothing notable
+
+    _alertedHoles.add(alertKey);
+
+    const teams = getTeams();
+    const teamAName = (teams[0] && teams[0].name) || "Team A";
+    const teamBName = (teams[1] && teams[1].name) || "Team B";
+
+    // Build context for Swami
+    const birdieNames = birdies.map(id => {
+      const p = players.find(x => x.id === id);
+      return p ? p.name : "Someone";
+    });
+    const holeWinner = holeWon ? (aMin < bMin ? teamAName : teamBName) : null;
+    const holeLoser  = holeWon ? (aMin < bMin ? teamBName : teamAName) : null;
+
+    // Compute current match state for context
+    const nassauNow = computeNassau({ ...match, holeScores: updatedHoleScores });
+    const overallStr = nassauNow.overall.aUp === 0 ? "All Square" :
+      (nassauNow.overall.aUp > 0 ? teamAName : teamBName) + " " + Math.abs(nassauNow.overall.aUp) + " UP";
+    const thru = nassauNow.overall.holesPlayed;
+
+    let context = "Hole " + holeNum + " (par " + par + ") in a Best Ball Nassau match.";
+    if (birdies.length) {
+      const eagle = birdies.some(id => scoreMap[id] <= par - 2);
+      context += " " + birdieNames.join(" and ") + (eagle ? " made an eagle." : " made a birdie.");
+    }
+    if (holeWon) {
+      context += " " + holeWinner + " won the hole over " + holeLoser + " (" + aMin + " vs " + bMin + ").";
+    }
+    context += " Match is " + overallStr + " through " + thru + " holes.";
+    context += " Teams: " + teamAName + " vs " + teamBName + ".";
+    context += " Course: " + (match.course || "unknown") + ".";
+
+    const prompt = context + "\n\nGive ONE sharp Swami observation — max 15 words. " +
+      "No memes, no images, text only. Specific, punchy, golf-savvy. " +
+      "Reference the player names and team names. No hashtags.";
+
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, maxTokens: 80 })
+      });
+      const data = await res.json();
+      const text = (data.text || "").trim();
+      if (!text) return;
+
+      // Store as a feed post tagged with competitionId
+      await addDoc(feedPostsCollection(), {
+        text,
+        author: "Swami",
+        isSwami: true,
+        competitionId: activeCompetitionId,
+        holeNum,
+        matchId: match.id,
+        createdAt: new Date().toISOString(),
+        type: "compAlert"
+      });
+
+    } catch(e) {
+      console.warn("Competition alert error:", e.message);
+    }
+  }
+
+  function renderCompSwamiAlert(feedPosts) {
+    const alertEl = document.getElementById("compSwamiAlert");
+    const textEl  = document.getElementById("compSwamiText");
+    const timeEl  = document.getElementById("compSwamiTime");
+    if (!alertEl || !textEl || !timeEl) return;
+
+    // Find most recent post tagged to this competition
+    const compPosts = (feedPosts || []).filter(p =>
+      p.competitionId === activeCompetitionId && p.isSwami && p.type === "compAlert"
+    );
+    if (!compPosts.length) { alertEl.style.display = "none"; return; }
+
+    const latest = compPosts.sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    )[0];
+
+    textEl.textContent = latest.text;
+    timeEl.textContent = formatFeedTime(latest.createdAt);
+    alertEl.style.display = "block";
+  }
+
+  // ── END COMPETITION SWAMI ALERTS ─────────────────────────────────────────────
+
 
   function getTeeForMatch(match) {
     const courseKey = match.courseId || normalizeCourseKey(match.course || "");
@@ -4784,6 +4946,9 @@ Max 80 words total.`;
         holeDetail: holeDetailData,
         updatedAt: new Date().toISOString()
       });
+
+      // Check for notable events — hole won by a team or birdie made
+      await checkCompetitionAlert(match, updatedHoleScores, holeDetailHoleNum);
 
       const pd = holeDetailData[holeDetailPlayerId] && holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
       if ((pd && pd.moment) && pd.moment.trim()) {
@@ -6641,6 +6806,7 @@ ${closer}`;
     show("competitionScreen");
     renderCompScoreboard();
     renderMatchList();
+    renderCompSwamiAlert(feedPosts);
   }
 
   function openCompetitionMenu(e) {
