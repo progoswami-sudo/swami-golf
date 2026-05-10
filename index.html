@@ -1711,6 +1711,7 @@
         <span class="sc-bogey" style="width:18px;height:18px;font-size:10px;">B</span>
         <button id="scorecardViewToggle" onclick="toggleScorecardView()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">Gross</button>
         <button onclick="openScanScorecard()" class="secondary" style="width:auto;padding:6px 10px;margin:0;margin-left:auto;font-size:12px;">📷 Scan</button>
+        <button onclick="openVoiceEntry()" class="secondary" style="width:auto;padding:6px 10px;margin:0;font-size:12px;">🎤</button>
       </div>
     </div>
     <div class="card">
@@ -1726,7 +1727,43 @@
     </div>
   </div>
 
-  <!-- ── SCAN SCORECARD ──────────────────────────────────────────────────── -->
+  <!-- ── VOICE SCORE ENTRY ───────────────────────────────────────────────────── -->
+  <div id="voiceEntryScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goBackFromVoice()" class="secondary">Back</button>
+      <h2>Voice / Text Entry</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:#93c5fd;margin-bottom:6px;font-weight:600;">Speak or type scores below</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.6;">
+        On iPhone: tap the text area, then tap the 🎤 key on your keyboard to dictate.<br>
+        You can speak one hole or many at once.
+      </div>
+
+      <div style="background:#0a1f3d;border:1px solid #375984;border-radius:10px;padding:10px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#475569;margin-bottom:6px;">Examples:</div>
+        <div style="font-size:12px;color:#64748b;line-height:1.8;">
+          "Hole 5, Brian 5, Sean 4, Ryan 6, Evan 5"<br>
+          "Holes 1 through 4: Brian 4 5 3 4, Sean 5 4 4 5"<br>
+          "Hole 7, Brian 4 two putts hit fairway missed green"
+        </div>
+      </div>
+
+      <textarea id="voiceTranscriptInput"
+        placeholder="Tap here and use the 🎤 on your keyboard, or type scores directly..."
+        style="width:100%;min-height:120px;padding:12px;background:#0a1f3d;border:1px solid #375984;border-radius:10px;font-size:14px;color:#e2e8f0;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"
+        oninput="onVoiceInputChange()"></textarea>
+
+      <div id="voiceCharCount" style="font-size:11px;color:#475569;text-align:right;margin-top:4px;"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="clearVoiceTranscript()" class="secondary" style="flex:1;">Clear</button>
+        <button id="voiceInterpretBtn" onclick="interpretVoiceTranscript()" style="flex:1;">Interpret Scores</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCAN SCORECARD ──────────────────────────────────────────────────────── -->
   <div id="scanScorecardScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goBackFromScan()" class="secondary">Back</button>
@@ -1752,7 +1789,7 @@
   <!-- ── SCAN REVIEW ──────────────────────────────────────────────────────── -->
   <div id="scanReviewScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="goBackToScanScorecardScreen()" class="secondary">Back</button>
+      <button onclick="goBackFromReview()" class="secondary">Back</button>
       <h2>Review Scores</h2>
     </div>
     <div class="card">
@@ -1764,7 +1801,7 @@
       </div>
     </div>
     <div style="padding:12px;display:flex;gap:8px;">
-      <button onclick="goBackToScanScorecardScreen()" class="secondary" style="flex:1;">Re-scan</button>
+      <button onclick="goBackFromReview()" class="secondary" style="flex:1;">Re-try</button>
       <button id="acceptScanBtn" onclick="acceptScannedScores()" style="flex:1;">✓ Accept All</button>
     </div>
   </div>
@@ -3546,6 +3583,7 @@ Respond ONLY with valid JSON, nothing else:
       "addToTeamScreen",
       "scanScorecardScreen",
       "scanReviewScreen",
+      "voiceEntryScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -6204,7 +6242,150 @@ ${closer}`;
     }
   }
 
-  // ── SCORECARD SCANNER ───────────────────────────────────────────────────────
+  // ── VOICE / TEXT SCORE ENTRY ─────────────────────────────────────────────────
+
+  function openVoiceEntry() {
+    const input = document.getElementById("voiceTranscriptInput");
+    const count = document.getElementById("voiceCharCount");
+    if (input) input.value = "";
+    if (count) count.textContent = "";
+    show("voiceEntryScreen");
+    // Focus the textarea after a short delay to trigger keyboard on mobile
+    setTimeout(function() {
+      if (input) input.focus();
+    }, 300);
+  }
+
+  function goBackFromVoice() {
+    openEnterScore(activeScorecardMatchId);
+  }
+
+  function onVoiceInputChange() {
+    const input = document.getElementById("voiceTranscriptInput");
+    const count = document.getElementById("voiceCharCount");
+    if (!input) return;
+    const len = input.value.length;
+    if (count) count.textContent = len > 0 ? len + " characters" : "";
+  }
+
+  function clearVoiceTranscript() {
+    const input = document.getElementById("voiceTranscriptInput");
+    const count = document.getElementById("voiceCharCount");
+    if (input) { input.value = ""; input.focus(); }
+    if (count) count.textContent = "";
+  }
+
+  async function interpretVoiceTranscript() {
+    const input = document.getElementById("voiceTranscriptInput");
+    const text = input ? input.value.trim() : "";
+    if (!text) return alert("Please enter or dictate some scores first.");
+
+    const btn = document.getElementById("voiceInterpretBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Interpreting..."; }
+
+    const match = matches.find(m => m.id === activeScorecardMatchId);
+    if (!match) { if (btn) { btn.disabled = false; btn.textContent = "Interpret Scores"; } return alert("No active match."); }
+
+    const matchPlayers = (match.teamAPlayerIds || [])
+      .concat(match.teamBPlayerIds || [])
+      .map(pid => players.find(x => x.id === pid))
+      .filter(Boolean)
+      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+
+    const playerList = matchPlayers.map(p => p.name + (p.nickname ? ' ("' + p.nickname + '")' : '')).join(", ");
+    const holes = getScorecardForMatch(match).holes || [];
+    const holeCount = holes.length || 18;
+
+    const prompt = 'The following is a golf scorecard narration (spoken or typed). Extract all scores and hole details.\n\n' +
+      'Players in this match: ' + playerList + '\n\n' +
+      'Input text:\n"' + text + '"\n\n' +
+      'The course has ' + holeCount + ' holes. Return ONLY a JSON object, no markdown:\n' +
+      '{\n' +
+      '  "holes": [\n' +
+      '    {\n' +
+      '      "hole": 7,\n' +
+      '      "players": [\n' +
+      '        {\n' +
+      '          "name": "Brian",\n' +
+      '          "score": 4,\n' +
+      '          "putts": 2,\n' +
+      '          "fairwayHit": true,\n' +
+      '          "greenHit": false,\n' +
+      '          "notes": "bunker right"\n' +
+      '        }\n' +
+      '      ]\n' +
+      '    }\n' +
+      '  ]\n' +
+      '}\n\n' +
+      'Rules: Match player names loosely (case-insensitive, first name OK). ' +
+      'score must be an integer 1-12. putts/fairwayHit/greenHit only if mentioned. ' +
+      'Only include holes and players explicitly mentioned.';
+
+    try {
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, maxTokens: 2000 })
+      });
+      const data = await res.json();
+      const raw = (data.text || "").trim();
+
+      let result = null;
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try { result = JSON.parse(jsonMatch[0]); } catch(e) { console.warn("Voice parse failed:", e.message); }
+      }
+      if (!result) throw new Error("Could not understand the input. Try being more explicit about hole numbers and player names.");
+
+      // Build scanExtractedScores and voiceHoleDetails
+      scanExtractedScores = {};
+      scanEditedScores = {};
+      const voiceHoleDetails = {};
+      matchPlayers.forEach(p => { scanExtractedScores[p.id] = {}; });
+
+      (result.holes || []).forEach(h => {
+        const holeNum = Number(h.hole);
+        if (!holeNum) return;
+        (h.players || []).forEach(pd => {
+          const player = matchPlayers.find(mp =>
+            mp.name.toLowerCase() === (pd.name || "").toLowerCase() ||
+            mp.name.toLowerCase().startsWith((pd.name || "").toLowerCase().substring(0, 3))
+          );
+          if (!player) return;
+          if (pd.score) scanExtractedScores[player.id][String(holeNum)] = pd.score;
+          const hasDetail = pd.putts || pd.fairwayHit !== undefined || pd.greenHit !== undefined || pd.notes;
+          if (hasDetail) {
+            if (!voiceHoleDetails[player.id]) voiceHoleDetails[player.id] = {};
+            voiceHoleDetails[player.id][holeNum] = {
+              putts: pd.putts || null,
+              fairwayHit: pd.fairwayHit !== undefined ? pd.fairwayHit : null,
+              greenHit: pd.greenHit !== undefined ? pd.greenHit : null,
+              notes: pd.notes || ""
+            };
+          }
+        });
+      });
+
+      window._voiceHoleDetails = voiceHoleDetails;
+      scanEditedScores = JSON.parse(JSON.stringify(scanExtractedScores));
+
+      const totalScores = Object.values(scanExtractedScores).reduce((t, p) => t + Object.keys(p).length, 0);
+      const warningMsg = totalScores === 0
+        ? "No scores found. Try including hole numbers and player names, e.g. \"Hole 5, Brian 4, Sean 5\""
+        : null;
+
+      showScanReview(matchPlayers, [], "high", warningMsg);
+
+    } catch(e) {
+      console.error("Voice interpret error:", e);
+      alert("Error: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Interpret Scores"; }
+    }
+  }
+
+  // ── END VOICE / TEXT SCORE ENTRY ─────────────────────────────────────────────
+
 
   let activeScorecardMatchId = null;
   let scanImageBase64 = null;
@@ -6571,8 +6752,19 @@ ${closer}`;
           updatedHoleScores[playerId][holeNum] = String(score);
           if (!updatedHoleDetail[playerId][holeNum]) updatedHoleDetail[playerId][holeNum] = {};
           updatedHoleDetail[playerId][holeNum].score = score;
+          // Merge voice hole details if available
+          const vd = window._voiceHoleDetails &&
+            window._voiceHoleDetails[playerId] &&
+            window._voiceHoleDetails[playerId][Number(holeNum)];
+          if (vd) {
+            if (vd.putts !== null)       updatedHoleDetail[playerId][holeNum].putts = vd.putts;
+            if (vd.fairwayHit !== null)  updatedHoleDetail[playerId][holeNum].fairwayHit = vd.fairwayHit;
+            if (vd.greenHit !== null)    updatedHoleDetail[playerId][holeNum].greenHit = vd.greenHit;
+            if (vd.notes)               updatedHoleDetail[playerId][holeNum].notes = vd.notes;
+          }
         });
       });
+      window._voiceHoleDetails = null;
 
       await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", activeScorecardMatchId), {
         holeScores: updatedHoleScores,
@@ -9867,6 +10059,22 @@ ${closer}`;
   window.saveTeams = saveTeams;
   window.goCompetitionScreen = goCompetitionScreen;
   window.goTeamRosterScreen = goTeamRosterScreen;
+  window.openVoiceEntry = openVoiceEntry;
+  window.goBackFromVoice = goBackFromVoice;
+  window.clearVoiceTranscript = clearVoiceTranscript;
+  window.interpretVoiceTranscript = interpretVoiceTranscript;
+  window.onVoiceInputChange = onVoiceInputChange;
+
+  // Smart back from review — returns to voice or scan screen depending on origin
+  window.goBackFromReview = function() {
+    if (window._voiceHoleDetails !== undefined && document.getElementById("voiceEntryScreen") &&
+        !document.getElementById("voiceEntryScreen").classList.contains("hidden") === false) {
+      show("voiceEntryScreen");
+    } else {
+      goBackToScanScorecardScreen();
+    }
+  };
+
   window.openScanScorecard = openScanScorecard;
   window.goBackFromScan = goBackFromScan;
   window.handleScanUpload = handleScanUpload;
