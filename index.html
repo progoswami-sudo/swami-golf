@@ -124,6 +124,9 @@
       background: rgba(15,36,66,0.8);
       min-width: 36px;
     }
+
+    .team-name {
+      font-weight: bold;
       font-size: 17px;
       user-select: none;
       -webkit-user-select: none;
@@ -4090,6 +4093,7 @@ Max 80 words total.`;
   }
 
   function renderMatchCard(match) {
+    try {
     const teams = getTeams();
     const teamAName = (teams[0] && teams[0].name) || activeTripData.teamA || "Team A";
     const teamBName = (teams[1] && teams[1].name) || activeTripData.teamB || "Team B";
@@ -4175,6 +4179,10 @@ Max 80 words total.`;
         '</div>' +
       '</div>' +
     '</div>';
+    } catch(e) {
+      console.error("renderMatchCard error:", e.message, match.id);
+      return '<div class="match-scorecard"><div class="match-scorecard-body" style="color:#f87171;font-size:12px;">Error rendering match: ' + escapeHtml(e.message) + '</div></div>';
+    }
   }
 
 
@@ -4377,9 +4385,18 @@ Max 80 words total.`;
   // ── END NASSAU ENGINE ────────────────────────────────────────────────────────
 
   function getTeeForMatch(match) {
+    const courseKey = match.courseId || normalizeCourseKey(match.course || "");
     const teeKey = match.teeId || normalizeCourseKey(match.tees || "");
     const course = courseLibrary[courseKey];
     if (!course || !course.tees) return null;
+    // tees is an array — find by teeName or normalized key
+    if (Array.isArray(course.tees)) {
+      return course.tees.find(t =>
+        normalizeCourseKey(t.teeName || "") === teeKey ||
+        (t.teeName || "").toLowerCase() === (match.tees || "").toLowerCase()
+      ) || null;
+    }
+    // legacy object format
     return course.tees[teeKey] || null;
   }
 
