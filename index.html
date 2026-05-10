@@ -9443,8 +9443,8 @@ ${closer}`;
     requestNotifications, turnOffNotifications, openTab,
     filterCourseDropdown, selectCourse, closeCourseDropdown,
     saveMatch, savePlayer, saveExpense, saveWager, saveCompetition,
-    saveTeamAssignments, saveIntel, saveHoleDetail,
-    markPaymentPaid, unmarkPaymentPaid,
+    saveTeamAssignments, saveIntel, saveHoleDetail, saveMoment,
+    markPaymentPaid, unmarkPaymentPaid, completeMatch, completeCurrentMatch,
     deleteMatch, deleteExpense, deleteCompetition,
     openEnterScore, openMatchSetup, openExpenseEditor, openWagerEditor,
     openPlayerList, openPlayer, openMemberManager, openRecaps,
@@ -9455,7 +9455,8 @@ ${closer}`;
     openScanScorecard, handleScanUpload, runScorecardScan,
     editScanScore, acceptScannedScores, goBackToScanScorecardScreen,
     openNewCompetition, editCompetition, saveTeams, setNumTeams,
-    openTeamRoster, openTeamEdit, openTeamSetup
+    openTeamRoster, openTeamEdit, openTeamSetup,
+    testSwamiApi, runConfidenceMeter, promptEditTeamNameFromRoster, goBackFromPhotoUpload, handleExpenseReceiptSelected, openScorecardPhotoCapture, openPhotoUpload, openPhotoViewer, closePhotoViewer, savePhoto, deletePhoto, setPhotoCategory, selectPhotoCategory, togglePhotoPlayer, handlePhotoFileSelected, setSplitMethod, toggleExpenseSplitPlayer, updateCustomSplitTotal, updatePercentSplitTotal, toggleScorecardView, openHoleDetail, closeHoleDetail, navHoleDetail, switchHoleDetailPlayer, setHoleDetailField, adjustHoleDetailScore, adjustHoleDetailPutts, adjustHoleDetailBalls, toggleHoleDetailHazard, openSubmitIntel, openViewIntel, deleteIntel, populateLinkMemberPicker, changeMemberRole, setPlayerSource, onMemberPickerChange, deletePlayerWithCheck, selectInviteRole, openMatchHome, handleMatchFormatChange, toggleMatchMenu, renderMatchValueFields, renderRecapControls, generateRecap, editTrip, deleteTrip, assignMeToCurrentPlayer, handleFeedInput, toggleMentionPlayer, openTags, markTagsRead, toggleRoundGroup, insertMentionPlayer, renderMentionOptions, saveScoreEntry, handleCourseChange, handleTeeChange, handleScoreInput, openMoments, openItinerary, openSettings, openImportScreen, openCompetitionMenu, openCompRecaps, openMatchEditor, goBackFromScan, openItineraryEditor, saveItineraryEvent, deleteItineraryEvent, exportData, importData
   };
   Object.keys(_allFns).forEach(function(name) {
     window['__fn_' + name] = _allFns[name];
