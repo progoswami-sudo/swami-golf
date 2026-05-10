@@ -1287,13 +1287,14 @@
     <div class="card score-card">
       <div id="compScoreboard" class="scoreboard"></div>
     </div>
-    <div id="compSwamiAlert" style="display:none;margin:0 12px 4px;padding:12px 14px;background:rgba(30,58,95,0.7);border:1px solid #375984;border-radius:12px;cursor:pointer;" onclick="openTripFeed()">
+    <div id="compSwamiAlert" style="margin:0 12px 8px;padding:12px 14px;background:rgba(30,58,95,0.7);border:1px solid #375984;border-radius:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
         <span style="font-size:16px;">🔮</span>
         <span style="font-size:11px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.05em;">Swami</span>
         <span id="compSwamiTime" style="font-size:11px;color:#475569;margin-left:auto;"></span>
+        <button onclick="requestCompSwamiAlert()" id="compSwamiRefreshBtn" style="width:auto;padding:3px 8px;margin:0;font-size:11px;background:transparent;border:1px solid #375984;color:#93c5fd;border-radius:8px;">↻</button>
       </div>
-      <div id="compSwamiText" style="font-size:13px;color:#e2e8f0;line-height:1.5;font-style:italic;"></div>
+      <div id="compSwamiText" style="font-size:13px;color:#64748b;line-height:1.5;font-style:italic;">Waiting for the action to start...</div>
     </div>
     <div class="card">
       <div class="mini-tile" onclick="openMatchSetup()">Set Up New Match</div>
@@ -4559,24 +4560,84 @@ Max 80 words total.`;
   }
 
   function renderCompSwamiAlert(feedPosts) {
-    const alertEl = document.getElementById("compSwamiAlert");
-    const textEl  = document.getElementById("compSwamiText");
-    const timeEl  = document.getElementById("compSwamiTime");
-    if (!alertEl || !textEl || !timeEl) return;
+    const textEl = document.getElementById("compSwamiText");
+    const timeEl = document.getElementById("compSwamiTime");
+    if (!textEl) return;
 
     // Find most recent post tagged to this competition
     const compPosts = (feedPosts || []).filter(p =>
       p.competitionId === activeCompetitionId && p.isSwami && p.type === "compAlert"
     );
-    if (!compPosts.length) { alertEl.style.display = "none"; return; }
+
+    if (!compPosts.length) {
+      textEl.style.color = "#64748b";
+      textEl.textContent = "Waiting for the action to start...";
+      if (timeEl) timeEl.textContent = "";
+      return;
+    }
 
     const latest = compPosts.sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
     )[0];
 
+    textEl.style.color = "#e2e8f0";
     textEl.textContent = latest.text;
-    timeEl.textContent = formatFeedTime(latest.createdAt);
-    alertEl.style.display = "block";
+    if (timeEl) timeEl.textContent = formatFeedTime(latest.createdAt);
+  }
+
+  async function requestCompSwamiAlert() {
+    if (!activeCompetitionId) return;
+    const btn = document.getElementById("compSwamiRefreshBtn");
+    const textEl = document.getElementById("compSwamiText");
+    if (btn) { btn.disabled = true; btn.textContent = "..."; }
+    if (textEl) { textEl.style.color = "#64748b"; textEl.textContent = "Swami is watching..."; }
+
+    try {
+      const teams = getTeams();
+      const teamAName = (teams[0] && teams[0].name) || "Team A";
+      const teamBName = (teams[1] && teams[1].name) || "Team B";
+
+      // Summarize all in-progress matches
+      const matchSummaries = matches.map(match => {
+        const nassau = computeNassau(match);
+        const status = nassauStatusLabel(match);
+        const overallStr = nassau.overall.aUp === 0 ? "All Square" :
+          (nassau.overall.aUp > 0 ? teamAName : teamBName) + " " + Math.abs(nassau.overall.aUp) + " UP";
+        return "Round " + (match.round || 1) + " at " + (match.course || "TBD") +
+          ": " + status + ", Overall: " + overallStr +
+          " (Front: " + (nassau.front.aUp === 0 ? "AS" : (nassau.front.aUp > 0 ? teamAName : teamBName) + " " + Math.abs(nassau.front.aUp) + "UP") + ")";
+      }).join(". ");
+
+      const context = "Golf competition: " + teamAName + " vs " + teamBName + ". " +
+        (matches.length ? matchSummaries : "No matches started yet.") +
+        " Competition name: " + (activeCompetitionData.name || "Main Event") + ".";
+
+      const prompt = context + "\n\nOne sharp Swami take on the competition — max 15 words. " +
+        "Text only, no memes, no hashtags. Be specific about the scores.";
+
+      const res = await fetch("/api/swami", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, maxTokens: 80 })
+      });
+      const data = await res.json();
+      const text = (data.text || "").trim();
+      if (!text) throw new Error("No response");
+
+      await addDoc(feedPostsCollection(), {
+        text,
+        author: "Swami",
+        isSwami: true,
+        competitionId: activeCompetitionId,
+        createdAt: new Date().toISOString(),
+        type: "compAlert"
+      });
+    } catch(e) {
+      console.warn("Manual alert error:", e.message);
+      if (textEl) { textEl.style.color = "#f87171"; textEl.textContent = "Swami is unavailable. Try again."; }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "↻"; }
+    }
   }
 
   // ── END COMPETITION SWAMI ALERTS ─────────────────────────────────────────────
@@ -9796,6 +9857,7 @@ ${closer}`;
   window.openCompetitionMenu = openCompetitionMenu;
   window.openCompRecaps = openCompRecaps;
   window.openMatchEditor = openMatchEditor;
+  window.requestCompSwamiAlert = requestCompSwamiAlert;
   window.setNumTeams = setNumTeams;
   window.openTeamEdit = openTeamEdit;
   window.openTeamSetup = openTeamSetup;
