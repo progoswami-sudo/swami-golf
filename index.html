@@ -10362,6 +10362,8 @@ ${closer}`;
         const venmoHandle  = (payInfo && payInfo.venmo || "").trim();
         const paypalHandle = (payInfo && payInfo.paypal || "").trim();
 
+        console.log("Settlement row:", t.toId, "payInfo:", payInfo, "venmo:", venmoHandle, "paypal:", paypalHandle, "toPlayer:", toPlayer && toPlayer.name, "toPlayer.linkedUid:", toPlayer && toPlayer.linkedUid);
+
         const venmoBtn = venmoHandle
           ? '<a href="venmo://paycharge?txn=pay&recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amt + '&note=' + note + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#008CFF;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">Venmo</a>'
           : "";
