@@ -6314,17 +6314,22 @@ ${closer}`;
       '          "name": "Brian",\n' +
       '          "score": 4,\n' +
       '          "putts": 2,\n' +
-      '          "fairwayHit": true,\n' +
-      '          "greenHit": false,\n' +
+      '          "fairway": "Hit",\n' +
+      '          "approach": "Left",\n' +
       '          "notes": "bunker right"\n' +
       '        }\n' +
       '      ]\n' +
       '    }\n' +
       '  ]\n' +
       '}\n\n' +
-      'Rules: Match player names loosely (case-insensitive, first name OK). ' +
-      'score must be an integer 1-12. putts/fairwayHit/greenHit only if mentioned. ' +
-      'Only include holes and players explicitly mentioned.';
+      'Rules:\n' +
+      '- Match player names loosely (case-insensitive, first name OK)\n' +
+      '- score must be an integer 1-12\n' +
+      '- putts is integer if mentioned, otherwise omit\n' +
+      '- fairway: "Hit" if hit fairway, "Left"/"Right"/"Short" if missed, omit if not mentioned\n' +
+      '- approach: "Hit" if hit green/GIR, "Left"/"Right"/"Short"/"Long" if missed, omit if not mentioned\n' +
+      '- notes: any other detail (hazard, bunker, water, ob, etc.)\n' +
+      '- Only include holes and players explicitly mentioned';
 
     try {
       const res = await fetch("/api/swami", {
@@ -6358,14 +6363,16 @@ ${closer}`;
           );
           if (!player) return;
           if (pd.score) scanExtractedScores[player.id][String(holeNum)] = pd.score;
-          const hasDetail = pd.putts || pd.fairwayHit !== undefined || pd.greenHit !== undefined || pd.notes;
+          const hasDetail = pd.putts || pd.fairway || pd.approach || pd.notes;
           if (hasDetail) {
             if (!voiceHoleDetails[player.id]) voiceHoleDetails[player.id] = {};
             voiceHoleDetails[player.id][holeNum] = {
-              putts: pd.putts || null,
-              fairwayHit: pd.fairwayHit !== undefined ? pd.fairwayHit : null,
-              greenHit: pd.greenHit !== undefined ? pd.greenHit : null,
-              notes: pd.notes || ""
+              putts:      pd.putts  || null,
+              fairwayHit: pd.fairway ? (pd.fairway === "Hit" ? true : false) : null,
+              fairway:    pd.fairway || null,
+              greenHit:   pd.approach ? (pd.approach === "Hit" ? true : false) : null,
+              approach:   pd.approach || null,
+              notes:      pd.notes || ""
             };
           }
         });
@@ -6728,12 +6735,10 @@ ${closer}`;
           const d = vd[player.id] && vd[player.id][holeNum];
           if (!d) return;
           const parts = [];
-          if (d.putts !== null)      parts.push(d.putts + " putt" + (d.putts !== 1 ? "s" : ""));
-          if (d.fairwayHit === true)  parts.push("hit fairway");
-          if (d.fairwayHit === false) parts.push("missed fairway");
-          if (d.greenHit === true)    parts.push("GIR");
-          if (d.greenHit === false)   parts.push("missed green");
-          if (d.notes)               parts.push(d.notes);
+          if (d.putts !== null && d.putts !== undefined) parts.push(d.putts + " putt" + (d.putts !== 1 ? "s" : ""));
+          if (d.fairway)   parts.push("fairway: " + d.fairway);
+          if (d.approach)  parts.push("green: " + d.approach);
+          if (d.notes)     parts.push(d.notes);
           if (parts.length) {
             lines.push("Hole " + holeNum + " · " + player.name + ": " + parts.join(", "));
           }
@@ -6801,10 +6806,20 @@ ${closer}`;
             window._voiceHoleDetails[playerId] &&
             window._voiceHoleDetails[playerId][Number(holeNum)];
           if (vd) {
-            if (vd.putts !== null)      updatedHoleDetail[playerId][holeNum].putts = vd.putts;
-            if (vd.fairwayHit !== null) updatedHoleDetail[playerId][holeNum].fairwayHit = vd.fairwayHit;
-            if (vd.greenHit !== null)   updatedHoleDetail[playerId][holeNum].greenHit = vd.greenHit;
-            if (vd.notes)              updatedHoleDetail[playerId][holeNum].notes = vd.notes;
+            if (vd.putts !== null && vd.putts !== undefined) {
+              updatedHoleDetail[playerId][holeNum].putts = vd.putts;
+            }
+            if (vd.fairway) {
+              updatedHoleDetail[playerId][holeNum].fairway = vd.fairway;
+            }
+            if (vd.approach) {
+              updatedHoleDetail[playerId][holeNum].approach = vd.approach;
+            }
+            if (vd.notes) {
+              updatedHoleDetail[playerId][holeNum].moment =
+                (updatedHoleDetail[playerId][holeNum].moment
+                  ? updatedHoleDetail[playerId][holeNum].moment + "; " : "") + vd.notes;
+            }
           }
         });
       });
