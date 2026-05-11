@@ -1956,13 +1956,6 @@
           <label class="form-label" for="handicapIndex">Handicap Index</label>
           <input id="handicapIndex" type="number" step="0.1" placeholder="e.g. 14.2" style="margin-top:6px;"/>
         </div>
-
-      <div id="linkMemberRow" style="display:none;margin-bottom:8px;">
-        <label class="form-label">Link to Trip Member (optional)</label>
-        <select id="linkMemberPicker" style="margin-top:6px;">
-          <option value="">— Not linked to a member —</option>
-        </select>
-        <div style="font-size:11px;color:#64748b;margin-top:4px;">Links this player profile to a member's account for tagging and notifications.</div>
       </div>
 
       <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
@@ -2839,24 +2832,27 @@ Respond ONLY with valid JSON, nothing else:
 
   function openUserProfile() {
     const emailEl = document.getElementById("userProfileEmail");
-    if (emailEl) emailEl.textContent = (currentUser && currentUser.email) || getCookie(EMAIL_COOKIE) || "";
     const nameEl = document.getElementById("userDisplayName");
+    const venmoEl = document.getElementById("userVenmo");
+    const paypalEl = document.getElementById("userPaypal");
+    const genderEl = document.getElementById("userGender");
+
+    // Show screen immediately with what we have from cookies
+    if (emailEl) emailEl.textContent = (currentUser && currentUser.email) || getCookie(EMAIL_COOKIE) || "";
     if (nameEl) nameEl.value = getCookie(NAME_COOKIE) || "";
-    if ((currentUser && currentUser.uid)) {
-      getDoc(doc(db, "users", currentUser.uid)).then(snap => {
-        if (snap.exists()) {
-          const d = snap.data();
-          if (nameEl && d.name) nameEl.value = d.name;
-          const venmoEl = document.getElementById("userVenmo");
-          const paypalEl = document.getElementById("userPaypal");
-          const genderEl = document.getElementById("userGender");
-          if (venmoEl) venmoEl.value = d.venmo || "";
-          if (paypalEl) paypalEl.value = d.paypal || "";
-          if (genderEl) genderEl.value = d.gender || "";
-        }
-      }).catch(() => {});
-    }
     show("userProfileScreen");
+
+    // Then load full profile from Firestore if logged in
+    if (currentUser && currentUser.uid) {
+      getDoc(doc(db, "users", currentUser.uid)).then(snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+        if (nameEl && d.name) nameEl.value = d.name;
+        if (venmoEl) venmoEl.value = d.venmo || "";
+        if (paypalEl) paypalEl.value = d.paypal || "";
+        if (genderEl) genderEl.value = d.gender || "";
+      }).catch(e => { console.warn("Profile load failed:", e.message); });
+    }
   }
 
   async function saveUserProfile() {
