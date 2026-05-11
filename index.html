@@ -8527,16 +8527,35 @@ ${closer}`;
   async function populateMemberPicker() {
     const sel = document.getElementById("memberPicker");
     if (!sel) return;
-    sel.innerHTML = `<option value="">— Choose a member —</option>`;
+    sel.innerHTML = '<option value="">— Choose a member —</option>';
     try {
       const snap = await getDocs(membersCollection());
-      // Filter out members who are already players
       const playerEmails = new Set(players.map(p => (p.email ? p.email.toLowerCase() : "")).filter(Boolean));
-      snap.docs.forEach(d => {
+
+      // Fetch user profile names in parallel for members that don't have a name in the member doc
+      const memberDocs = snap.docs.filter(d => {
         const m = d.data();
-        if (m.email && playerEmails.has(m.email.toLowerCase())) return; // already a player
-        const label = m.name ? `${m.name} (${m.email || "no email"})` : (m.email || d.id);
-        sel.innerHTML += `<option value="${escapeAttr(d.id)}">${escapeHtml(label)}</option>`;
+        return !(m.email && playerEmails.has(m.email.toLowerCase()));
+      });
+
+      const enriched = await Promise.all(memberDocs.map(async d => {
+        const m = d.data();
+        let name = m.name || "";
+        // If no name in member doc, check users/{uid}
+        if (!name) {
+          try {
+            const userSnap = await getDoc(doc(db, "users", d.id));
+            if (userSnap.exists() && userSnap.data().name) {
+              name = userSnap.data().name;
+            }
+          } catch(e) {}
+        }
+        return { uid: d.id, name, email: m.email || "" };
+      }));
+
+      enriched.forEach(({ uid, name, email }) => {
+        const label = name ? name + " (" + email + ")" : (email || uid);
+        sel.innerHTML += '<option value="' + escapeAttr(uid) + '">' + escapeHtml(label) + '</option>';
       });
     } catch(e) { console.warn("populateMemberPicker failed:", e); }
   }
