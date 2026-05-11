@@ -1684,7 +1684,7 @@
       </select>
 
       <div class="dynamic-point-card">
-        <h3 id="matchValueSectionTitle">Point System</h3>
+        <h3 id="matchValueSectionTitle">Points</h3>
         <div id="matchValueFields"></div>
       </div>
 
@@ -3847,7 +3847,7 @@ Respond ONLY with valid JSON, nothing else:
   function renderMatchValueFields() {
     const format = document.getElementById("matchFormat").value;
     const valueType = document.getElementById("matchValueType").value;
-    const title = valueType === "Cash" ? "Wager" : "Point System";
+    const title = valueType === "Cash" ? "Wager" : "Points";
     const container = document.getElementById("matchValueFields");
 
     document.getElementById("matchValueSectionTitle").innerText = title;
@@ -5486,7 +5486,7 @@ Max 80 words total.`;
     const settings = match.valueSettings || {};
     const keys = Object.keys(settings);
     if (keys.length === 0) return "";
-    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Point System")}:</strong> ${keys.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ")}</div>`;
+    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Points")}:</strong> ${keys.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ")}</div>`;
   }
 
   function toggleMatchMenu(matchId) { document.getElementById(`matchMenu-${matchId}`).classList.toggle("hidden"); }
