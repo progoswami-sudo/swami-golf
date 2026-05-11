@@ -8658,30 +8658,36 @@ ${closer}`;
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
 
-    // Name is readonly for member-linked players
     const nameInput = document.getElementById("playerName");
-    if (nameInput && player.linkedUid) {
-      nameInput.readOnly = true;
-      nameInput.style.opacity = "0.6";
-    } else if (nameInput) {
-      nameInput.readOnly = false;
-      nameInput.style.opacity = "1";
+    const genderInputCol = document.getElementById("genderInputCol");
+    const genderReadonlyCol = document.getElementById("genderReadonlyCol");
+    const playerGenderEl = document.getElementById("playerGender");
+    const readonlyEl = document.getElementById("playerGenderReadonly");
+
+    if (player.linkedUid) {
+      // Linked player — name and gender are both read-only
+      if (nameInput) { nameInput.readOnly = true; nameInput.style.opacity = "0.6"; }
+      if (genderInputCol) genderInputCol.style.display = "none";
+      if (genderReadonlyCol) genderReadonlyCol.style.display = "block";
+      if (readonlyEl) {
+        readonlyEl.textContent = player.gender === "male" ? "Male"
+          : player.gender === "female" ? "Female" : "Not set in profile";
+      }
+    } else {
+      // Manual player — name and gender are editable
+      if (nameInput) { nameInput.readOnly = false; nameInput.style.opacity = "1"; }
+      if (genderInputCol) genderInputCol.style.display = "block";
+      if (genderReadonlyCol) genderReadonlyCol.style.display = "none";
+      if (playerGenderEl) playerGenderEl.value = player.gender || "";
     }
 
-    // Show read-only member display
+    // Show read-only member display if linked
     const memberDisplayRow = document.getElementById("memberDisplayRow");
     const memberDisplayValue = document.getElementById("memberDisplayValue");
     if (memberDisplayRow && memberDisplayValue) {
       if (player.linkedUid || player.email) {
-        // Look up member info to display
-        const memberDoc = player.linkedUid
-          ? null // will fetch below
-          : null;
-        const displayText = player.name + (player.email ? " — " + player.email : "");
-        memberDisplayValue.textContent = displayText;
+        memberDisplayValue.textContent = player.name + (player.email ? " — " + player.email : "");
         memberDisplayRow.style.display = "block";
-
-        // Fetch member email if we have linkedUid
         if (player.linkedUid) {
           getDoc(doc(db, "trips", activeTripId, "members", player.linkedUid))
             .then(snap => {
@@ -8724,9 +8730,21 @@ ${closer}`;
     const name = document.getElementById("playerName").value.trim();
     const nickname = document.getElementById("nickname").value.trim();
     const handicapIndex = document.getElementById("handicapIndex").value.trim();
-    const gender = playerSource === "manual"
-      ? (document.getElementById("playerGender") && document.getElementById("playerGender").value || "")
-      : (window._pendingPlayerGender || ""); // from user profile via onMemberPickerChange
+    let gender = "";
+    if (editingPlayerId) {
+      // On edit, only manual players can change gender; linked players keep their existing value
+      const existing = players.find(p => p.id === editingPlayerId);
+      if (existing && existing.linkedUid) {
+        gender = existing.gender || ""; // keep existing, don't let form overwrite
+      } else {
+        gender = document.getElementById("playerGender").value || "";
+      }
+    } else {
+      // Add mode
+      gender = playerSource === "manual"
+        ? (document.getElementById("playerGender").value || "")
+        : (window._pendingPlayerGender || "");
+    }
     window._pendingPlayerGender = null;
     const team = "";  // team assignment now at competition level
 
