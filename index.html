@@ -1937,12 +1937,18 @@
         </div>
       </div>
 
-      <!-- Member picker (shown when source = member) -->
+      <!-- Member picker (shown when source = member, Add mode only) -->
       <div id="memberPickerRow" style="display:none;margin-bottom:12px;">
         <label class="form-label">Select Member</label>
         <select id="memberPicker" onchange="onMemberPickerChange()" style="margin-top:6px;">
           <option value="">— Choose a member —</option>
         </select>
+      </div>
+
+      <!-- Read-only member display (shown in Edit mode only) -->
+      <div id="memberDisplayRow" style="display:none;margin-bottom:12px;">
+        <label class="form-label">Member</label>
+        <div id="memberDisplayValue" style="margin-top:6px;padding:10px 14px;background:#0a1f3d;border:1px solid #375984;border-radius:10px;font-size:14px;color:#93c5fd;"></div>
       </div>
 
       <label class="form-label" for="playerName">Name</label>
@@ -6237,6 +6243,7 @@ ${closer}`;
     if (playerId === null) {
       document.getElementById("playerScreenTitle").textContent = "Add Player";
       sourceRow.style.display = "block";
+      document.getElementById("memberDisplayRow").style.display = "none";
       if (linkRow) linkRow.style.display = "none";
       deleteBtn.classList.add("hidden");
       resetPlayerForm();
@@ -6245,7 +6252,8 @@ ${closer}`;
     } else {
       document.getElementById("playerScreenTitle").textContent = "Edit Player";
       sourceRow.style.display = "none";
-      if (linkRow) linkRow.style.display = "block";
+      document.getElementById("memberPickerRow").style.display = "none";
+      if (linkRow) linkRow.style.display = "none";
       deleteBtn.classList.remove("hidden");
       loadPlayerForEdit(playerId);
     }
@@ -8600,8 +8608,7 @@ ${closer}`;
     document.getElementById("playerName").value = player.name || "";
     document.getElementById("nickname").value = player.nickname || "";
     document.getElementById("handicapIndex").value = player.handicapIndex || "";
-    // gender moved to user profile
-    // team dropdown removed - assignment at competition level
+
     // Name is readonly for member-linked players
     const nameInput = document.getElementById("playerName");
     if (nameInput && player.linkedUid) {
@@ -8611,11 +8618,33 @@ ${closer}`;
       nameInput.readOnly = false;
       nameInput.style.opacity = "1";
     }
-    // Set link member picker
-    const picker = document.getElementById("linkMemberPicker");
-    if (picker && player.linkedUid) {
-      // Will be set after populateLinkMemberPicker finishes
-      setTimeout(() => { if (picker) picker.value = player.linkedUid || ""; }, 300);
+
+    // Show read-only member display
+    const memberDisplayRow = document.getElementById("memberDisplayRow");
+    const memberDisplayValue = document.getElementById("memberDisplayValue");
+    if (memberDisplayRow && memberDisplayValue) {
+      if (player.linkedUid || player.email) {
+        // Look up member info to display
+        const memberDoc = player.linkedUid
+          ? null // will fetch below
+          : null;
+        const displayText = player.name + (player.email ? " — " + player.email : "");
+        memberDisplayValue.textContent = displayText;
+        memberDisplayRow.style.display = "block";
+
+        // Fetch member email if we have linkedUid
+        if (player.linkedUid) {
+          getDoc(doc(db, "trips", activeTripId, "members", player.linkedUid))
+            .then(snap => {
+              if (snap.exists()) {
+                const email = snap.data().email || "";
+                memberDisplayValue.textContent = player.name + (email ? " — " + email : "");
+              }
+            }).catch(() => {});
+        }
+      } else {
+        memberDisplayRow.style.display = "none";
+      }
     }
   }
 
