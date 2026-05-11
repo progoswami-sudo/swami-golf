@@ -1963,6 +1963,18 @@
           <label class="form-label" for="handicapIndex">Handicap Index</label>
           <input id="handicapIndex" type="number" step="0.1" placeholder="e.g. 14.2" style="margin-top:6px;"/>
         </div>
+        <div id="genderInputCol">
+          <label class="form-label" for="playerGender">Gender</label>
+          <select id="playerGender" style="margin-top:6px;">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div id="genderReadonlyCol" style="display:none;">
+          <label class="form-label">Gender</label>
+          <div id="playerGenderReadonly" style="margin-top:6px;padding:10px 14px;background:#0a1f3d;border:1px solid #375984;border-radius:10px;font-size:14px;color:#64748b;">—</div>
+        </div>
       </div>
 
       <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
@@ -6186,9 +6198,11 @@ ${closer}`;
     playerSource = src;
     const memberRow = document.getElementById("memberPickerRow");
     const nameInput = document.getElementById("playerName");
-    const emailNote = document.getElementById("playerEmailNote");
     const srcMemberBtn = document.getElementById("srcMemberBtn");
     const srcManualBtn = document.getElementById("srcManualBtn");
+    const genderInputCol = document.getElementById("genderInputCol");
+    const genderReadonlyCol = document.getElementById("genderReadonlyCol");
+    const playerGender = document.getElementById("playerGender");
 
     if (src === "member") {
       srcMemberBtn.className = "";
@@ -6196,6 +6210,10 @@ ${closer}`;
       memberRow.style.display = "block";
       nameInput.readOnly = true;
       nameInput.style.opacity = "0.6";
+      // Hide editable gender, show readonly
+      if (genderInputCol) genderInputCol.style.display = "none";
+      if (genderReadonlyCol) genderReadonlyCol.style.display = "block";
+      if (playerGender) playerGender.value = "";
     } else {
       srcMemberBtn.className = "secondary";
       srcManualBtn.className = "";
@@ -6204,20 +6222,31 @@ ${closer}`;
       nameInput.style.opacity = "1";
       nameInput.value = "";
       document.getElementById("memberPicker").value = "";
+      // Show editable gender, hide readonly
+      if (genderInputCol) genderInputCol.style.display = "block";
+      if (genderReadonlyCol) genderReadonlyCol.style.display = "none";
+      const readonlyEl = document.getElementById("playerGenderReadonly");
+      if (readonlyEl) readonlyEl.textContent = "—";
     }
   }
 
   async function onMemberPickerChange() {
     const uid = document.getElementById("memberPicker").value;
-    if (!uid) { document.getElementById("playerName").value = ""; return; }
+    const readonlyGender = document.getElementById("playerGenderReadonly");
+    if (!uid) {
+      document.getElementById("playerName").value = "";
+      if (readonlyGender) readonlyGender.textContent = "—";
+      return;
+    }
     try {
-      // Check users/{uid} first for name and gender
       const userSnap = await getDoc(doc(db, "users", uid));
       if (userSnap.exists()) {
         const d = userSnap.data();
         if (d.name) document.getElementById("playerName").value = d.name;
-        // Store gender for use when saving the player
         window._pendingPlayerGender = d.gender || "";
+        if (readonlyGender) {
+          readonlyGender.textContent = d.gender === "male" ? "Male" : d.gender === "female" ? "Female" : "Not set in profile";
+        }
         return;
       }
       // Fall back to members collection
@@ -6226,6 +6255,7 @@ ${closer}`;
         const data = memberSnap.data();
         document.getElementById("playerName").value =
           data.name || (data.email ? data.email.split("@")[0] : "") || "";
+        if (readonlyGender) readonlyGender.textContent = "Not set in profile";
       }
     } catch(e) { console.warn("Member lookup failed:", e); }
   }
@@ -8613,8 +8643,10 @@ ${closer}`;
     document.getElementById("playerName").value = "";
     document.getElementById("nickname").value = "";
     document.getElementById("handicapIndex").value = "";
-    // gender moved to user profile
-    // team assignment moved to competition level
+    const genderEl = document.getElementById("playerGender");
+    if (genderEl) genderEl.value = "";
+    const readonlyEl = document.getElementById("playerGenderReadonly");
+    if (readonlyEl) readonlyEl.textContent = "—";
     const nameInput = document.getElementById("playerName");
     if (nameInput) { nameInput.readOnly = false; nameInput.style.opacity = "1"; }
   }
@@ -8692,7 +8724,9 @@ ${closer}`;
     const name = document.getElementById("playerName").value.trim();
     const nickname = document.getElementById("nickname").value.trim();
     const handicapIndex = document.getElementById("handicapIndex").value.trim();
-    const gender = window._pendingPlayerGender || ""; // from user profile via onMemberPickerChange
+    const gender = playerSource === "manual"
+      ? (document.getElementById("playerGender") && document.getElementById("playerGender").value || "")
+      : (window._pendingPlayerGender || ""); // from user profile via onMemberPickerChange
     window._pendingPlayerGender = null;
     const team = "";  // team assignment now at competition level
 
