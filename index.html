@@ -7304,36 +7304,30 @@ ${closer}`;
   }
 
   function buildScoreboardHtml(teams, scores) {
-    const fmt = s => (s === undefined || s === null) ? "—" : (s % 1 === 0 ? String(s) : s.toFixed(1));
+    const fmt = s => (s === undefined || s === null || s === 0 && typeof s === 'number' && !Number.isFinite(s)) ? "—" :
+      (Number.isFinite(Number(s)) ? (Number(s) % 1 === 0 ? String(Number(s)) : Number(s).toFixed(1)) : "—");
 
-    if (teams.length <= 2) {
-      const t0 = teams[0] || { id: "A", name: "Team A" };
-      const t1 = teams[1] || { id: "B", name: "Team B" };
-      return '<div class="scoreboard">' +
-        '<div>' +
-          '<div class="team-name">' + escapeHtml(t0.name) + '</div>' +
-          '<div class="score-click-zone"><div class="score">' + fmt(scores[t0.id]) + '</div></div>' +
-        '</div>' +
-        '<div class="score-click-zone">VS</div>' +
-        '<div>' +
-          '<div class="team-name">' + escapeHtml(t1.name) + '</div>' +
-          '<div class="score-click-zone"><div class="score">' + fmt(scores[t1.id]) + '</div></div>' +
-        '</div>' +
-      '</div>';
-    } else {
-      // Leaderboard style for 3-4 teams
-      const sorted = [...teams].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
-      return '<div class="scoreboard" style="flex-direction:column;gap:6px;">' +
-        sorted.map((t, i) =>
-          '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">' +
-            '<div class="team-name" style="font-size:15px;">' +
-              ['🥇','🥈','🥉',''][i] + ' ' + escapeHtml(t.name) +
-            '</div>' +
-            '<div class="score" style="font-size:22px;">' + fmt(scores[t.id]) + '</div>' +
-          '</div>'
-        ).join("") +
-      '</div>';
-    }
+    const sorted = [...teams].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+
+    return '<table style="width:100%;border-collapse:collapse;">' +
+      '<thead><tr>' +
+        '<th style="text-align:left;padding:8px 10px;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #1e3a5f;">Team</th>' +
+        '<th style="text-align:right;padding:8px 10px;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #1e3a5f;">Points</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+      sorted.map((t, i) => {
+        const pts = fmt(scores[t.id]);
+        const isLeading = i === 0 && (scores[t.id] || 0) > 0;
+        return '<tr style="border-bottom:1px solid #0f2442;">' +
+          '<td style="padding:10px 10px;font-size:15px;font-weight:600;color:' + (isLeading ? '#4ade80' : '#e2e8f0') + ';">' +
+            escapeHtml(t.name) +
+          '</td>' +
+          '<td style="padding:10px 10px;font-size:20px;font-weight:700;text-align:right;color:' + (isLeading ? '#4ade80' : '#e2e8f0') + ';">' +
+            pts +
+          '</td>' +
+        '</tr>';
+      }).join("") +
+      '</tbody></table>';
   }
 
   async function migrateMatchesToDefaultCompetition(tripId) {
@@ -7508,7 +7502,7 @@ ${closer}`;
     if (!el) return;
     const teams = getTeams();
     const scores = computeTeamScores();
-    el.innerHTML = buildScoreboardHtml(teams, scores).replace('<div class="scoreboard"', '<div class="scoreboard" style="width:100%"');
+    el.innerHTML = buildScoreboardHtml(teams, scores);
   }
 
   function renderCompInlineMatches() {
