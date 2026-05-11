@@ -2864,12 +2864,35 @@ Respond ONLY with valid JSON, nothing else:
     if (!(currentUser && currentUser.uid)) return;
     const venmo = ((document.getElementById("userVenmo") && document.getElementById("userVenmo").value) || "").trim().replace(/^@/, "");
     const paypal = ((document.getElementById("userPaypal") && document.getElementById("userPaypal").value) || "").trim().replace(/^@/, "");
+
+    // Save to users collection
     await setDoc(doc(db, "users", currentUser.uid), {
       name, venmo, paypal,
       email: currentUser.email || getCookie(EMAIL_COOKIE) || "",
       updatedAt: new Date().toISOString()
     }, { merge: true });
     setCookie(NAME_COOKIE, name);
+
+    // Also sync name to any trip member docs for this user
+    // This ensures the name shows up when admins add players
+    try {
+      const tripsSnap = await getDocs(collection(db, "trips"));
+      const updates = [];
+      tripsSnap.docs.forEach(tripDoc => {
+        const memberRef = doc(db, "trips", tripDoc.id, "members", currentUser.uid);
+        updates.push(
+          getDoc(memberRef).then(snap => {
+            if (snap.exists()) {
+              return setDoc(memberRef, { name }, { merge: true });
+            }
+          }).catch(() => {})
+        );
+      });
+      await Promise.all(updates);
+    } catch(e) {
+      console.warn("Member name sync failed:", e.message);
+    }
+
     goHome();
   }
 
