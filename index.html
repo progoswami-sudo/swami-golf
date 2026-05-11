@@ -2072,7 +2072,7 @@
         <button id="inviteRoleAdmin" onclick="selectInviteRole('admin')" class="secondary" style="flex:1;margin:0;padding:10px;">Admin</button>
         <button id="inviteRoleParticipant" onclick="selectInviteRole('participant')" style="flex:1;margin:0;padding:10px;">Participant</button>
       </div>
-      <button onclick="sendInvite()" style="margin-top:12px;">Send Invite</button>
+      <button id="sendInviteBtn" onclick="sendInvite()" style="margin-top:12px;">Send Invite</button>
       <div id="pendingInvitesList" style="margin-top:16px;"></div>
     </div>
   </div><!-- end membersScreen -->
@@ -9905,25 +9905,62 @@ ${closer}`;
       return;
     }
 
-    // Check if already a member
-    const membersSnap = await getDocs(membersCollection());
-    const alreadyMember = membersSnap.docs.some(d => (d.data().email ? d.data().email.toLowerCase() : '') === email);
-    if (alreadyMember) {
-      alert(`${email} is already a member of this trip.`);
-      return;
+    const btn = document.querySelector("#memberManagerScreen button[onclick='sendInvite()']") ||
+                document.getElementById("sendInviteBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Sending..."; }
+
+    try {
+      // Check if already a member
+      const membersSnap = await getDocs(membersCollection());
+      const alreadyMember = membersSnap.docs.some(d =>
+        (d.data().email ? d.data().email.toLowerCase() : '') === email
+      );
+      if (alreadyMember) {
+        alert(email + " is already a member of this trip.");
+        return;
+      }
+
+      // Write invite to Firestore
+      await addDoc(invitesCollection(), {
+        email,
+        role: selectedInviteRole,
+        invitedBy: (currentUser && currentUser.uid) || "",
+        invitedByEmail: (currentUser && currentUser.email) || "",
+        createdAt: new Date().toISOString()
+      });
+
+      // Send the actual email via magic link API
+      // Include trip ID in the continue URL so they land on the right trip
+      const continueUrl = (window.location.origin || "https://www.swami-golf.com") +
+        "/?trip=" + encodeURIComponent(activeTripId);
+
+      const res = await fetch("/api/send-magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          actionCodeSettings: { url: continueUrl }
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        // Invite is saved but email failed — warn the user
+        console.error("Email send failed:", data.error);
+        alert("Invite saved, but the email could not be sent (" + (data.error || "unknown error") +
+          "). You can share the app link manually with " + email + ".");
+      } else {
+        document.getElementById("inviteEmail").value = "";
+        await renderPendingInvites();
+        alert("Invite sent to " + email + "! They'll receive a sign-in link by email.");
+      }
+    } catch(e) {
+      console.error("sendInvite error:", e);
+      alert("Error sending invite: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Send Invite"; }
     }
-
-    await addDoc(invitesCollection(), {
-      email,
-      role: selectedInviteRole,
-      invitedBy: (currentUser && currentUser.uid) || "",
-      invitedByEmail: (currentUser && currentUser.email) || "",
-      createdAt: new Date().toISOString()
-    });
-
-    document.getElementById("inviteEmail").value = "";
-    await renderPendingInvites();
-    alert(`Invite sent to ${email}. They'll join automatically when they sign in.`);
   }
 
   async function removeMember(uid) {
