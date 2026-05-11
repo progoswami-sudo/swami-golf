@@ -5518,7 +5518,16 @@ Max 80 words total.`;
     const settings = match.valueSettings || {};
     const keys = Object.keys(settings);
     if (keys.length === 0) return "";
-    return `<div class="match-detail" style="margin-top:10px;"><strong>${escapeHtml(match.valueType === "Cash" ? "Wager" : "Points")}:</strong> ${keys.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ")}</div>`;
+    // Sort keys: Front 9 first, Back 9 second, Overall third, then anything else
+    const order = ["Front 9", "Back 9", "Overall"];
+    const sorted = [
+      ...order.filter(k => keys.includes(k)),
+      ...keys.filter(k => !order.includes(k))
+    ];
+    return '<div class="match-detail" style="margin-top:10px;"><strong>' +
+      escapeHtml(match.valueType === "Cash" ? "Wager" : "Points") + ':</strong> ' +
+      sorted.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ") +
+      '</div>';
   }
 
   function toggleMatchMenu(matchId) { document.getElementById(`matchMenu-${matchId}`).classList.toggle("hidden"); }
@@ -6173,12 +6182,19 @@ ${closer}`;
   async function onMemberPickerChange() {
     const uid = document.getElementById("memberPicker").value;
     if (!uid) { document.getElementById("playerName").value = ""; return; }
-    // Look up member name from members collection
     try {
-      const snap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("playerName").value = data.name || (data.email ? data.email.split("@") : [])[0] || "";
+      // First try users/{uid} for the name the user set in their own profile
+      const userSnap = await getDoc(doc(db, "users", uid));
+      if (userSnap.exists() && userSnap.data().name) {
+        document.getElementById("playerName").value = userSnap.data().name;
+        return;
+      }
+      // Fall back to members collection
+      const memberSnap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
+      if (memberSnap.exists()) {
+        const data = memberSnap.data();
+        document.getElementById("playerName").value =
+          data.name || (data.email ? data.email.split("@")[0] : "") || "";
       }
     } catch(e) { console.warn("Member lookup failed:", e); }
   }
@@ -6200,7 +6216,7 @@ ${closer}`;
       if (linkRow) linkRow.style.display = "none";
       deleteBtn.classList.add("hidden");
       resetPlayerForm();
-      setPlayerSource("manual");
+      setPlayerSource("member");
       populateMemberPicker();
     } else {
       document.getElementById("playerScreenTitle").textContent = "Edit Player";
@@ -7327,6 +7343,7 @@ ${closer}`;
   }
 
   function openNewCompetition() {
+    if (!requireAdmin("create a competition")) return;
     _editingCompetitionId = null;
     const title = document.getElementById("compSetupTitle");
     const backBtn = document.getElementById("compSetupBackBtn");
