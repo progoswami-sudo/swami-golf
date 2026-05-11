@@ -6791,39 +6791,51 @@ ${closer}`;
       const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
       const updatedHoleDetail = JSON.parse(JSON.stringify(match.holeDetail || {}));
 
-      Object.entries(scanEditedScores).forEach(function(entry) {
-        const playerId = entry[0];
-        const holes = entry[1];
+      // Build union of all holes with scores OR voice details
+      const allPlayerHoles = {};
+      Object.entries(scanEditedScores).forEach(function(e) {
+        const pid = e[0]; const scoreHoles = e[1];
+        Object.keys(scoreHoles).forEach(function(h) {
+          if (!allPlayerHoles[pid]) allPlayerHoles[pid] = new Set();
+          allPlayerHoles[pid].add(String(h));
+        });
+      });
+      const vdAll = window._voiceHoleDetails || {};
+      Object.entries(vdAll).forEach(function(e) {
+        const pid = e[0];
+        Object.keys(e[1]).forEach(function(h) {
+          if (!allPlayerHoles[pid]) allPlayerHoles[pid] = new Set();
+          allPlayerHoles[pid].add(String(h));
+        });
+      });
+
+      Object.entries(allPlayerHoles).forEach(function(e) {
+        const playerId = e[0]; const holeSet = e[1];
         if (!updatedHoleScores[playerId]) updatedHoleScores[playerId] = {};
         if (!updatedHoleDetail[playerId]) updatedHoleDetail[playerId] = {};
-        Object.entries(holes).forEach(function(he) {
-          const holeNum = he[0];
-          const score = he[1];
-          updatedHoleScores[playerId][holeNum] = String(score);
-          if (!updatedHoleDetail[playerId][holeNum]) updatedHoleDetail[playerId][holeNum] = {};
-          updatedHoleDetail[playerId][holeNum].score = score;
-          const vd = window._voiceHoleDetails &&
-            window._voiceHoleDetails[playerId] &&
-            window._voiceHoleDetails[playerId][Number(holeNum)];
+        holeSet.forEach(function(holeNum) {
+          const score = scanEditedScores[playerId] && scanEditedScores[playerId][holeNum];
+          if (score) {
+            updatedHoleScores[playerId][holeNum] = String(score);
+            if (!updatedHoleDetail[playerId][holeNum]) updatedHoleDetail[playerId][holeNum] = {};
+            updatedHoleDetail[playerId][holeNum].score = score;
+          }
+          const vd = vdAll[playerId] && vdAll[playerId][Number(holeNum)];
           if (vd) {
-            if (vd.putts !== null && vd.putts !== undefined) {
+            if (!updatedHoleDetail[playerId][holeNum]) updatedHoleDetail[playerId][holeNum] = {};
+            if (vd.putts !== null && vd.putts !== undefined)
               updatedHoleDetail[playerId][holeNum].putts = vd.putts;
-            }
-            if (vd.fairway) {
-              updatedHoleDetail[playerId][holeNum].fairway = vd.fairway;
-            }
-            if (vd.approach) {
-              updatedHoleDetail[playerId][holeNum].approach = vd.approach;
-            }
-            if (vd.notes) {
-              updatedHoleDetail[playerId][holeNum].moment =
-                (updatedHoleDetail[playerId][holeNum].moment
-                  ? updatedHoleDetail[playerId][holeNum].moment + "; " : "") + vd.notes;
-            }
+            if (vd.fairway)  updatedHoleDetail[playerId][holeNum].fairway  = vd.fairway;
+            if (vd.approach) updatedHoleDetail[playerId][holeNum].approach = vd.approach;
+            if (vd.notes)    updatedHoleDetail[playerId][holeNum].moment   =
+              ((updatedHoleDetail[playerId][holeNum].moment || "") +
+               (updatedHoleDetail[playerId][holeNum].moment ? "; " : "") + vd.notes);
           }
         });
       });
       window._voiceHoleDetails = null;
+
+      console.log("Voice save - holeDetail:", JSON.stringify(updatedHoleDetail).slice(0, 400));
 
       await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", activeScorecardMatchId), {
         holeScores: updatedHoleScores,
