@@ -8664,7 +8664,10 @@ ${closer}`;
     const playerGenderEl = document.getElementById("playerGender");
     const readonlyEl = document.getElementById("playerGenderReadonly");
 
-    if (player.linkedUid) {
+    // A player is "linked" if they have a linkedUid, type=member, or an email (older records)
+    const isLinked = !!(player.linkedUid || player.type === "member" || player.email);
+
+    if (isLinked) {
       // Linked player — name and gender are both read-only
       if (nameInput) { nameInput.readOnly = true; nameInput.style.opacity = "0.6"; }
       if (genderInputCol) genderInputCol.style.display = "none";
@@ -8685,7 +8688,7 @@ ${closer}`;
     const memberDisplayRow = document.getElementById("memberDisplayRow");
     const memberDisplayValue = document.getElementById("memberDisplayValue");
     if (memberDisplayRow && memberDisplayValue) {
-      if (player.linkedUid || player.email) {
+      if (isLinked) {
         memberDisplayValue.textContent = player.name + (player.email ? " — " + player.email : "");
         memberDisplayRow.style.display = "block";
         if (player.linkedUid) {
@@ -8732,10 +8735,10 @@ ${closer}`;
     const handicapIndex = document.getElementById("handicapIndex").value.trim();
     let gender = "";
     if (editingPlayerId) {
-      // On edit, only manual players can change gender; linked players keep their existing value
       const existing = players.find(p => p.id === editingPlayerId);
-      if (existing && existing.linkedUid) {
-        gender = existing.gender || ""; // keep existing, don't let form overwrite
+      const isLinked = !!(existing && (existing.linkedUid || existing.type === "member" || existing.email));
+      if (isLinked) {
+        gender = (existing && existing.gender) || "";
       } else {
         gender = document.getElementById("playerGender").value || "";
       }
