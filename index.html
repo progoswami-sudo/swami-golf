@@ -1733,7 +1733,7 @@
   <!-- ── GRINT EXPORT ───────────────────────────────────────────────────────── -->
   <div id="grintExportScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
-      <button onclick="openEnterScore(activeScoreMatchId)" class="secondary">Back</button>
+      <button onclick="goBackToScorecard()" class="secondary">Back</button>
       <h2>Post to The Grint</h2>
     </div>
     <div class="card">
@@ -10449,6 +10449,7 @@ ${closer}`;
   window.selectGrintPlayer = selectGrintPlayer;
   window.grintSaveImage = grintSaveImage;
   window.grintOpenApp = grintOpenApp;
+  window.goBackToScorecard = function() { openEnterScore(activeScoreMatchId); };
   window.openVoiceEntry = openVoiceEntry;
   window.goBackFromVoice = goBackFromVoice;
   window.clearVoiceTranscript = clearVoiceTranscript;
