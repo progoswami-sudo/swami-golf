@@ -1285,7 +1285,7 @@
       </div>
     </div>
     <div class="card score-card">
-      <div id="compScoreboard" class="scoreboard"></div>
+      <div id="compScoreboard" style="width:100%;"></div>
     </div>
     <div id="compSwamiAlert" class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -1904,6 +1904,7 @@
         <button id="numTeams2" onclick="setNumTeams(2)" style="flex:1;margin:0;padding:10px;">2</button>
         <button id="numTeams3" onclick="setNumTeams(3)" class="secondary" style="flex:1;margin:0;padding:10px;">3</button>
         <button id="numTeams4" onclick="setNumTeams(4)" class="secondary" style="flex:1;margin:0;padding:10px;">4</button>
+        <button id="numTeamsI" onclick="setNumTeams('individual')" class="secondary" style="flex:1;margin:0;padding:10px;font-size:12px;">Individual</button>
       </div>
       <div id="teamNameInputs"></div>
       <button id="saveTeamsBtn" onclick="saveCompetition()" style="margin-top:16px;">Save</button>
@@ -7394,10 +7395,16 @@ ${closer}`;
     if (title) title.textContent = "Edit Competition";
     if (backBtn) backBtn.onclick = () => show("competitionScreen");
     if (nameInput) nameInput.value = activeCompetitionData.name || "";
+    const isIndividual = activeCompetitionData.isIndividual;
     const teams = getTeams();
-    _setupNumTeams = teams.length;
-    setNumTeams(teams.length);
-    renderTeamNameInputs(teams.length, teams.map(t => t.name));
+    if (isIndividual) {
+      _setupNumTeams = "individual";
+      setNumTeams("individual");
+    } else {
+      _setupNumTeams = teams.length;
+      setNumTeams(teams.length);
+      renderTeamNameInputs(teams.length, teams.map(t => t.name));
+    }
     show("teamScreen");
   }
 
@@ -7406,19 +7413,25 @@ ${closer}`;
     if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
 
     const name = (document.getElementById("compNameInput").value || "").trim() || "Competition";
-    const inputs = document.querySelectorAll(".team-name-input");
-    const defaults = ["Team A", "Team B", "Team C", "Team D"];
-    const newTeams = Array.from(inputs).map((inp, i) => ({
-      id: ["A","B","C","D"][i],
-      name: inp.value.trim() || defaults[i]
-    }));
+
+    let newTeams;
+    if (_setupNumTeams === "individual") {
+      // One team per player — player name becomes team name, id is player id
+      newTeams = players.map(p => ({ id: p.id, name: p.name }));
+    } else {
+      const inputs = document.querySelectorAll(".team-name-input");
+      const defaults = ["Team A", "Team B", "Team C", "Team D"];
+      newTeams = Array.from(inputs).map((inp, i) => ({
+        id: ["A","B","C","D"][i],
+        name: inp.value.trim() || defaults[i]
+      }));
+    }
 
     try {
       if (_editingCompetitionId) {
         await updateDoc(competitionDocRef(_editingCompetitionId), {
           name, teams: newTeams, updatedAt: new Date().toISOString()
         });
-        // If editing current active comp, refresh its data
         if (_editingCompetitionId === activeCompetitionId) {
           activeCompetitionData = { ...activeCompetitionData, name, teams: newTeams };
           renderCompScoreboard();
@@ -7428,6 +7441,7 @@ ${closer}`;
       } else {
         const compRef = await addDoc(competitionsCollection(), {
           name, teams: newTeams,
+          isIndividual: _setupNumTeams === "individual",
           createdAt: new Date().toISOString(),
           createdBy: (currentUser && currentUser.uid) || ""
         });
@@ -7563,15 +7577,24 @@ ${closer}`;
       const btn = document.getElementById("numTeams" + i);
       if (btn) btn.className = i === n ? "" : "secondary";
     });
+    const indBtn = document.getElementById("numTeamsI");
+    if (indBtn) indBtn.className = n === "individual" ? "" : "secondary";
     renderTeamNameInputs(n);
   }
 
   function renderTeamNameInputs(n, prefill) {
-    const defaults = ["Team A", "Team B", "Team C", "Team D"];
     const el = document.getElementById("teamNameInputs");
     if (!el) return;
+
+    if (n === "individual") {
+      // No team names needed — players are their own teams
+      el.innerHTML = '<div style="font-size:13px;color:#64748b;padding:8px 0;">Each player competes individually. Player names will be used as team names.</div>';
+      return;
+    }
+
+    const defaults = ["Team A", "Team B", "Team C", "Team D"];
     el.innerHTML = Array.from({length: n}, (_, i) => {
-      const val = (prefill && prefill[i]) || defaults[i];
+      const val = (prefill && prefill[i]) ? prefill[i] : defaults[i];
       return '<label class="form-label" style="margin-top:' + (i > 0 ? '12px' : '0') + ';">Team ' + (i+1) + ' Name</label>' +
         '<input class="team-name-input" data-index="' + i + '" value="' + escapeHtml(val) + '" placeholder="' + defaults[i] + '"/>';
     }).join("");
