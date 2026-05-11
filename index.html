@@ -7475,6 +7475,17 @@ ${closer}`;
           createdAt: new Date().toISOString(),
           createdBy: (currentUser && currentUser.uid) || ""
         });
+
+        // For individual competitions, auto-assign each player to their own team
+        if (_setupNumTeams === "individual" && players.length) {
+          const batch = writeBatch(db);
+          players.forEach(p => {
+            // Each player's team name = their own name (matches newTeams)
+            batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: p.name });
+          });
+          await batch.commit();
+        }
+
         await openCompetition(compRef.id);
       }
     } catch(e) {
@@ -7676,7 +7687,6 @@ ${closer}`;
     const list = document.getElementById("teamRosterList");
     if (!list) return;
 
-    // Match by team name OR legacy team ID (A/B/C/D)
     const teams = getTeams();
     const team = teams.find(t => t.name === teamName || t.id === activeTeamRosterKey);
     const teamId = team ? team.id : activeTeamRosterKey;
@@ -7691,15 +7701,74 @@ ${closer}`;
     }
 
     list.innerHTML = teamPlayers.map(player =>
-      '<div class="player-row">' +
-        '<div class="player-name">' + escapeHtml(player.name) + '</div>' +
-        '<div class="player-detail">' +
-          (player.nickname ? '"' + escapeHtml(player.nickname) + '"<br>' : '') +
-          '<strong>HI:</strong> ' + (player.handicapIndex || "—") + ' &nbsp;' +
-          '<strong>Gender:</strong> ' + formatGender(player.gender) +
+      '<div class="swipe-row" id="swipe-' + escapeAttr(player.id) + '" style="position:relative;overflow:hidden;border-radius:10px;margin-bottom:6px;">' +
+        // Delete background
+        '<div style="position:absolute;right:0;top:0;bottom:0;width:80px;background:#7f1d1d;display:flex;align-items:center;justify-content:center;border-radius:0 10px 10px 0;">' +
+          '<span style="color:#fca5a5;font-size:12px;font-weight:700;">Remove</span>' +
+        '</div>' +
+        // Player row (slides left on swipe)
+        '<div class="player-row swipe-content" data-player-id="' + escapeAttr(player.id) + '" data-player-name="' + escapeAttr(player.name) + '" ' +
+          'style="position:relative;background:#13294d;transition:transform 0.2s;touch-action:pan-y;margin:0;border-radius:10px;">' +
+          '<div class="player-name">' + escapeHtml(player.name) + '</div>' +
+          '<div class="player-detail">' +
+            (player.nickname ? '"' + escapeHtml(player.nickname) + '"<br>' : '') +
+            '<strong>HI:</strong> ' + (player.handicapIndex || "—") + ' &nbsp;' +
+            '<strong>Gender:</strong> ' + formatGender(player.gender) +
+          '</div>' +
         '</div>' +
       '</div>'
     ).join("");
+
+    // Attach swipe listeners
+    list.querySelectorAll(".swipe-content").forEach(el => {
+      let startX = 0, currentX = 0, swiping = false;
+      const THRESHOLD = 60;
+
+      el.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        swiping = true;
+        el.style.transition = "none";
+      }, { passive: true });
+
+      el.addEventListener("touchmove", function(e) {
+        if (!swiping) return;
+        currentX = e.touches[0].clientX - startX;
+        if (currentX < 0) {
+          el.style.transform = "translateX(" + Math.max(currentX, -80) + "px)";
+        }
+      }, { passive: true });
+
+      el.addEventListener("touchend", function() {
+        swiping = false;
+        el.style.transition = "transform 0.2s";
+        if (currentX < -THRESHOLD) {
+          el.style.transform = "translateX(-80px)";
+          // Tap the exposed area or auto-confirm after a moment
+          const playerId = el.getAttribute("data-player-id");
+          const playerName = el.getAttribute("data-player-name");
+          if (confirm("Remove " + playerName + " from this team?")) {
+            removePlayerFromTeam(playerId);
+          } else {
+            el.style.transform = "translateX(0)";
+          }
+        } else {
+          el.style.transform = "translateX(0)";
+        }
+        currentX = 0;
+      });
+    });
+  }
+
+  async function removePlayerFromTeam(playerId) {
+    try {
+      await updateDoc(doc(db, "trips", activeTripId, "players", playerId), { team: "" });
+      // Re-render roster inline without full reload
+      const teams = getTeams();
+      const team = teams.find(t => t.id === activeTeamRosterKey);
+      renderTeamRoster(team ? team.name : activeTeamRosterKey);
+    } catch(e) {
+      alert("Error removing player: " + e.message);
+    }
   }
 
   function renderItinerary() {
@@ -10709,6 +10778,7 @@ ${closer}`;
   window.goBackToScanScorecardScreen = goBackToScanScorecardScreen;
   window.openAddToTeamPicker = openAddToTeamPicker;
   window.saveTeamAssignments = saveTeamAssignments;
+  window.removePlayerFromTeam = removePlayerFromTeam;
   window.openTeamRoster = openTeamRoster;
   window.openItineraryEditor = openItineraryEditor;
   window.saveItineraryEvent = saveItineraryEvent;
