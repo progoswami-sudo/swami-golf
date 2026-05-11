@@ -10389,6 +10389,8 @@ ${closer}`;
         }).join("");
       });
     }
+
+    if (payments.length && settledEl && sectionEl) {
       sectionEl.style.display = "block";
       settledEl.innerHTML = payments
         .slice().sort((a, b) => new Date(b.settledAt || 0) - new Date(a.settledAt || 0))
