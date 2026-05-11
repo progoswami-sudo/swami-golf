@@ -1724,10 +1724,40 @@
       <div id="completeMatchBtnWrap" style="margin-top:8px;display:none;">
         <button id="completeMatchBtn" onclick="completeCurrentMatch()" style="width:100%;">✓ Complete Match</button>
       </div>
+      <div style="margin-top:8px;">
+        <button onclick="openGrintExport()" class="secondary" style="width:100%;">📤 Post to The Grint</button>
+      </div>
     </div>
   </div>
 
-  <!-- ── VOICE SCORE ENTRY ───────────────────────────────────────────────────── -->
+  <!-- ── GRINT EXPORT ───────────────────────────────────────────────────────── -->
+  <div id="grintExportScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="openEnterScore(activeScoreMatchId)" class="secondary">Back</button>
+      <h2>Post to The Grint</h2>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:#93c5fd;font-weight:600;margin-bottom:8px;">Select player to export</div>
+      <div id="grintPlayerList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+  <div id="grintHandoffScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="show('grintExportScreen')" class="secondary">Back</button>
+      <h2>Post to The Grint</h2>
+    </div>
+    <div class="card">
+      <div id="grintScorecardPreview" style="margin-bottom:16px;border-radius:8px;overflow:hidden;"></div>
+      <button id="grintSaveImageBtn" onclick="grintSaveImage()" style="width:100%;margin-bottom:8px;">💾 Save Scorecard Image</button>
+      <div style="font-size:12px;color:#4ade80;text-align:center;margin-bottom:16px;display:none;" id="grintSavedMsg">✓ Image saved to your photos!</div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:#93c5fd;margin-bottom:12px;">Next steps in The Grint:</div>
+      <div id="grintStepsList" style="font-size:13px;line-height:2;color:#e2e8f0;"></div>
+      <button onclick="grintOpenApp()" style="width:100%;margin-top:16px;">Open The Grint →</button>
+    </div>
+  </div>
   <div id="voiceEntryScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goBackFromVoice()" class="secondary">Back</button>
@@ -3588,6 +3618,8 @@ Respond ONLY with valid JSON, nothing else:
       "scanScorecardScreen",
       "scanReviewScreen",
       "voiceEntryScreen",
+      "grintExportScreen",
+      "grintHandoffScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -6246,7 +6278,288 @@ ${closer}`;
     }
   }
 
-  // ── VOICE / TEXT SCORE ENTRY ─────────────────────────────────────────────────
+  // ── GRINT EXPORT ─────────────────────────────────────────────────────────────
+
+  let _grintExportPlayerId = null;
+  let _grintScorecardDataUrl = null;
+
+  function openGrintExport() {
+    const match = matches.find(m => m.id === activeScoreMatchId);
+    if (!match) return alert("No active match.");
+    const matchPlayers = getPlayersForMatch(match);
+    if (!matchPlayers.length) return alert("No players found in this match.");
+
+    const list = document.getElementById("grintPlayerList");
+    if (list) {
+      list.innerHTML = matchPlayers.map(p =>
+        '<button onclick="selectGrintPlayer(\'' + escapeAttr(p.id) + '\')" ' +
+        'class="secondary" style="width:100%;text-align:left;padding:12px 16px;font-size:15px;">' +
+        escapeHtml(p.name) +
+        (p.handicapIndex ? '<span style="color:#64748b;font-size:12px;margin-left:8px;">HI ' + escapeHtml(String(p.handicapIndex)) + '</span>' : '') +
+        '</button>'
+      ).join("");
+    }
+    show("grintExportScreen");
+  }
+
+  function selectGrintPlayer(playerId) {
+    _grintExportPlayerId = playerId;
+    const match = matches.find(m => m.id === activeScoreMatchId);
+    if (!match) return;
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    // Generate scorecard canvas
+    const canvas = generateScorecardCanvas(match, player);
+    _grintScorecardDataUrl = canvas.toDataURL("image/png");
+
+    // Show preview
+    const preview = document.getElementById("grintScorecardPreview");
+    if (preview) {
+      preview.innerHTML = '<img src="' + _grintScorecardDataUrl + '" style="width:100%;display:block;">';
+    }
+
+    // Build steps list
+    const steps = document.getElementById("grintStepsList");
+    const teams = getTeams();
+    const tee = match.tees || "White";
+    const course = match.course || match.courseName || "your course";
+    const date = match.matchDate || new Date().toISOString().slice(0,10);
+
+    if (steps) {
+      steps.innerHTML = [
+        '1. Save the scorecard image above to your photos',
+        '2. Open The Grint and tap <strong>Post Score</strong>',
+        '3. Select course: <strong>' + escapeHtml(course) + '</strong>',
+        '4. Select tees: <strong>' + escapeHtml(tee) + '</strong>',
+        '5. Set date: <strong>' + escapeHtml(date) + '</strong>',
+        '6. Choose <strong>Scorecard Upload</strong>',
+        '7. Select the saved image from your photo library',
+        '8. Submit!'
+      ].map(s => '<div style="padding:2px 0;">' + s + '</div>').join("");
+    }
+
+    const savedMsg = document.getElementById("grintSavedMsg");
+    if (savedMsg) savedMsg.style.display = "none";
+
+    show("grintHandoffScreen");
+  }
+
+  function generateScorecardCanvas(match, player) {
+    const holes = getScorecardForMatch(match).holes || [];
+    const holeScores = (match.holeScores || {})[player.id] || {};
+    const holeDetail = (match.holeDetail || {})[player.id] || {};
+
+    const frontHoles = holes.filter(h => Number(h.hole) <= 9);
+    const backHoles  = holes.filter(h => Number(h.hole) >= 10);
+
+    // Canvas dimensions
+    const W = 800;
+    const headerH = 120;
+    const rowH = 36;
+    const rows = ["Par", "HCP", "Score", "Putts", "FIR", "GIR"];
+    const bodyH = rows.length * rowH;
+    const H = headerH + bodyH * 2 + 80; // front + back + totals
+
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // Background
+    ctx.fillStyle = "#0f2442";
+    ctx.fillRect(0, 0, W, H);
+
+    // Header
+    ctx.fillStyle = "#1e3a5f";
+    ctx.fillRect(0, 0, W, headerH);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 22px Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(match.course || match.courseName || "Golf Course", 20, 32);
+
+    ctx.font = "14px Arial, sans-serif";
+    ctx.fillStyle = "#93c5fd";
+    ctx.fillText(player.name + "  •  " + (match.tees || "White") + " Tees  •  HI: " + (player.handicapIndex || "—"), 20, 54);
+    ctx.fillText("Date: " + (match.matchDate || "") + "  •  Format: " + (match.format || "Best Ball"), 20, 74);
+    ctx.fillText("Round " + (match.round || "1") + "  •  " + (match.scoringType || "Gross"), 20, 94);
+
+    // Draw a half (front or back)
+    function drawHalf(startY, holeList, label) {
+      const colW = (W - 120) / (holeList.length + 1); // +1 for totals col
+      const labelColW = 120;
+
+      // Section header
+      ctx.fillStyle = "#375984";
+      ctx.fillRect(0, startY, W, rowH);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 13px Arial, sans-serif";
+      ctx.textAlign = "center";
+
+      // Draw hole number headers
+      holeList.forEach((hole, i) => {
+        ctx.fillText(String(hole.hole), labelColW + i * colW + colW / 2, startY + 23);
+      });
+      ctx.fillText(label, labelColW + holeList.length * colW + colW / 2, startY + 23);
+
+      // Draw rows
+      rows.forEach((rowLabel, ri) => {
+        const rowY = startY + rowH + ri * rowH;
+        const isEven = ri % 2 === 0;
+
+        ctx.fillStyle = isEven ? "#0d2040" : "#0f2442";
+        ctx.fillRect(0, rowY, W, rowH);
+
+        // Row label
+        ctx.fillStyle = "#64748b";
+        ctx.font = "12px Arial, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(rowLabel, 10, rowY + 23);
+
+        // Cell values
+        let total = 0;
+        holeList.forEach((hole, i) => {
+          const hNum = hole.hole;
+          const par = Number(hole.par) || 4;
+          const score = Number(holeScores[hNum]) || 0;
+          const detail = holeDetail[hNum] || {};
+          let value = "—";
+          let cellColor = "#e2e8f0";
+
+          if (rowLabel === "Par") {
+            value = String(par);
+            total += par;
+            cellColor = "#93c5fd";
+          } else if (rowLabel === "HCP") {
+            value = String(hole.hcp || "—");
+            cellColor = "#64748b";
+          } else if (rowLabel === "Score") {
+            if (score) {
+              value = String(score);
+              total += score;
+              const diff = score - par;
+              if (diff <= -2) cellColor = "#f59e0b";
+              else if (diff === -1) cellColor = "#4ade80";
+              else if (diff === 0) cellColor = "#e2e8f0";
+              else if (diff === 1) cellColor = "#f87171";
+              else cellColor = "#dc2626";
+            }
+          } else if (rowLabel === "Putts") {
+            if (detail.putts) { value = String(detail.putts); total += detail.putts; }
+          } else if (rowLabel === "FIR") {
+            if (hole.par !== 3) {
+              value = detail.fairway || "—";
+              cellColor = detail.fairway === "Hit" ? "#4ade80" : detail.fairway ? "#f87171" : "#475569";
+            } else {
+              value = "—"; cellColor = "#475569";
+            }
+          } else if (rowLabel === "GIR") {
+            value = detail.approach || "—";
+            cellColor = detail.approach === "Hit" ? "#4ade80" : detail.approach ? "#f87171" : "#475569";
+          }
+
+          const cx = labelColW + i * colW + colW / 2;
+          const cy = rowY + 23;
+
+          // Score circle background for Score row
+          if (rowLabel === "Score" && score) {
+            const diff = score - par;
+            if (diff <= -1) {
+              ctx.strokeStyle = cellColor;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(cx, cy - 6, 12, 0, Math.PI * 2);
+              ctx.stroke();
+            } else if (diff >= 1) {
+              ctx.strokeStyle = cellColor;
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(cx - 13, cy - 18, 26, 26);
+            }
+          }
+
+          ctx.fillStyle = cellColor;
+          ctx.font = rowLabel === "Score" ? "bold 14px Arial, sans-serif" : "13px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(value, cx, cy);
+        });
+
+        // Total column
+        const totalX = labelColW + holeList.length * colW + colW / 2;
+        ctx.fillStyle = rowLabel === "Score" ? "#ffffff" : "#93c5fd";
+        ctx.font = rowLabel === "Score" ? "bold 16px Arial" : "13px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(total > 0 || rowLabel === "Par" ? String(total) : "—", totalX, rowY + 23);
+      });
+    }
+
+    drawHalf(headerH, frontHoles, "OUT");
+    drawHalf(headerH + rowH * (rows.length + 1), backHoles, "IN");
+
+    // Grand total bar
+    const totY = H - 44;
+    ctx.fillStyle = "#1e3a5f";
+    ctx.fillRect(0, totY, W, 44);
+
+    const frontScore = frontHoles.reduce((t, h) => t + (Number(holeScores[h.hole]) || 0), 0);
+    const backScore  = backHoles.reduce((t, h) => t + (Number(holeScores[h.hole]) || 0), 0);
+    const frontPar   = frontHoles.reduce((t, h) => t + (Number(h.par) || 4), 0);
+    const backPar    = backHoles.reduce((t, h) => t + (Number(h.par) || 4), 0);
+
+    ctx.fillStyle = "#93c5fd";
+    ctx.font = "13px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("OUT: " + (frontScore || "—") + " / " + frontPar +
+                 "   IN: " + (backScore || "—") + " / " + backPar +
+                 "   TOTAL: " + (frontScore + backScore || "—") + " / " + (frontPar + backPar), 20, totY + 28);
+
+    // Swami Golf watermark
+    ctx.fillStyle = "#375984";
+    ctx.font = "11px Arial";
+    ctx.textAlign = "right";
+    ctx.fillText("Swami Golf", W - 16, totY + 28);
+
+    return canvas;
+  }
+
+  function grintSaveImage() {
+    if (!_grintScorecardDataUrl) return;
+    const player = players.find(p => p.id === _grintExportPlayerId);
+    const match = matches.find(m => m.id === activeScoreMatchId);
+    const filename = (player ? player.name.replace(/\s+/g, "_") : "scorecard") + "_" +
+                     (match ? (match.matchDate || "").replace(/-/g, "") : "") + "_grint.png";
+
+    const link = document.createElement("a");
+    link.href = _grintScorecardDataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    const msg = document.getElementById("grintSavedMsg");
+    if (msg) msg.style.display = "block";
+  }
+
+  function grintOpenApp() {
+    // Try The Grint app URL scheme, fall back to App Store
+    const appUrl = "thegrint://";
+    const appStoreUrl = "https://apps.apple.com/us/app/thegrint/id496778189";
+    const playStoreUrl = "https://play.google.com/store/apps/details?id=com.thegrint.android";
+
+    // Try to open the app; if it doesn't open within 1.5s, go to store
+    const start = Date.now();
+    window.location.href = appUrl;
+    setTimeout(function() {
+      if (Date.now() - start < 2000) {
+        // App didn't open — detect platform and go to store
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        window.open(isAndroid ? playStoreUrl : appStoreUrl, "_blank");
+      }
+    }, 1500);
+  }
+
+  // ── END GRINT EXPORT ─────────────────────────────────────────────────────────
+
 
   function openVoiceEntry() {
     // Sync match ID from scorecard context
@@ -10132,6 +10445,10 @@ ${closer}`;
   window.saveTeams = saveTeams;
   window.goCompetitionScreen = goCompetitionScreen;
   window.goTeamRosterScreen = goTeamRosterScreen;
+  window.openGrintExport = openGrintExport;
+  window.selectGrintPlayer = selectGrintPlayer;
+  window.grintSaveImage = grintSaveImage;
+  window.grintOpenApp = grintOpenApp;
   window.openVoiceEntry = openVoiceEntry;
   window.goBackFromVoice = goBackFromVoice;
   window.clearVoiceTranscript = clearVoiceTranscript;
