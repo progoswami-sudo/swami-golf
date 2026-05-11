@@ -9108,16 +9108,29 @@ ${closer}`;
     // Load Venmo/PayPal from user accounts for each player in settlements
     const userPaymentInfo = {};
     await Promise.all(players.map(async p => {
-      if (!p.linkedUid && !p.email) return;
       try {
-        // Try linkedUid first, then search by email
+        // Path 1: linked UID → users collection
         if (p.linkedUid) {
           const snap = await getDoc(doc(db, "users", p.linkedUid));
-          if (snap.exists()) {
+          if (snap.exists() && (snap.data().venmo || snap.data().paypal)) {
             userPaymentInfo[p.id] = { venmo: snap.data().venmo || "", paypal: snap.data().paypal || "" };
+            return;
           }
         }
-      } catch(e) { /* ignore */ }
+        // Path 2: find member by email → get their UID → look up users collection
+        if (p.email) {
+          const membersSnap = await getDocs(membersCollection());
+          const memberDoc = membersSnap.docs.find(d =>
+            (d.data().email || "").toLowerCase() === p.email.toLowerCase()
+          );
+          if (memberDoc) {
+            const snap = await getDoc(doc(db, "users", memberDoc.id));
+            if (snap.exists() && (snap.data().venmo || snap.data().paypal)) {
+              userPaymentInfo[p.id] = { venmo: snap.data().venmo || "", paypal: snap.data().paypal || "" };
+            }
+          }
+        }
+      } catch(e) { console.warn("Payment info lookup failed for", p.name, e.message); }
     }));
 
     const settledSection = document.getElementById("expenseSettledSection");
@@ -10395,15 +10408,31 @@ ${closer}`;
     loadPayInfoForSettlement(settlements.map(s => s.toId));
   }
 
-  async function loadPayInfoForSettlement(uids) {
-    if (!uids.length) return;
+  async function loadPayInfoForSettlement(playerIds) {
+    if (!playerIds.length) return;
     window._payInfo = window._payInfo || {};
-    await Promise.all([...new Set(uids)].map(async uid => {
-      if (window._payInfo[uid]) return;
+    await Promise.all([...new Set(playerIds)].map(async playerId => {
+      if (window._payInfo[playerId]) return;
       try {
+        const player = players.find(p => p.id === playerId);
+        if (!player) return;
+
+        // Get the Firebase Auth UID — either from linkedUid or by matching email in members
+        let uid = player.linkedUid || null;
+        if (!uid && player.email) {
+          const membersSnap = await getDocs(membersCollection());
+          const memberDoc = membersSnap.docs.find(d =>
+            (d.data().email || "").toLowerCase() === (player.email || "").toLowerCase()
+          );
+          if (memberDoc) uid = memberDoc.id;
+        }
+        if (!uid) return;
+
         const snap = await getDoc(doc(db, "users", uid));
-        if (snap.exists()) window._payInfo[uid] = snap.data();
-      } catch(e) { /* ignore */ }
+        if (snap.exists() && (snap.data().venmo || snap.data().paypal)) {
+          window._payInfo[playerId] = snap.data();
+        }
+      } catch(e) { console.warn("loadPayInfo failed for", playerId, e.message); }
     }));
     // Re-render with payment info now available
     renderSettlement();
