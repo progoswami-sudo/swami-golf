@@ -10350,45 +10350,45 @@ ${closer}`;
         ((expenses.length || wagers.length) ? "✅ All settled up!" : "No expenses or wagers yet.") +
         '</div>';
     } else {
-      const tripName = ((activeTripData && activeTripData.name) || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
-      const note = encodeURIComponent(tripName + " settlement");
+      // Load payment info first, then render
+      loadPayInfoForSettlement(settlements).then(payInfo => {
+        const tripName = ((activeTripData && activeTripData.name) || "Golf Trip").replace(/[^a-zA-Z0-9 ]/g, "").trim();
+        const note = encodeURIComponent(tripName + " settlement");
 
-      planEl.innerHTML = settlements.map(t => {
-        const toPlayer  = players.find(p => p.id === t.toId);
-        const amt = t.amount.toFixed(2);
+        planEl.innerHTML = settlements.map(t => {
+          const amt = t.amount.toFixed(2);
+          const pi = payInfo[t.toId] || {};
+          const venmoHandle  = (pi.venmo  || "").trim();
+          const paypalHandle = (pi.paypal || "").trim();
 
-        // Look up Venmo/PayPal from users collection (stored in memory if loaded)
-        const payInfo = window._payInfo && window._payInfo[t.toId];
-        const venmoHandle  = (payInfo && payInfo.venmo || "").trim();
-        const paypalHandle = (payInfo && payInfo.paypal || "").trim();
+          console.log("Settlement to:", t.to, "toId:", t.toId, "venmo:", venmoHandle, "paypal:", paypalHandle);
 
-        console.log("Settlement row:", t.toId, "payInfo:", payInfo, "venmo:", venmoHandle, "paypal:", paypalHandle, "toPlayer:", toPlayer && toPlayer.name, "toPlayer.linkedUid:", toPlayer && toPlayer.linkedUid);
+          const venmoBtn = venmoHandle
+            ? '<a href="venmo://paycharge?txn=pay&recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amt + '&note=' + note + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#008CFF;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">Venmo</a>'
+            : "";
+          const paypalBtn = paypalHandle
+            ? '<a href="https://paypal.me/' + encodeURIComponent(paypalHandle) + '/' + amt + '" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#003087;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">PayPal</a>'
+            : "";
+          const noPaymentMsg = (!venmoHandle && !paypalHandle)
+            ? '<span style="font-size:11px;color:#475569;">Ask ' + escapeHtml(t.to) + ' to add Venmo/PayPal to their profile</span>'
+            : "";
 
-        const venmoBtn = venmoHandle
-          ? '<a href="venmo://paycharge?txn=pay&recipients=' + encodeURIComponent(venmoHandle) + '&amount=' + amt + '&note=' + note + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#008CFF;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">Venmo</a>'
-          : "";
-        const paypalBtn = paypalHandle
-          ? '<a href="https://paypal.me/' + encodeURIComponent(paypalHandle) + '/' + amt + '" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#003087;color:white;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;">PayPal</a>'
-          : "";
-
-        return '<div class="settlement-row" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-            '<span style="color:#f87171;font-weight:600;">' + escapeHtml(t.from) + '</span>' +
-            '<span style="color:#64748b;">pays</span>' +
-            '<span class="settlement-amount">$' + amt + '</span>' +
-            '<span style="color:#64748b;">to</span>' +
-            '<span style="color:#4ade80;font-weight:600;">' + escapeHtml(t.to) + '</span>' +
-          '</div>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
-            venmoBtn + paypalBtn +
-            '<button onclick="markPaymentPaid(\'' + escapeAttr(t.fromId) + '\',\'' + escapeAttr(t.toId) + '\',\'' + escapeAttr(t.from) + '\',\'' + escapeAttr(t.to) + '\',' + t.amount + ')" style="padding:7px 12px;background:transparent;color:#86efac;border-radius:20px;font-size:12px;font-weight:600;width:auto;margin:0;border:1.5px solid #166534;">✓ Mark Paid</button>' +
-          '</div>' +
-        '</div>';
-      }).join("");
+          return '<div class="settlement-row" style="flex-direction:column;align-items:flex-start;gap:8px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+              '<span style="color:#f87171;font-weight:600;">' + escapeHtml(t.from) + '</span>' +
+              '<span style="color:#64748b;">pays</span>' +
+              '<span class="settlement-amount">$' + amt + '</span>' +
+              '<span style="color:#64748b;">to</span>' +
+              '<span style="color:#4ade80;font-weight:600;">' + escapeHtml(t.to) + '</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+              venmoBtn + paypalBtn + noPaymentMsg +
+              '<button onclick="markPaymentPaid(\'' + escapeAttr(t.fromId) + '\',\'' + escapeAttr(t.toId) + '\',\'' + escapeAttr(t.from) + '\',\'' + escapeAttr(t.to) + '\',' + t.amount + ')" style="padding:7px 12px;background:transparent;color:#86efac;border-radius:20px;font-size:12px;font-weight:600;width:auto;margin:0;border:1.5px solid #166534;">✓ Mark Paid</button>' +
+            '</div>' +
+          '</div>';
+        }).join("");
+      });
     }
-
-    // Settled section
-    if (payments.length && settledEl && sectionEl) {
       sectionEl.style.display = "block";
       settledEl.innerHTML = payments
         .slice().sort((a, b) => new Date(b.settledAt || 0) - new Date(a.settledAt || 0))
@@ -10406,20 +10406,21 @@ ${closer}`;
       sectionEl.style.display = "none";
     }
 
-    // Load payment info for Venmo/PayPal lookups
-    loadPayInfoForSettlement(settlements.map(s => s.toId));
   }
 
-  async function loadPayInfoForSettlement(playerIds) {
-    if (!playerIds.length) return;
-    window._payInfo = window._payInfo || {};
-    await Promise.all([...new Set(playerIds)].map(async playerId => {
-      if (window._payInfo[playerId]) return;
+  // loadPayInfoForSettlement: returns {playerId: {venmo, paypal}} map
+  async function loadPayInfoForSettlement(settlements) {
+    const payInfo = {};
+    if (!settlements || !settlements.length) return payInfo;
+    const playerIds = [...new Set(settlements.map(s => s.toId))];
+
+    // Also fetch payers (fromId) in case we need them later
+    await Promise.all(playerIds.map(async playerId => {
       try {
         const player = players.find(p => p.id === playerId);
-        if (!player) return;
+        if (!player) { console.log("No player found for id:", playerId); return; }
 
-        // Get the Firebase Auth UID — either from linkedUid or by matching email in members
+        // Get Firebase Auth UID
         let uid = player.linkedUid || null;
         if (!uid && player.email) {
           const membersSnap = await getDocs(membersCollection());
@@ -10428,16 +10429,18 @@ ${closer}`;
           );
           if (memberDoc) uid = memberDoc.id;
         }
+        console.log("PayInfo lookup:", player.name, "linkedUid:", player.linkedUid, "resolved uid:", uid);
         if (!uid) return;
 
         const snap = await getDoc(doc(db, "users", uid));
-        if (snap.exists() && (snap.data().venmo || snap.data().paypal)) {
-          window._payInfo[playerId] = snap.data();
+        console.log("users doc exists:", snap.exists(), "data:", snap.exists() ? JSON.stringify(snap.data()) : "n/a");
+        if (snap.exists()) {
+          payInfo[playerId] = snap.data();
         }
       } catch(e) { console.warn("loadPayInfo failed for", playerId, e.message); }
     }));
-    // Re-render with payment info now available
-    renderSettlement();
+
+    return payInfo;
   }
 
   // ── END TAB MODULE ──────────────────────────────────────────────────────────
@@ -10466,7 +10469,7 @@ ${closer}`;
   var _allFns = {
     toggleHomeMenu, openUserProfile, goHome, createTrip, openTripHome, goTripHome,
     toggleTripMenu, sendMagicLink, showLoginEmailStep, signOutUser, saveUserProfile,
-    requestNotifications, turnOffNotifications, openTab,
+    requestNotifications, turnOffNotifications, openTab, openTab,
     filterCourseDropdown, selectCourse, closeCourseDropdown,
     saveMatch, savePlayer, saveExpense, saveWager, saveCompetition,
     saveTeamAssignments, saveIntel, saveHoleDetail, saveMoment,
