@@ -1662,13 +1662,19 @@
         <option value="Best Ball">Best Ball</option>
         <option value="Best Ball (Nassau)">Best Ball (Nassau)</option>
         <option value="Scramble">Scramble</option>
+        <option value="Scramble (Nassau)">Scramble (Nassau)</option>
         <option value="Stableford">Stableford</option>
       </select>
 
       <label class="form-label" for="matchScoringType">Gross / Net</label>
-      <select id="matchScoringType">
+      <select id="matchScoringType" onchange="handleMatchFormatChange()">
         <option value="Gross">Gross</option>
         <option value="Net">Net</option>
+      </select>
+
+      <label class="form-label" for="matchHandicapAllowance" style="margin-top:8px;">Handicap Allowance</label>
+      <select id="matchHandicapAllowance" style="margin-top:6px;">
+        <option value="N/A">N/A</option>
       </select>
 
       <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
@@ -3851,8 +3857,16 @@ Respond ONLY with valid JSON, nothing else:
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
 
-      // Render the correct value/point fields for this format
+      // Render the correct value/point fields and HA options for this format
       handleMatchFormatChange();
+
+      // Restore handicap allowance after handleMatchFormatChange populates the options
+      setTimeout(function() {
+        const haEl = document.getElementById("matchHandicapAllowance");
+        if (haEl && sourceMatch.handicapAllowance) {
+          haEl.value = sourceMatch.handicapAllowance;
+        }
+      }, 10);
 
       // Populate value settings AFTER fields are rendered
       if (sourceMatch.valueSettings) {
@@ -3912,7 +3926,47 @@ Respond ONLY with valid JSON, nothing else:
 
   function handleMatchFormatChange() {
     const format = document.getElementById("matchFormat").value;
-    document.getElementById("nassauHelp").classList.toggle("hidden", format !== "Best Ball (Nassau)");
+    const scoring = document.getElementById("matchScoringType").value;
+    const isNet = scoring === "Net";
+    const nassauHelp = document.getElementById("nassauHelp");
+    if (nassauHelp) nassauHelp.classList.toggle("hidden",
+      format !== "Best Ball (Nassau)" && format !== "Scramble (Nassau)");
+
+    // Populate Handicap Allowance options
+    const haSelect = document.getElementById("matchHandicapAllowance");
+    if (haSelect) {
+      const currentVal = haSelect.value;
+      haSelect.innerHTML = "";
+      haSelect.disabled = false;
+
+      let options = [];
+      if (!isNet) {
+        options = ["N/A"];
+        haSelect.disabled = true;
+      } else if (format === "Best Ball" || format === "Best Ball (Nassau)") {
+        options = ["100%", "90%"];
+      } else if (format === "Scramble" || format === "Scramble (Nassau)") {
+        options = [
+          "35% low / 15% high",
+          "30% low / 20% / 10% high",
+          "25% low / 20% / 15% / 10% high"
+        ];
+      } else {
+        options = ["100%"];
+      }
+
+      options.forEach(function(opt) {
+        const el = document.createElement("option");
+        el.value = opt;
+        el.textContent = opt;
+        haSelect.appendChild(el);
+      });
+
+      // Restore previous value if still valid, else default to first
+      if (options.includes(currentVal)) haSelect.value = currentVal;
+      else haSelect.value = options[0];
+    }
+
     renderMatchValueFields();
   }
 
@@ -3935,7 +3989,7 @@ Respond ONLY with valid JSON, nothing else:
       "Double or Worse (2+ over)": "0.00"
     };
 
-    if (format === "Best Ball (Nassau)") {
+    if (format === "Best Ball (Nassau)" || format === "Scramble (Nassau)") {
       fields = ["Front 9", "Back 9", "Overall"];
     } else if (format === "Stableford") {
       fields = [
@@ -4123,6 +4177,7 @@ Max 80 words total.`;
     const round = String(document.getElementById("matchRound").value || "1");
     const format = document.getElementById("matchFormat").value;
     const scoringType = document.getElementById("matchScoringType").value;
+    const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
     const valueType = document.getElementById("matchValueType").value;
     const valueSettings = getMatchValueSettings();
     const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
@@ -4141,7 +4196,7 @@ Max 80 words total.`;
       teeRating: selectedTee ? selectedTee.rating : null,
       teeSlope: selectedTee ? selectedTee.slope : null,
       teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
-      numberOfHoles, startingHole, round, format, scoringType, valueType, valueSettings,
+      numberOfHoles, startingHole, round, format, scoringType, handicapAllowance, valueType, valueSettings,
       teamAPlayerIds, teamBPlayerIds,
       teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
       frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
@@ -4228,13 +4283,13 @@ Max 80 words total.`;
     const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
     const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
     const isNassau = (match.format || "").includes("Nassau");
-    const isBestBall = (match.format || "") === "Best Ball";
+    const isBestBall = (match.format || "") === "Best Ball" || (match.format || "") === "Scramble";
     const status = nassauStatusLabel(match);
     const isComplete = !!match.isComplete;
     const isStarted = status !== "Not Started";
 
-    // Compute live Nassau scores
-    const nassau = isNassau && isStarted ? computeNassau(match) : null;
+    // Compute live Nassau scores for all match play formats
+    const nassau = (isNassau || isBestBall) && isStarted ? computeNassau(match) : null;
 
     function segCell(seg, team) {
       if (isComplete) {
