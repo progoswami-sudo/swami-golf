@@ -4403,23 +4403,79 @@ Max 80 words total.`;
   // ── NASSAU SCORING ENGINE ────────────────────────────────────────────────────
 
   function computeNassau(match) {
-    // Returns { front, back, overall } each as { aUp, aWins, bWins, holesPlayed, complete, dominated }
     const holes = getScorecardForMatch(match).holes || [];
     const tee = getTeeForMatch(match);
     const aIds = match.teamAPlayerIds || [];
     const bIds = match.teamBPlayerIds || [];
     const holeScores = match.holeScores || {};
     const isNet = (match.scoringType || "Gross") === "Net";
+    const scramble = isScrambleFormat(match);
+    const allowance = match.handicapAllowance || "N/A";
 
-    // Build stroke maps for net scoring
+    let strokeMaps = {};
+
+    if (scramble) {
+      // Scramble: team scores keyed by team ID ("A"/"B" or player ID for individual)
+      const compTeams = getTeams();
+      const teamA = compTeams[0] || { id: "A" };
+      const teamB = compTeams[1] || { id: "B" };
+      // Find actual team IDs used in holeScores
+      const aTeamId = teamA.id;
+      const bTeamId = teamB.id;
+
+      if (isNet) {
+        const aTeamCH = computeScrambleHandicap(aIds, tee, allowance);
+        const bTeamCH = computeScrambleHandicap(bIds, tee, allowance);
+        const lowCH = Math.min(aTeamCH, bTeamCH);
+        const aStrokes = Math.max(0, aTeamCH - lowCH);
+        const bStrokes = Math.max(0, bTeamCH - lowCH);
+        strokeMaps[aTeamId] = calculateStrokeMap(aStrokes, holes);
+        strokeMaps[bTeamId] = calculateStrokeMap(bStrokes, holes);
+      }
+
+      function getTeamScore(teamId, hole) {
+        const raw = Number((holeScores[teamId] || {})[hole.hole]);
+        if (!raw) return null;
+        return raw - (isNet ? (strokeMaps[teamId] && strokeMaps[teamId][hole.hole] || 0) : 0);
+      }
+
+      function holeCompleteScramble(hole) {
+        const aId = compTeams[0] ? compTeams[0].id : "A";
+        const bId = compTeams[1] ? compTeams[1].id : "B";
+        return Number((holeScores[aId] || {})[hole.hole]) > 0 &&
+               Number((holeScores[bId] || {})[hole.hole]) > 0;
+      }
+
+      function computeSegment(segHoles) {
+        let aWins = 0, bWins = 0, played = 0;
+        const aId = compTeams[0] ? compTeams[0].id : "A";
+        const bId = compTeams[1] ? compTeams[1].id : "B";
+        segHoles.forEach(hole => {
+          if (!holeCompleteScramble(hole)) return;
+          played++;
+          const a = getTeamScore(aId, hole);
+          const b = getTeamScore(bId, hole);
+          if (a === null || b === null) return;
+          if (a < b) aWins++;
+          else if (b < a) bWins++;
+        });
+        const remaining = segHoles.length - played;
+        const aUp = aWins - bWins;
+        return { aUp, aWins, bWins, holesPlayed: played, total: segHoles.length, remaining, dominated: Math.abs(aUp) > remaining };
+      }
+
+      const frontHoles = holes.filter(h => Number(h.hole) <= 9);
+      const backHoles  = holes.filter(h => Number(h.hole) >= 10);
+      return { front: computeSegment(frontHoles), back: computeSegment(backHoles), overall: computeSegment(holes) };
+    }
+
+    // ── Best Ball / Standard path ─────────────────────────────────────────────
     const allIds = aIds.concat(bIds);
-    const chs = {};
     const validChs = allIds.map(id => {
       const p = players.find(x => x.id === id);
       return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
     }).filter(x => x !== null);
     const lowCh = validChs.length ? Math.min.apply(null, validChs) : null;
-    const strokeMaps = {};
     allIds.forEach(id => {
       const p = players.find(x => x.id === id);
       const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
@@ -4437,14 +4493,11 @@ Max 80 words total.`;
     }
 
     function holeComplete(hole) {
-      // A hole counts only when every player has a score
-      const allPlayers = aIds.concat(bIds);
-      return allPlayers.every(id => Number((holeScores[id] || {})[hole.hole]) > 0);
+      return aIds.concat(bIds).every(id => Number((holeScores[id] || {})[hole.hole]) > 0);
     }
 
     function computeSegment(segHoles) {
-      let aWins = 0, bWins = 0, halves = 0;
-      let played = 0;
+      let aWins = 0, bWins = 0, halves = 0, played = 0;
       segHoles.forEach(hole => {
         if (!holeComplete(hole)) return;
         played++;
@@ -4457,19 +4510,12 @@ Max 80 words total.`;
       });
       const remaining = segHoles.length - played;
       const aUp = aWins - bWins;
-      // Check for early clinch (can't be caught)
-      const dominated = Math.abs(aUp) > remaining;
-      return { aUp, aWins, bWins, halves, holesPlayed: played, total: segHoles.length, remaining, dominated };
+      return { aUp, aWins, bWins, halves, holesPlayed: played, total: segHoles.length, remaining, dominated: Math.abs(aUp) > remaining };
     }
 
     const frontHoles = holes.filter(h => Number(h.hole) <= 9);
     const backHoles  = holes.filter(h => Number(h.hole) >= 10);
-
-    return {
-      front:   computeSegment(frontHoles),
-      back:    computeSegment(backHoles),
-      overall: computeSegment(holes)
-    };
+    return { front: computeSegment(frontHoles), back: computeSegment(backHoles), overall: computeSegment(holes) };
   }
 
   function nassauStatusLabel(match) {
@@ -4825,6 +4871,37 @@ Max 80 words total.`;
 
   // ── END COMPETITION SWAMI ALERTS ─────────────────────────────────────────────
 
+  // ── SCRAMBLE HANDICAP ENGINE ─────────────────────────────────────────────────
+
+  function isScrambleFormat(match) {
+    return (match.format || "").toLowerCase().startsWith("scramble");
+  }
+
+  function computeScrambleHandicap(teamIds, tee, allowance) {
+    const chs = teamIds.map(id => {
+      const p = players.find(x => x.id === id);
+      return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+    }).filter(x => x !== null).sort((a, b) => a - b); // low to high
+
+    if (!chs.length) return 0;
+    if (!allowance || allowance === "N/A") return 0;
+
+    if (allowance.includes("35%"))
+      return Math.round(chs[0] * 0.35 + (chs[chs.length - 1] || 0) * 0.15);
+    if (allowance.includes("30%")) {
+      const pcts = [0.30, 0.20, 0.10];
+      return Math.round(chs.reduce((t, ch, i) => t + ch * (pcts[i] || 0), 0));
+    }
+    if (allowance.includes("25%")) {
+      const pcts = [0.25, 0.20, 0.15, 0.10];
+      return Math.round(chs.reduce((t, ch, i) => t + ch * (pcts[i] || 0), 0));
+    }
+    const pct = allowance.includes("90") ? 0.9 : 1.0;
+    return Math.round(chs[0] * pct);
+  }
+
+  // ── END SCRAMBLE HANDICAP ENGINE ─────────────────────────────────────────────
+
 
   function getTeeForMatch(match) {
     const courseKey = match.courseId || normalizeCourseKey(match.course || "");
@@ -4943,8 +5020,14 @@ Max 80 words total.`;
     const match = matches.find(m => m.id === matchId);
     if (match) {
       holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
-      // Apply defaults for ALL players on this hole upfront
-      getPlayersForMatch(match).forEach(p => applyHoleDefaults(match, p.id, holeDetailHoleNum));
+      if (isScrambleFormat(match)) {
+        // For scramble, init detail for both team IDs
+        const compTeams = getTeams();
+        const teamIds = compTeams.map(t => t.id);
+        teamIds.forEach(tid => applyHoleDefaults(match, tid, holeDetailHoleNum));
+      } else {
+        getPlayersForMatch(match).forEach(p => applyHoleDefaults(match, p.id, holeDetailHoleNum));
+      }
     }
     renderHoleDetail();
     show("holeDetailScreen");
@@ -4966,6 +5049,7 @@ Max 80 words total.`;
     const par = Number(hole.par) || 4;
     const tee = getTeeForMatch(match);
     const playersForMatch = getPlayersForMatch(match);
+    const compTeams = getTeams();
     const isNet = (match.scoringType || "Gross") === "Net";
 
     document.getElementById("holeDetailTitle").textContent = `Hole ${holeDetailHoleNum}`;
@@ -4978,25 +5062,49 @@ Max 80 words total.`;
     </div>`;
 
     // Player tabs
-    let tabs = `<div class="hole-player-tabs">`;
-    playersForMatch.forEach(p => {
-      const active = p.id === holeDetailPlayerId ? "active" : "";
-      tabs += `<button class="hole-player-tab ${active}" onclick="switchHoleDetailPlayer('${p.id}')">${escapeHtml(p.name.split(" ")[0])}</button>`;
-    });
-    tabs += `</div>`;
+    // Player/team tabs
+    let tabs = '<div class="hole-player-tabs">';
+    const scrambleMatch = isScrambleFormat(match);
+    if (scrambleMatch) {
+      const compTeams = getTeams();
+      compTeams.forEach(t => {
+        const active = t.id === holeDetailPlayerId ? "active" : "";
+        tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(t.id) + '\')">' + escapeHtml(t.name) + '</button>';
+      });
+    } else {
+      playersForMatch.forEach(p => {
+        const active = p.id === holeDetailPlayerId ? "active" : "";
+        tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(p.id) + '\')">' + escapeHtml(p.name.split(" ")[0]) + '</button>';
+      });
+    }
+    tabs += '</div>';
 
-    // Current player's data for this hole
     const pd = (holeDetailData[holeDetailPlayerId] || {})[holeDetailHoleNum] || {};
     const existingScore = ((match.holeScores || {})[holeDetailPlayerId] || {})[holeDetailHoleNum];
     const currentScore = pd.score || Number(existingScore) || 0;
-    const courseHandicaps = {};
-    playersForMatch.forEach(p => { courseHandicaps[p.id] = calculateCourseHandicap(p.handicapIndex, tee); });
-    const validCh = playersForMatch.map(p => courseHandicaps[p.id]).filter(v => v !== null);
-    const lowCh = validCh.length ? Math.min(...validCh) : null;
-    const ch = courseHandicaps[holeDetailPlayerId];
-    const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
-    const strokeMap = calculateStrokeMap(strokes, holes);
-    const strokesOnHole = strokeMap[holeDetailHoleNum] || 0;
+
+    let strokes = 0, strokesOnHole = 0;
+    if (scrambleMatch && isNet) {
+      const aId = compTeams[0] ? compTeams[0].id : "A";
+      const bId = compTeams[1] ? compTeams[1].id : "B";
+      const allowance = match.handicapAllowance || "N/A";
+      const aCH = computeScrambleHandicap(match.teamAPlayerIds || [], tee, allowance);
+      const bCH = computeScrambleHandicap(match.teamBPlayerIds || [], tee, allowance);
+      const lowCH = Math.min(aCH, bCH);
+      const thisCH = holeDetailPlayerId === aId ? aCH : bCH;
+      strokes = Math.max(0, thisCH - lowCH);
+      const sm = calculateStrokeMap(strokes, holes);
+      strokesOnHole = sm[holeDetailHoleNum] || 0;
+    } else if (!scrambleMatch) {
+      const courseHandicaps = {};
+      playersForMatch.forEach(p => { courseHandicaps[p.id] = calculateCourseHandicap(p.handicapIndex, tee); });
+      const validCh = playersForMatch.map(p => courseHandicaps[p.id]).filter(v => v !== null);
+      const lowCh = validCh.length ? Math.min(...validCh) : null;
+      const ch = courseHandicaps[holeDetailPlayerId];
+      strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+      const strokeMap = calculateStrokeMap(strokes, holes);
+      strokesOnHole = strokeMap[holeDetailHoleNum] || 0;
+    }
 
     const diff = currentScore && par ? currentScore - par : null;        // always gross vs par
     const vsParLabel = currentScore ? vsParText(diff) : "–";
@@ -5194,10 +5302,20 @@ Max 80 words total.`;
       // Check for notable events — hole won by a team or birdie made
       await checkCompetitionAlert(match, updatedHoleScores, holeDetailHoleNum);
 
-      const pd = holeDetailData[holeDetailPlayerId] && holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
-      if ((pd && pd.moment) && pd.moment.trim()) {
-        const player = players.find(p => p.id === holeDetailPlayerId);
-        await addSwamiPost("momentAdd", `Hole ${holeDetailHoleNum} — ${(player && player.name) || "A player"}: ${pd.moment.trim()}`);
+      const pdFinal = holeDetailData[holeDetailPlayerId] && holeDetailData[holeDetailPlayerId][holeDetailHoleNum];
+      if ((pdFinal && pdFinal.moment) && pdFinal.moment.trim()) {
+        const matchForLabel = matches.find(m => m.id === holeDetailMatchId);
+        const scramble = matchForLabel && isScrambleFormat(matchForLabel);
+        let label = "A player";
+        if (scramble) {
+          const compTeams = getTeams();
+          const t = compTeams.find(t => t.id === holeDetailPlayerId);
+          label = t ? t.name : holeDetailPlayerId;
+        } else {
+          const player = players.find(p => p.id === holeDetailPlayerId);
+          label = (player && player.name) || "A player";
+        }
+        await addSwamiPost("momentAdd", "Hole " + holeDetailHoleNum + " — " + label + ": " + pdFinal.moment.trim());
       }
 
       renderScoreEntry();
@@ -5296,7 +5414,9 @@ Max 80 words total.`;
     const isNet = scoringType === "Net";
     const isNassau = (match.format || "").includes("Nassau");
     const isBestBall = (match.format || "") === "Best Ball";
+    const scramble = isScrambleFormat(match);
     const existingScores = match.holeScores || {};
+    const allowance = match.handicapAllowance || "N/A";
 
     const courseHandicaps = {};
     playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee); });
@@ -5313,6 +5433,26 @@ Max 80 words total.`;
     const outHoles = holes.filter(function(hole) { return Number(hole.hole) <= 9; });
     const inHoles = holes.filter(function(hole) { return Number(hole.hole) >= 10; });
     const sum = function(arr, field) { return arr.reduce(function(total, hole) { return total + (Number(hole[field]) || 0); }, 0); };
+
+    // Scramble team handicap data
+    const teamAIds = match.teamAPlayerIds || [];
+    const teamBIds = match.teamBPlayerIds || [];
+    const compTeams = getTeams();
+    const teamAName = (compTeams[0] && compTeams[0].name) || "Team A";
+    const teamBName = (compTeams[1] && compTeams[1].name) || "Team B";
+    const teamAId = compTeams[0] ? compTeams[0].id : "A";
+    const teamBId = compTeams[1] ? compTeams[1].id : "B";
+
+    let scrambleStrokeData = {};
+    if (scramble && isNet) {
+      const aCH = computeScrambleHandicap(teamAIds, tee, allowance);
+      const bCH = computeScrambleHandicap(teamBIds, tee, allowance);
+      const lowCH = Math.min(aCH, bCH);
+      const aStrokes = Math.max(0, aCH - lowCH);
+      const bStrokes = Math.max(0, bCH - lowCH);
+      scrambleStrokeData[teamAId] = { ch: aCH, strokes: aStrokes, strokeMap: calculateStrokeMap(aStrokes, holes) };
+      scrambleStrokeData[teamBId] = { ch: bCH, strokes: bStrokes, strokeMap: calculateStrokeMap(bStrokes, holes) };
+    }
 
     // Compute Nassau for live display
     const nassau = computeNassau(match);
@@ -5390,14 +5530,84 @@ Max 80 words total.`;
     });
     header += "<th>IN</th><th>TOTAL</th></tr>";
 
-    const teamAIds = match.teamAPlayerIds || [];
-    const teamBIds = match.teamBPlayerIds || [];
-    const compTeams = getTeams();
-    const teamAName = (compTeams[0] && compTeams[0].name) || "Team A";
-    const teamBName = (compTeams[1] && compTeams[1].name) || "Team B";
-
     // Build player rows grouped by team, with team name row below each group
     let playerRows = "";
+
+    // ── SCRAMBLE: team rows only ──────────────────────────────────────────────
+    if (scramble) {
+      function buildScrambleTeamRows(teamId, teamName, oppTeamId, isA, color) {
+        const sd = scrambleStrokeData[teamId] || { ch: null, strokes: 0, strokeMap: {} };
+        const teamScores = existingScores[teamId] || {};
+        let grossRow = '<tr><td style="white-space:nowrap;color:' + color + ';font-weight:700;">' +
+          escapeHtml(teamName);
+        if (isNet && sd.ch !== null) {
+          grossRow += ' <span style="color:#94a3b8;font-size:11px;">(CH ' + sd.ch + (sd.strokes ? ', +' + sd.strokes + ')' : ')') + '</span>';
+        }
+        grossRow += '</td>';
+
+        let netRow = '<tr><td style="color:#64748b;font-size:12px;padding-left:10px;">Net</td>';
+
+        let outGross = 0, inGross = 0, outNet = 0, inNet = 0;
+
+        holes.forEach(function(hole) {
+          const raw = Number(teamScores[hole.hole]) || 0;
+          const strokesOnHole = isNet ? (sd.strokeMap[hole.hole] || 0) : 0;
+          const net = raw ? raw - strokesOnHole : null;
+          const par = Number(hole.par) || 0;
+
+          // Gross tap cell
+          const grossBadge = raw ? scoreBadge(raw, par, 0) : '<span style="color:#475569;font-size:11px;">–</span>';
+          const dotHtml = isNet && strokesOnHole ? '<div class="stroke-dots">' + renderStrokeDots(strokesOnHole) + '</div>' : "";
+          grossRow += '<td class="score-tap-cell" data-match-id="' + escapeAttr(activeScoreMatchId) + '" data-player-id="' + escapeAttr(teamId) + '" data-hole="' + Number(hole.hole) + '" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">' +
+            '<div class="score-cell-wrap">' + dotHtml + '<div id="score-badge-' + escapeAttr(teamId) + '-' + hole.hole + '">' + grossBadge + '</div></div></td>';
+
+          // Net cell — highlighted if won
+          const oppScores = existingScores[oppTeamId] || {};
+          const oppRaw = Number(oppScores[hole.hole]) || 0;
+          const oppSd = scrambleStrokeData[oppTeamId] || { strokeMap: {} };
+          const oppNet = oppRaw ? oppRaw - (isNet ? (oppSd.strokeMap[hole.hole] || 0) : 0) : null;
+          const netWin = net !== null && oppNet !== null && net < oppNet;
+          const netBg = netWin ? 'background:#166534;' : '';
+          const netLabel = net !== null ? String(net) : '—';
+          netRow += '<td style="text-align:center;' + netBg + '">' + netLabel + '</td>';
+
+          if (Number(hole.hole) <= 9 && raw) outGross += raw;
+          else if (Number(hole.hole) >= 10 && raw) inGross += raw;
+          if (Number(hole.hole) <= 9 && net) outNet += net;
+          else if (Number(hole.hole) >= 10 && net) inNet += net;
+
+          if (Number(hole.hole) === 9) {
+            grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-out" class="subtotal-cell">' + (outGross || "—") + '</td>';
+            netRow += '<td class="subtotal-cell">' + (outNet || "—") + '</td>';
+          }
+        });
+
+        // IN and TOTAL
+        const nassauCell = function(seg, isTeamA) {
+          const disp = nassauSegmentDisplay(seg, false);
+          const val = isTeamA ? disp.a : disp.b;
+          const isUp = isTeamA ? disp.aUp : disp.bUp;
+          if (!val || val === "—") return val || "—";
+          const col = isUp ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
+          return '<span style="color:' + col + ';font-weight:700;">' + val + '</span>';
+        };
+
+        grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-in" class="subtotal-cell">' + (inGross || "—") + '</td>';
+        grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-tot" class="subtotal-cell">' + nassauCell(nassau.overall, isA) + '</td></tr>';
+
+        netRow += '<td class="subtotal-cell">' + (inNet || "—") + '</td>';
+        netRow += '<td class="subtotal-cell">' + ((outNet + inNet) || "—") + '</td></tr>';
+
+        return grossRow + netRow;
+      }
+
+      const colCount = holes.length + (holes.length > 9 ? 3 : 2);
+      playerRows += buildScrambleTeamRows(teamAId, teamAName, teamBId, true, "#93c5fd");
+      playerRows += '<tr><td colspan="' + (colCount + 1) + '" style="padding:0;border-top:3px double #375984;"></td></tr>';
+      playerRows += buildScrambleTeamRows(teamBId, teamBName, teamAId, false, "#86efac");
+
+    } else {
+    // ── BEST BALL: per-player rows ────────────────────────────────────────────
 
     function buildPlayerRow(player) {
       const data = strokeData[player.id];
@@ -5450,6 +5660,8 @@ Max 80 words total.`;
     }
 
     unassigned.forEach(p => { playerRows += buildPlayerRow(p); });
+
+    } // end scramble else
 
     // Double separator below YDS row — handled via CSS class
     try {
