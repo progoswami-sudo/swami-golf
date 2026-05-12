@@ -4227,7 +4227,8 @@ Max 80 words total.`;
     const teamBName = (teams[1] && teams[1].name) || activeTripData.teamB || "Team B";
     const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
     const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
-    const isNassau = (match.format || "").includes("Nassau") || (match.format || "").includes("Best Ball");
+    const isNassau = (match.format || "").includes("Nassau");
+    const isBestBall = (match.format || "") === "Best Ball";
     const status = nassauStatusLabel(match);
     const isComplete = !!match.isComplete;
     const isStarted = status !== "Not Started";
@@ -4318,6 +4319,12 @@ Max 80 words total.`;
               '<tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr>' +
               '<tr><th>' + escapeHtml(teamAName) + '</th>' + segCell("front","a") + segCell("back","a") + segCell("overall","a") + '</tr>' +
               '<tr><th>' + escapeHtml(teamBName) + '</th>' + segCell("front","b") + segCell("back","b") + segCell("overall","b") + '</tr>' +
+            '</table>'
+          : isBestBall
+          ? '<table class="scorecard-table">' +
+              '<tr><th></th><th>Overall</th></tr>' +
+              '<tr><th>' + escapeHtml(teamAName) + '</th>' + segCell("overall","a") + '</tr>' +
+              '<tr><th>' + escapeHtml(teamBName) + '</th>' + segCell("overall","b") + '</tr>' +
             '</table>'
           : '<table class="scorecard-table">' +
               '<tr><th></th><th>Score</th></tr>' +
@@ -4472,6 +4479,8 @@ Max 80 words total.`;
     if (!match) return;
 
     const nassau = computeNassau(match);
+    const isNassauMatch = (match.format || "").includes("Nassau");
+    const isBestBallMatch = (match.format || "") === "Best Ball";
     const teams = getTeams();
     const teamAName = (teams[0] && teams[0].name) || "Team A";
     const teamBName = (teams[1] && teams[1].name) || "Team B";
@@ -4479,10 +4488,10 @@ Max 80 words total.`;
                     (match.valueType || "").toLowerCase() === "cash";
     const vs = match.valueSettings || {};
 
-    // Get per-segment values
-    const frontVal   = Number(vs["Front 9"] || vs["Front"] || vs["Nassau"] || 0);
-    const backVal    = Number(vs["Back 9"]  || vs["Back"]  || vs["Nassau"] || 0);
-    const overallVal = Number(vs["Overall"] || vs["Nassau"] || vs["Total"] || 0);
+    // Get per-segment values — Best Ball only uses overall
+    const frontVal   = isBestBallMatch ? 0 : Number(vs["Front 9"] || vs["Front"] || vs["Nassau"] || 0);
+    const backVal    = isBestBallMatch ? 0 : Number(vs["Back 9"]  || vs["Back"]  || vs["Nassau"] || 0);
+    const overallVal = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || vs["Total"] || 0);
 
     function segLabel(seg, segVal) {
       if (seg.holesPlayed === 0) return { a: "E", b: "E" };
@@ -4492,7 +4501,6 @@ Max 80 words total.`;
         (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
 
       if (isWager && segVal > 0) {
-        // Show $ won by winner, $ owed by loser
         const winLabel  = "+$" + segVal.toFixed(2);
         const loseLabel = "-$" + segVal.toFixed(2);
         if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
@@ -4514,12 +4522,18 @@ Max 80 words total.`;
     const backDisp    = segLabel(nassau.back,     backVal);
     const overallDisp = segLabel(nassau.overall,  overallVal);
 
-    // Points for team scoreboard (only for non-wager)
-    const frontPts   = nassau.front.aUp > 0   ? [1,0] : nassau.front.aUp < 0   ? [0,1] : [0.5,0.5];
-    const backPts    = nassau.back.aUp > 0    ? [1,0] : nassau.back.aUp < 0    ? [0,1] : [0.5,0.5];
+    // Points: Best Ball = overall only; Nassau = front + back + overall
     const overallPts = nassau.overall.aUp > 0 ? [1,0] : nassau.overall.aUp < 0 ? [0,1] : [0.5,0.5];
-    const totalA = frontPts[0] + backPts[0] + overallPts[0];
-    const totalB = frontPts[1] + backPts[1] + overallPts[1];
+    let totalA, totalB;
+    if (isBestBallMatch) {
+      totalA = overallPts[0];
+      totalB = overallPts[1];
+    } else {
+      const frontPts = nassau.front.aUp > 0 ? [1,0] : nassau.front.aUp < 0 ? [0,1] : [0.5,0.5];
+      const backPts  = nassau.back.aUp  > 0 ? [1,0] : nassau.back.aUp  < 0 ? [0,1] : [0.5,0.5];
+      totalA = frontPts[0] + backPts[0] + overallPts[0];
+      totalB = frontPts[1] + backPts[1] + overallPts[1];
+    }
 
     const updates = {
       isComplete: true,
@@ -5225,6 +5239,8 @@ Max 80 words total.`;
     const playersForMatch = getPlayersForMatch(match);
     const scoringType = match.scoringType || "Gross";
     const isNet = scoringType === "Net";
+    const isNassau = (match.format || "").includes("Nassau");
+    const isBestBall = (match.format || "") === "Best Ball";
     const existingScores = match.holeScores || {};
 
     const courseHandicaps = {};
@@ -5267,6 +5283,10 @@ Max 80 words total.`;
       return '<span style="color:' + color + ';font-weight:700;">' + val + '</span>';
     }
 
+    function rawSubtotal(teamIds, holeList) {
+      return holeList.reduce(function(t, h) { return t + (Number(teamScore(teamIds, h)) || 0); }, 0) || "";
+    }
+
     function teamCells(teamIds, oppIds, prefix, isA) {
       let out = "";
       holes.forEach(function(hole) {
@@ -5275,10 +5295,19 @@ Max 80 words total.`;
         const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
         out += '<td id="tscore-' + prefix + '-' + hole.hole + '" class="' + cls + '">' + val + '</td>';
         if (Number(hole.hole) === 9) {
-          out += '<td id="tscore-' + prefix + '-out" class="subtotal-cell">' + nassauCell(nassau.front, isA) + '</td>';
+          // Best Ball: show raw score for OUT; Nassau: show arrow
+          const outCell = isBestBall
+            ? (rawSubtotal(teamIds, outHoles) || "—")
+            : nassauCell(nassau.front, isA);
+          out += '<td id="tscore-' + prefix + '-out" class="subtotal-cell">' + outCell + '</td>';
         }
       });
-      out += '<td id="tscore-' + prefix + '-in" class="subtotal-cell">' + nassauCell(nassau.back, isA) + '</td>';
+      // IN column: raw for Best Ball, arrow for Nassau
+      const inCell = isBestBall
+        ? (rawSubtotal(teamIds, inHoles) || "—")
+        : nassauCell(nassau.back, isA);
+      out += '<td id="tscore-' + prefix + '-in" class="subtotal-cell">' + inCell + '</td>';
+      // TOTAL: always show arrow (the only competitive measure for Best Ball)
       out += '<td id="tscore-' + prefix + '-tot" class="subtotal-cell">' + nassauCell(nassau.overall, isA) + '</td>';
       return out;
     }
@@ -5308,8 +5337,9 @@ Max 80 words total.`;
 
     const teamAIds = match.teamAPlayerIds || [];
     const teamBIds = match.teamBPlayerIds || [];
-    const teamAName = activeTripData.teamA || "Team A";
-    const teamBName = activeTripData.teamB || "Team B";
+    const compTeams = getTeams();
+    const teamAName = (compTeams[0] && compTeams[0].name) || "Team A";
+    const teamBName = (compTeams[1] && compTeams[1].name) || "Team B";
 
     // Build player rows grouped by team, with team name row below each group
     let playerRows = "";
