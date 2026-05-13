@@ -5584,8 +5584,9 @@ Max 80 words total.`;
           else if (Number(hole.hole) >= 10 && net) inNet += net;
 
           if (Number(hole.hole) === 9) {
-            grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-out" class="subtotal-cell">' + (outGross || "—") + '</td>';
-            netRow += '<td class="subtotal-cell">' + (outNet || "—") + '</td>';
+            const outCell = isNassau ? nassauCell(nassau.front, isA) : (outGross || "—");
+            grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-out" class="subtotal-cell">' + outCell + '</td>';
+            netRow += '<td class="subtotal-cell">' + (isNassau ? "" : (outNet || "—")) + '</td>';
           }
         });
 
@@ -5599,11 +5600,12 @@ Max 80 words total.`;
           return '<span style="color:' + col + ';font-weight:700;">' + val + '</span>';
         };
 
-        grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-in" class="subtotal-cell">' + (inGross || "—") + '</td>';
+        const inCell = isNassau ? nassauCell(nassau.back, isA) : (inGross || "—");
+        grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-in" class="subtotal-cell">' + inCell + '</td>';
         grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-tot" class="subtotal-cell">' + nassauCell(nassau.overall, isA) + '</td></tr>';
 
-        netRow += '<td class="subtotal-cell">' + (inNet || "—") + '</td>';
-        netRow += '<td class="subtotal-cell">' + ((outNet + inNet) || "—") + '</td></tr>';
+        netRow += '<td class="subtotal-cell">' + (isNassau ? "" : (inNet || "—")) + '</td>';
+        netRow += '<td class="subtotal-cell">' + (isNassau ? "" : ((outNet + inNet) || "—")) + '</td></tr>';
 
         return grossRow + netRow;
       }
@@ -7005,7 +7007,7 @@ ${closer}`;
     const holeCount = holes.length || 18;
 
     const prompt = 'The following is a golf scorecard narration (spoken or typed). Extract all scores and hole details.\n\n' +
-      'Players in this match: ' + playerList + '\n\n' +
+      'Names to match (use EXACTLY as shown): ' + playerList + '\n\n' +
       'Input text:\n"' + text + '"\n\n' +
       'The course has ' + holeCount + ' holes. Return ONLY a JSON object, no markdown:\n' +
       '{\n' +
@@ -7014,7 +7016,7 @@ ${closer}`;
       '      "hole": 7,\n' +
       '      "players": [\n' +
       '        {\n' +
-      '          "name": "Brian",\n' +
+      '          "name": "exact name from the list above",\n' +
       '          "score": 4,\n' +
       '          "putts": 2,\n' +
       '          "fairway": "Hit",\n' +
@@ -7026,11 +7028,12 @@ ${closer}`;
       '  ]\n' +
       '}\n\n' +
       'Rules:\n' +
-      '- Match player names loosely (case-insensitive, first name OK)\n' +
+      '- Use the exact name from the list. "team a" → "Team A", "team b" → "Team B", first name → match to full name.\n' +
+      '- Each name in the list must appear at most once per hole.\n' +
       '- score must be an integer 1-12\n' +
       '- putts is integer if mentioned, otherwise omit\n' +
-      '- fairway: "Hit" if hit fairway, "Left"/"Right"/"Short" if missed, omit if not mentioned\n' +
-      '- approach: "Hit" if hit green/GIR, "Left"/"Right"/"Short"/"Long" if missed, omit if not mentioned\n' +
+      '- fairway: "Hit" if hit, "Left"/"Right"/"Short" if missed, omit if not mentioned\n' +
+      '- approach: "Hit" if GIR, "Left"/"Right"/"Short"/"Long" if missed, omit if not mentioned\n' +
       '- notes: any other detail (hazard, bunker, water, ob, etc.)\n' +
       '- Only include holes and players explicitly mentioned';
 
@@ -7060,10 +7063,13 @@ ${closer}`;
         const holeNum = Number(h.hole);
         if (!holeNum) return;
         (h.players || []).forEach(pd => {
-          const player = matchPlayers.find(mp =>
-            mp.name.toLowerCase() === (pd.name || "").toLowerCase() ||
-            mp.name.toLowerCase().startsWith((pd.name || "").toLowerCase().substring(0, 3))
-          );
+          const cardName = (pd.name || "").toLowerCase().trim();
+          // Try exact match first, then progressively looser
+          const player = matchPlayers.find(mp => mp.name.toLowerCase() === cardName)
+            || matchPlayers.find(mp => mp.name.toLowerCase().includes(cardName))
+            || matchPlayers.find(mp => cardName.includes(mp.name.toLowerCase()))
+            // Only use prefix match if prefix is long enough to be unambiguous (>4 chars)
+            || (cardName.length > 4 ? matchPlayers.find(mp => mp.name.toLowerCase().startsWith(cardName.substring(0, Math.min(cardName.length, 6)))) : null);
           if (!player) return;
           if (pd.score) scanExtractedScores[player.id][String(holeNum)] = pd.score;
           const hasDetail = pd.putts || pd.fairway || pd.approach || pd.notes;
