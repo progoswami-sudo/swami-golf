@@ -4521,9 +4521,15 @@ Max 80 words total.`;
   function nassauStatusLabel(match) {
     const holeScores = match.holeScores || {};
     const holes = getScorecardForMatch(match).holes || [];
-    const allIds = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
-
     if (match.isComplete) return "Completed";
+
+    let allIds;
+    if (isScrambleFormat(match)) {
+      const compTeams = getTeams();
+      allIds = compTeams.map(t => t.id);
+    } else {
+      allIds = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
+    }
 
     let thru = 0;
     holes.forEach(hole => {
@@ -5490,15 +5496,16 @@ Max 80 words total.`;
         const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
         out += '<td id="tscore-' + prefix + '-' + hole.hole + '" class="' + cls + '">' + val + '</td>';
         if (Number(hole.hole) === 9) {
-          // Best Ball: show raw score for OUT; Nassau: show arrow
-          const outCell = isBestBall
+          // Best Ball or Scramble (no Nassau): raw score for OUT
+          // Nassau formats: arrow
+          const outCell = (isBestBall || scramble) && !isNassau
             ? (rawSubtotal(teamIds, outHoles) || "—")
             : nassauCell(nassau.front, isA);
           out += '<td id="tscore-' + prefix + '-out" class="subtotal-cell">' + outCell + '</td>';
         }
       });
-      // IN column: raw for Best Ball, arrow for Nassau
-      const inCell = isBestBall
+      // IN column
+      const inCell = (isBestBall || scramble) && !isNassau
         ? (rawSubtotal(teamIds, inHoles) || "—")
         : nassauCell(nassau.back, isA);
       out += '<td id="tscore-' + prefix + '-in" class="subtotal-cell">' + inCell + '</td>';
@@ -6980,11 +6987,18 @@ ${closer}`;
     const match = matches.find(m => m.id === activeScorecardMatchId);
     if (!match) { if (btn) { btn.disabled = false; btn.textContent = "Interpret Scores"; } return alert("No active match."); }
 
-    const matchPlayers = (match.teamAPlayerIds || [])
-      .concat(match.teamBPlayerIds || [])
-      .map(pid => players.find(x => x.id === pid))
-      .filter(Boolean)
-      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+    const scramble = isScrambleFormat(match);
+    let matchPlayers; // { id, name } array — either teams or players
+    if (scramble) {
+      const compTeams = getTeams();
+      matchPlayers = compTeams.map(t => ({ id: t.id, name: t.name }));
+    } else {
+      matchPlayers = (match.teamAPlayerIds || [])
+        .concat(match.teamBPlayerIds || [])
+        .map(pid => players.find(x => x.id === pid))
+        .filter(Boolean)
+        .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+    }
 
     const playerList = matchPlayers.map(p => p.name + (p.nickname ? ' ("' + p.nickname + '")' : '')).join(", ");
     const holes = getScorecardForMatch(match).holes || [];
@@ -7172,11 +7186,17 @@ ${closer}`;
     const match = matches.find(m => m.id === activeScorecardMatchId);
     if (!match) { alert("No active match found."); if (btn) { btn.disabled = false; btn.textContent = "Read Scores with AI"; } return; }
 
-    const matchPlayers = (match.players || match.teamAPlayerIds || [])
-      .concat(match.teamBPlayerIds || [])
-      .map(pid => players.find(x => x.id === pid))
-      .filter(Boolean)
-      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+    let matchPlayers;
+    if (isScrambleFormat(match)) {
+      const compTeams = getTeams();
+      matchPlayers = compTeams.map(t => ({ id: t.id, name: t.name }));
+    } else {
+      matchPlayers = (match.players || match.teamAPlayerIds || [])
+        .concat(match.teamBPlayerIds || [])
+        .map(pid => players.find(x => x.id === pid))
+        .filter(Boolean)
+        .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+    }
 
     const playerContext = matchPlayers.map(p =>
       p.nickname ? p.name + ' (aka "' + p.nickname + '")' : p.name
@@ -7476,8 +7496,7 @@ ${closer}`;
     const btn = document.getElementById("acceptScanBtn");
     if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
 
-    try {
-      const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
+    try {      const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
       const updatedHoleDetail = JSON.parse(JSON.stringify(match.holeDetail || {}));
 
       // Build union of all holes with scores OR voice details
@@ -7540,6 +7559,7 @@ ${closer}`;
 
     } catch(e) {
       alert("Error saving scores: " + e.message);
+    } finally {
       if (btn) { btn.disabled = false; btn.textContent = "✓ Accept All"; }
     }
   }
