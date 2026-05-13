@@ -5554,6 +5554,16 @@ Max 80 words total.`;
 
         let netRow = '<tr><td style="color:#64748b;font-size:12px;padding-left:10px;">Net</td>';
 
+        // Define nassauCell before any reference to it
+        function nassauCell(seg, isTeamA) {
+          const disp = nassauSegmentDisplay(seg, false);
+          const val = isTeamA ? disp.a : disp.b;
+          const isUp = isTeamA ? disp.aUp : disp.bUp;
+          if (!val || val === "—") return val || "—";
+          const col = isUp ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
+          return '<span style="color:' + col + ';font-weight:700;">' + val + '</span>';
+        }
+
         let outGross = 0, inGross = 0, outNet = 0, inNet = 0;
 
         holes.forEach(function(hole) {
@@ -5589,16 +5599,6 @@ Max 80 words total.`;
             netRow += '<td class="subtotal-cell">' + (isNassau ? "" : (outNet || "—")) + '</td>';
           }
         });
-
-        // IN and TOTAL
-        const nassauCell = function(seg, isTeamA) {
-          const disp = nassauSegmentDisplay(seg, false);
-          const val = isTeamA ? disp.a : disp.b;
-          const isUp = isTeamA ? disp.aUp : disp.bUp;
-          if (!val || val === "—") return val || "—";
-          const col = isUp ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
-          return '<span style="color:' + col + ';font-weight:700;">' + val + '</span>';
-        };
 
         const inCell = isNassau ? nassauCell(nassau.back, isA) : (inGross || "—");
         grossRow += '<td id="tscore-' + escapeAttr(teamId) + '-in" class="subtotal-cell">' + inCell + '</td>';
