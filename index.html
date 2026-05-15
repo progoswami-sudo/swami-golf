@@ -4292,43 +4292,41 @@ Max 80 words total.`;
     const nassau = (isNassau || isBestBall) && isStarted ? computeNassau(match) : null;
 
     function segCell(seg, team) {
-      if (isComplete) {
+      const s = nassau ? nassau[seg === "front" ? "front" : seg === "back" ? "back" : "overall"] : null;
+
+      if (isComplete && nassau) {
         const isWager = (match.valueType || "").toLowerCase() === "wager" ||
                         (match.valueType || "").toLowerCase() === "cash";
-        // For wager matches, always recompute from nassau
-        if (isWager && nassau) {
-          const vs = match.valueSettings || {};
-          const segVal = Number(
-            seg === "front"  ? (vs["Front 9"] || vs["Front"] || vs["Nassau"] || 0) :
-            seg === "back"   ? (vs["Back 9"]  || vs["Back"]  || vs["Nassau"] || 0) :
-                               (vs["Overall"] || vs["Nassau"] || vs["Total"] || 0)
-          );
-          const s = nassau[seg === "front" ? "front" : seg === "back" ? "back" : "overall"];
+        const vs = match.valueSettings || {};
+        const segVal = Number(
+          seg === "front"  ? (vs["Front 9"] || vs["Front"] || vs["Nassau"] || 0) :
+          seg === "back"   ? (vs["Back 9"]  || vs["Back"]  || vs["Nassau"] || 0) :
+                             (vs["Overall"] || vs["Nassau"] || vs["Total"] || vs["Points"] || 0)
+        );
+
+        if (!s || s.holesPlayed === 0) return '<td style="color:#475569;">—</td>';
+
+        if (isWager) {
           if (s.aUp === 0) return '<td style="color:#93c5fd;font-weight:700;">E</td>';
           const won = team === "a" ? s.aUp > 0 : s.aUp < 0;
           const display = segVal > 0 ? (won ? "+$" + segVal.toFixed(2) : "-$" + segVal.toFixed(2)) : (won ? "W" : "L");
           return '<td style="color:' + (won ? "#4ade80" : "#f87171") + ';font-weight:700;">' + display + '</td>';
         }
-        // Points match — use stored labels written by completeMatch
-        const val = team === "a"
-          ? (seg === "front" ? match.frontA : seg === "back" ? match.backA : match.overallA)
-          : (seg === "front" ? match.frontB : seg === "back" ? match.backB : match.overallB);
-        const display = val || "—";
-        // Colour: pts > 0 and not half = green; 0 pts = red; half pts = blue
-        const numVal = parseFloat(display);
-        const segValStr = seg === "front" ? (match.valueSettings || {})["Front 9"] :
-                          seg === "back"  ? (match.valueSettings || {})["Back 9"]  :
-                                            (match.valueSettings || {})["Overall"];
-        const maxPts = Number(segValStr || 0);
-        const color = display === "—" || display === "E" ? "#93c5fd"
-          : numVal === 0 ? "#f87171"
-          : numVal >= maxPts ? "#4ade80"
-          : "#93c5fd"; // half points
-        return '<td style="color:' + color + ';font-weight:700;">' + escapeHtml(display) + '</td>';
+
+        // Points — compute from live nassau
+        const aUp = s.aUp;
+        const aPts = aUp > 0 ? segVal : aUp < 0 ? 0 : segVal / 2;
+        const bPts = aUp < 0 ? segVal : aUp > 0 ? 0 : segVal / 2;
+        const pts  = team === "a" ? aPts : bPts;
+        const color = pts === segVal ? "#4ade80" : pts === 0 ? "#f87171" : "#93c5fd";
+        const label = segVal > 0
+          ? pts + " pt" + (pts !== 1 ? "s" : "")
+          : (aUp === 0 ? "E" : (team === "a" ? (aUp > 0 ? "W" : "L") : (aUp < 0 ? "W" : "L")));
+        return '<td style="color:' + color + ';font-weight:700;">' + label + '</td>';
       }
+
       // In progress — live Nassau arrows
-      if (!nassau) return '<td>—</td>';
-      const s = nassau[seg === "front" ? "front" : seg === "back" ? "back" : "overall"];
+      if (!s) return '<td>—</td>';
       const disp = nassauSegmentDisplay(s, false);
       const val = team === "a" ? disp.a : disp.b;
       const isUp = team === "a" ? disp.aUp : disp.bUp;
@@ -7594,18 +7592,53 @@ ${closer}`;
     const teams = getTeams();
     const scores = {};
     teams.forEach(t => { scores[t.id] = 0; });
+
     matches.forEach(match => {
-      // Only count completed points matches
       if (!match.isComplete) return;
       const vt = (match.valueType || "").toLowerCase();
       if (vt === "wager" || vt === "cash") return;
-      const aScore = Number(match.teamAScore || 0);
-      const bScore = Number(match.teamBScore || 0);
-      if (aScore === 0 && bScore === 0) return;
-      // Use competition team IDs (A/B) which map to teams[0]/teams[1]
-      if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aScore;
-      if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bScore;
+
+      const vs = match.valueSettings || {};
+      const isNassauMatch = (match.format || "").includes("Nassau");
+      const isBestBallMatch = (match.format || "") === "Best Ball" ||
+                              (match.format || "") === "Scramble";
+
+      // Recompute from live Nassau to handle stale stored scores
+      try {
+        const nassau = computeNassau(match);
+        let aPts = 0, bPts = 0;
+
+        function addSeg(seg, key) {
+          const val = Number(vs[key] || 0);
+          if (!val || !seg || seg.holesPlayed === 0) return;
+          aPts += seg.aUp > 0 ? val : seg.aUp < 0 ? 0 : val / 2;
+          bPts += seg.aUp < 0 ? val : seg.aUp > 0 ? 0 : val / 2;
+        }
+
+        if (isNassauMatch) {
+          addSeg(nassau.front,   "Front 9");
+          addSeg(nassau.back,    "Back 9");
+          addSeg(nassau.overall, "Overall");
+        } else {
+          // Best Ball / Scramble — overall only
+          const overallVal = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
+          if (nassau.overall.holesPlayed > 0) {
+            aPts += nassau.overall.aUp > 0 ? overallVal : nassau.overall.aUp < 0 ? 0 : overallVal / 2;
+            bPts += nassau.overall.aUp < 0 ? overallVal : nassau.overall.aUp > 0 ? 0 : overallVal / 2;
+          }
+        }
+
+        if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aPts;
+        if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bPts;
+      } catch(e) {
+        // Fall back to stored scores if recompute fails
+        const aScore = Number(match.teamAScore || 0);
+        const bScore = Number(match.teamBScore || 0);
+        if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aScore;
+        if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bScore;
+      }
     });
+
     return scores;
   }
 
@@ -7632,7 +7665,7 @@ ${closer}`;
           { id: "B", name: "Team B" }
         ];
 
-        // Compute scores from cached matches — same rules as computeTeamScores
+        // Compute scores from cached matches — recompute from nassau for accuracy
         const compMatches = (window._compScoreCache && window._compScoreCache[comp.id]) || [];
         const scores = {};
         teams.forEach(t => { scores[t.id] = 0; });
@@ -7640,11 +7673,37 @@ ${closer}`;
           if (!m.isComplete) return;
           const vt = (m.valueType || "").toLowerCase();
           if (vt === "wager" || vt === "cash") return;
-          const a = Number(m.teamAScore || 0);
-          const b = Number(m.teamBScore || 0);
-          if (a === 0 && b === 0) return;
-          scores["A"] = (scores["A"] || 0) + a;
-          scores["B"] = (scores["B"] || 0) + b;
+          const vs = m.valueSettings || {};
+          const isNassauM = (m.format || "").includes("Nassau");
+          try {
+            const nassauM = computeNassau(m);
+            let aPts = 0, bPts = 0;
+            function addSegT(seg, key) {
+              const val = Number(vs[key] || 0);
+              if (!val || !seg || seg.holesPlayed === 0) return;
+              aPts += seg.aUp > 0 ? val : seg.aUp < 0 ? 0 : val / 2;
+              bPts += seg.aUp < 0 ? val : seg.aUp > 0 ? 0 : val / 2;
+            }
+            if (isNassauM) {
+              addSegT(nassauM.front, "Front 9");
+              addSegT(nassauM.back, "Back 9");
+              addSegT(nassauM.overall, "Overall");
+            } else {
+              const ov = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
+              if (nassauM.overall.holesPlayed > 0) {
+                aPts += nassauM.overall.aUp > 0 ? ov : nassauM.overall.aUp < 0 ? 0 : ov / 2;
+                bPts += nassauM.overall.aUp < 0 ? ov : nassauM.overall.aUp > 0 ? 0 : ov / 2;
+              }
+            }
+            if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aPts;
+            if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bPts;
+          } catch(e) {
+            const a = Number(m.teamAScore || 0);
+            const b = Number(m.teamBScore || 0);
+            if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + a;
+            if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + b;
+          }
+        });
         });
 
         const scoreHtml = buildScoreboardHtml(teams, scores);
