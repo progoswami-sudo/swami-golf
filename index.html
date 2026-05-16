@@ -10374,6 +10374,9 @@ ${closer}`;
     if (photoUploadReturnScreen === "scoreEntryScreen") {
       show("scoreEntryScreen");
       setTimeout(renderScoreEntry, 50);
+    } else if (photoUploadReturnScreen === "scorecardPhotosScreen") {
+      show("scorecardPhotosScreen");
+      renderScorecardPhotos();
     } else {
       show("photoLibraryScreen");
       renderPhotoLibrary();
