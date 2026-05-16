@@ -1314,7 +1314,6 @@
       <div id="expenseSummaryBar"></div>
     </div>
     <div class="card">
-      <div class="feed-title" style="margin-bottom:10px;">Balances</div>
       <div id="expenseBalances"></div>
     </div>
     <div id="expenseList"></div>
@@ -1764,6 +1763,18 @@
       <button onclick="grintOpenApp()" style="width:100%;margin-top:16px;">Open The Grint →</button>
     </div>
   </div>
+  <!-- ── SCORECARD PHOTOS ──────────────────────────────────────────────────── -->
+  <div id="scorecardPhotosScreen" class="hidden secondary-screen">
+    <div class="sticky-page-header">
+      <button onclick="goBackToScorecard()" class="secondary">Back</button>
+      <h2>Match Photos</h2>
+      <button onclick="openScorecardAddPhoto()" style="width:auto;padding:6px 12px;margin:0;font-size:13px;">+ Add</button>
+    </div>
+    <div class="card">
+      <div id="scorecardPhotosGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
+    </div>
+  </div>
+
   <div id="voiceEntryScreen" class="hidden secondary-screen">
     <div class="sticky-page-header">
       <button onclick="goBackFromVoice()" class="secondary">Back</button>
@@ -3666,6 +3677,7 @@ Respond ONLY with valid JSON, nothing else:
       "voiceEntryScreen",
       "grintExportScreen",
       "grintHandoffScreen",
+      "scorecardPhotosScreen",
       "photoLibraryScreen",
       "photoUploadScreen",
       "photoViewerScreen",
@@ -9743,21 +9755,43 @@ ${closer}`;
         const p = players.find(pl => pl.id === pid);
         return p ? p.name.split(" ")[0] : pid;
       }).join(", ");
-      return `
-        <div class="expense-card" onclick="openExpenseEditor('${escapeAttr(exp.id)}')">
-          <div class="expense-card-header">
-            <div>
-              <div class="expense-title">${escapeHtml(exp.description || "Expense")}</div>
-              <div class="expense-meta">${escapeHtml(exp.category || "Other")} · Paid by ${escapeHtml(payerName)}</div>
-            </div>
-            <div class="expense-amount">$${Number(exp.amount||0).toFixed(2)}</div>
-          </div>
-          ${splitNames ? "<div class=\"expense-splits\">Split: " + escapeHtml(splitNames) + "</div>" : ""}
-          ${exp.note ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">${escapeHtml(exp.note)}</div>` : ""}
-          ${exp.receiptUrl ? `<div style="margin-top:6px;"><img src="${escapeAttr(exp.receiptUrl)}" style="height:48px;border-radius:6px;object-fit:cover;" alt="Receipt"></div>` : ""}
-        </div>
-      `;
+      return '<div class="expense-card">' +
+        '<div class="expense-card-header">' +
+          '<div style="flex:1;">' +
+            '<div class="expense-title">' + escapeHtml(exp.description || "Expense") + '</div>' +
+            '<div class="expense-meta">' + escapeHtml(exp.category || "Other") + ' · Paid by ' + escapeHtml(payerName) + '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+            '<div class="expense-amount">$' + Number(exp.amount||0).toFixed(2) + '</div>' +
+            '<button onclick="openExpenseEditor(\'' + escapeAttr(exp.id) + '\')" ' +
+              'style="font-size:11px;padding:2px 8px;margin:0;width:auto;background:transparent;border:1px solid #375984;color:#93c5fd;border-radius:8px;">Edit</button>' +
+          '</div>' +
+        '</div>' +
+        (splitNames ? '<div class="expense-splits">Split: ' + escapeHtml(splitNames) + '</div>' : '') +
+        (exp.note ? '<div style="font-size:12px;color:#94a3b8;margin-top:4px;">' + escapeHtml(exp.note) + '</div>' : '') +
+        (exp.receiptUrl
+          ? '<div style="margin-top:8px;">' +
+              '<img src="' + escapeAttr(exp.receiptUrl) + '" ' +
+              'onclick="viewReceiptFullScreen(\'' + escapeAttr(exp.receiptUrl) + '\')" ' +
+              'style="height:64px;border-radius:8px;object-fit:cover;cursor:pointer;border:1px solid #375984;" ' +
+              'alt="Receipt">' +
+            '</div>'
+          : '') +
+      '</div>';
     }).join("");
+  }
+
+  function viewReceiptFullScreen(url) {
+    // Simple full-screen overlay for receipt images
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = '<div style="position:relative;max-width:100%;max-height:100%;">' +
+      '<img src="' + escapeAttr(url) + '" style="max-width:100%;max-height:90vh;border-radius:10px;display:block;">' +
+      '<button onclick="this.closest(\'div\').parentElement.remove()" ' +
+        'style="position:absolute;top:-12px;right:-12px;width:32px;height:32px;border-radius:50%;padding:0;font-size:18px;line-height:1;background:#0f2442;border:2px solid #375984;">×</button>' +
+    '</div>';
+    overlay.addEventListener("click", function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
   }
 
   function openExpenseEditor(expenseId = null) {
@@ -9970,6 +10004,20 @@ ${closer}`;
         });
         expenseData.receiptUrl = receiptUrl;
         expenseReceiptBlob = null;
+
+        // Auto-add to photo library with "receipts" category
+        try {
+          await addDoc(photosCollection(), {
+            url: receiptUrl,
+            category: "receipts",
+            caption: "Receipt: " + (expenseData.description || "Expense"),
+            linkedExpenseId: editingExpenseId || null,
+            createdAt: new Date().toISOString(),
+            uploadedBy: (currentUser && currentUser.uid) || ""
+          });
+        } catch(photoErr) {
+          console.warn("Receipt photo library add failed:", photoErr);
+        }
       } catch (e) {
         console.warn("Receipt upload failed:", e);
       }
@@ -10333,17 +10381,40 @@ ${closer}`;
   }
 
   function openScorecardPhotoCapture() {
-    openPhotoUpload(); // this sets photoUploadReturnScreen = "photoLibraryScreen"
-    photoUploadReturnScreen = "scoreEntryScreen"; // override AFTER openPhotoUpload runs
-    // After screen renders, pre-select Scorecards and link match
-    setTimeout(() => {
+    // Show a gallery of existing match photos + Add button
+    show("scorecardPhotosScreen");
+    renderScorecardPhotos();
+  }
+
+  function renderScorecardPhotos() {
+    const grid = document.getElementById("scorecardPhotosGrid");
+    if (!grid) return;
+    const matchPhotos = photos.filter(p =>
+      p.linkedMatch === activeScoreMatchId ||
+      p.category === "scorecards"
+    );
+    if (!matchPhotos.length) {
+      grid.innerHTML = '<div class="empty-state">No photos yet for this match.</div>';
+      return;
+    }
+    grid.innerHTML = matchPhotos.map(p =>
+      '<div onclick="openPhotoViewer(\'' + escapeAttr(p.id) + '\')" style="cursor:pointer;">' +
+        '<img src="' + escapeAttr(p.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;">' +
+      '</div>'
+    ).join("");
+  }
+
+  function openScorecardAddPhoto() {
+    openPhotoUpload();
+    photoUploadReturnScreen = "scorecardPhotosScreen";
+    setTimeout(function() {
       selectedPhotoCategory = "scorecards";
       const chipsEl = document.getElementById("photoCategoryChips");
       if (chipsEl) {
-        chipsEl.innerHTML = PHOTO_CATEGORIES.filter(c => c.id !== "all").map(cat => `
-          <button class="photo-category-chip-btn ${cat.id === "scorecards" ? "selected" : ""}"
-            onclick="selectPhotoCategory('${cat.id}')">${cat.emoji} ${cat.label}</button>
-        `).join("");
+        chipsEl.innerHTML = PHOTO_CATEGORIES.filter(function(c) { return c.id !== "all"; }).map(function(cat) {
+          return '<button class="photo-category-chip-btn ' + (cat.id === "scorecards" ? "selected" : "") + '" ' +
+            'onclick="selectPhotoCategory(\'' + cat.id + '\')">' + cat.emoji + " " + cat.label + '</button>';
+        }).join("");
       }
       const matchSel = document.getElementById("photoLinkedMatch");
       if (matchSel && activeScoreMatchId) matchSel.value = activeScoreMatchId;
@@ -11132,7 +11203,9 @@ ${closer}`;
   window.saveTeams = saveTeams;
   window.goCompetitionScreen = goCompetitionScreen;
   window.goTeamRosterScreen = goTeamRosterScreen;
-  window.openGrintExport = openGrintExport;
+  window.viewReceiptFullScreen = viewReceiptFullScreen;
+  window.openScorecardAddPhoto = openScorecardAddPhoto;
+  window.renderScorecardPhotos = renderScorecardPhotos;
   window.selectGrintPlayer = selectGrintPlayer;
   window.grintSaveImage = grintSaveImage;
   window.grintOpenApp = grintOpenApp;
