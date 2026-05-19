@@ -17,6 +17,17 @@
       touch-action: manipulation;
     }
 
+    /* Eliminate 300ms tap delay on all interactive elements */
+    button, a, input, select, textarea,
+    [onclick], [role="button"],
+    .tile, .mini-tile, .home-menu-item, .player-row,
+    .score-tap-cell, .swipe-content, .match-scorecard,
+    .expense-card, .settlement-row, .hole-player-tab,
+    .photo-category-chip-btn, .dir-btn, .comp-tile {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body::before {
       content: "";
       position: fixed;
@@ -2951,6 +2962,13 @@ Respond ONLY with valid JSON, nothing else:
     // Firebase Auth restores session automatically via onAuthStateChanged
   }
 
+  // Global safety net: reset stuck disabled buttons on any unhandled error
+  window.addEventListener("unhandledrejection", function() {
+    document.querySelectorAll("button:disabled").forEach(function(b) {
+      if (b.id !== "matchHandicapAllowance") b.disabled = false;
+    });
+  });
+
   async function initSwamiApp(user) {
     currentUser = user;
     if (user.email) setCookie(EMAIL_COOKIE, user.email);
@@ -3650,6 +3668,16 @@ Respond ONLY with valid JSON, nothing else:
       document.activeElement.blur();
     }
 
+    // Reset any stuck disabled buttons when navigating screens
+    document.querySelectorAll("button:disabled").forEach(function(b) {
+      if (b.id !== "matchHandicapAllowance") b.disabled = false;
+    });
+
+    // Close any open menus/overlays
+    document.querySelectorAll(".match-actions-menu, .trip-menu, .competition-menu").forEach(function(m) {
+      m.classList.add("hidden");
+    });
+
     [
       "appHome",
       "tripHome",
@@ -4175,67 +4203,69 @@ Max 80 words total.`;
   }
 
   async function saveMatch() {
+    const saveBtn = document.querySelector("#matchSetupScreen button[onclick='saveMatch()']");
+    if (saveBtn) saveBtn.disabled = true;
     try {
-    if (!requireAdmin("add or edit matches")) return;
-    const matchDate = document.getElementById("matchDate").value;
-    const course = getSelectedCourseName();
-    const tees = getSelectedTeeName();
-    const courseId = getSelectedCourseId();
-    const teeId = getSelectedTeeId();
-    const selectedCourse = courseLibrary[courseId];
-    const selectedTee = selectedCourse && selectedCourse.tees ? selectedCourse.tees[teeId] : null;
-    const numberOfHoles = String(document.getElementById("matchNumberOfHoles") ? document.getElementById("matchNumberOfHoles").value : "18");
-    const startingHole = String(document.getElementById("matchStartingHole") ? document.getElementById("matchStartingHole").value : "1");
-    const round = String(document.getElementById("matchRound").value || "1");
-    const format = document.getElementById("matchFormat").value;
-    const scoringType = document.getElementById("matchScoringType").value;
-    const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
-    const valueType = document.getElementById("matchValueType").value;
-    const valueSettings = getMatchValueSettings();
-    const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
-    const teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
+      if (!requireAdmin("add or edit matches")) return;
+      const matchDate = document.getElementById("matchDate").value;
+      const course = getSelectedCourseName();
+      const tees = getSelectedTeeName();
+      const courseId = getSelectedCourseId();
+      const teeId = getSelectedTeeId();
+      const selectedCourse = courseLibrary[courseId];
+      const selectedTee = selectedCourse && selectedCourse.tees ? selectedCourse.tees[teeId] : null;
+      const numberOfHoles = String(document.getElementById("matchNumberOfHoles") ? document.getElementById("matchNumberOfHoles").value : "18");
+      const startingHole = String(document.getElementById("matchStartingHole") ? document.getElementById("matchStartingHole").value : "1");
+      const round = String(document.getElementById("matchRound").value || "1");
+      const format = document.getElementById("matchFormat").value;
+      const scoringType = document.getElementById("matchScoringType").value;
+      const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
+      const valueType = document.getElementById("matchValueType").value;
+      const valueSettings = getMatchValueSettings();
+      const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
+      const teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
 
-    if (!valueSettings) return;
-    if (!matchDate) return alert("Please select a date.");
-    if (!course) return alert("Please enter a golf course.");
-    if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return alert("Please select player(s) for both sides.");
+      if (!valueSettings) return;
+      if (!matchDate) return void alert("Please select a date.");
+      if (!course) return void alert("Please enter a golf course.");
+      if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return void alert("Please select player(s) for both sides.");
 
-    const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
-    console.log("Saving match, competitionId:", activeCompetitionId, "tripId:", activeTripId);
+      const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
+      console.log("Saving match, competitionId:", activeCompetitionId, "tripId:", activeTripId);
 
-    const matchData = {
-      matchDate, course, tees, courseId, teeId,
-      teeRating: selectedTee ? selectedTee.rating : null,
-      teeSlope: selectedTee ? selectedTee.slope : null,
-      teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
-      numberOfHoles, startingHole, round, format, scoringType, handicapAllowance, valueType, valueSettings,
-      teamAPlayerIds, teamBPlayerIds,
-      teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
-      frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
-      backA: baseScores.backA || "0", backB: baseScores.backB || "0",
-      overallA: baseScores.overallA || "0", overallB: baseScores.overallB || "0",
-      updatedAt: new Date().toISOString()
-    };
+      const matchData = {
+        matchDate, course, tees, courseId, teeId,
+        teeRating: selectedTee ? selectedTee.rating : null,
+        teeSlope: selectedTee ? selectedTee.slope : null,
+        teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
+        numberOfHoles, startingHole, round, format, scoringType, handicapAllowance, valueType, valueSettings,
+        teamAPlayerIds, teamBPlayerIds,
+        teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
+        frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
+        backA: baseScores.backA || "0", backB: baseScores.backB || "0",
+        overallA: baseScores.overallA || "0", overallB: baseScores.overallB || "0",
+        updatedAt: new Date().toISOString()
+      };
 
-    const wasEditing = Boolean(editingMatchId);
-    const matchLabel = "Round " + round + " " + format + " at " + course;
+      const wasEditing = Boolean(editingMatchId);
+      const matchLabel = "Round " + round + " " + format + " at " + course;
 
-    if (editingMatchId) {
-      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", editingMatchId), matchData);
-    } else {
-      await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
-    }
+      if (editingMatchId) {
+        await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", editingMatchId), matchData);
+      } else {
+        await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
+      }
 
-    await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", matchLabel);
-    editingMatchId = null;
-    openMatchHome();
+      await addSwamiPost(wasEditing ? "matchEdit" : "matchAdd", matchLabel);
+      editingMatchId = null;
+      openMatchHome();
     } catch(e) {
       alert("Error saving match: " + e.message);
       console.error("saveMatch error:", e);
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
     }
   }
-
-  function renderMatchList() {
     const list = document.getElementById("matchList");
     if (!list) return;
 
