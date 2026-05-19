@@ -6505,7 +6505,9 @@ ${closer}`;
     if (!pulse) return;
 
     const sortedFeed = [...feedPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const latestSwami = sortedFeed.find(post => post.author === "Swami Says");
+    const latestSwami = sortedFeed.find(post =>
+      post.author === "Swami Says" || post.author === "Swami" || post.isSwami
+    );
     const assignedId = typeof getAssignedPlayerId === "function" ? getAssignedPlayerId() : "";
     const latestTagged = assignedId
       ? sortedFeed.find(post => Array.isArray(post.taggedPlayerIds) && post.taggedPlayerIds.includes(assignedId))
@@ -8619,7 +8621,7 @@ ${closer}`;
       const div = document.createElement("div");
       div.className = "feed-post";
       const postId = post.id || `post-${idx}`;
-      const isSwami = post.author === "Swami Says";
+      const isSwami = post.author === "Swami Says" || post.author === "Swami" || !!post.isSwami;
       const isExpanded = expandedPosts.has(postId);
       const imgId = post.imageUrl ? `feed-img-${postId}` : "";
       const text = (post.text || "").trim();
@@ -8803,33 +8805,109 @@ ${closer}`;
   }
 
   function buildTripContext() {
-    const tripName = activeTripData.name || trips[activeTripId].name;
-    const teamA = activeTripData.teamA || "Team A";
-    const teamB = activeTripData.teamB || "Team B";
-    const teamAScore = activeTripData.teamAScore || "0";
-    const teamBScore = activeTripData.teamBScore || "0";
-    const playerList = players.map(p => {
-      const parts = [
-        p.name + (p.nickname ? ' "' + p.nickname + '"' : ''),
-        `HI: ${p.handicapIndex || "N/A"}`,
-        `Team: ${p.team || "unassigned"}`,
-        p.gender ? `Gender: ${formatGender(p.gender)}` : null,
-        p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
-        p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
-        null // intel loaded from subcollection
-      ].filter(Boolean);
-      return parts.join("; ");
-    }).join(" | ");
-    const recentFeed = [...feedPosts]
+    const tripName = activeTripData.name || "Golf Trip";
+
+    // ── TEAMS & SCORES ────────────────────────────────────────────────────────
+    const compTeams = getTeams();
+    const compScores = computeTeamScores();
+    const teamsStr = compTeams.length >= 2
+      ? compTeams.map(t => `${t.name} (${compScores[t.id] || 0} pts)`).join(" vs ")
+      : (activeTripData.teamA || "Team A") + " vs " + (activeTripData.teamB || "Team B");
+
+    // ── PLAYERS ───────────────────────────────────────────────────────────────
+    const playerList = players.map(p => [
+      p.name + (p.nickname ? ` "${p.nickname}"` : ""),
+      p.handicapIndex ? `HI:${p.handicapIndex}` : null,
+      p.team ? `Team:${p.team}` : null,
+      p.gender ? formatGender(p.gender) : null
+    ].filter(Boolean).join(" ")).join(" | ");
+
+    // ── MATCH DETAILS WITH HOLE SCORING ──────────────────────────────────────
+    const matchSummaries = matches.map(m => {
+      const nassau = (() => { try { return computeNassau(m); } catch(e) { return null; } })();
+      const status = nassauStatusLabel(m);
+      const aIds = m.teamAPlayerIds || [];
+      const bIds = m.teamBPlayerIds || [];
+      const aNames = aIds.map(id => { const p = players.find(x => x.id === id); return p ? p.name : null; }).filter(Boolean).join("/");
+      const bNames = bIds.map(id => { const p = players.find(x => x.id === id); return p ? p.name : null; }).filter(Boolean).join("/");
+      let summary = `${m.format||"Match"} R${m.round||1} at ${m.course||"TBD"} (${m.scoringType||"Gross"}${m.handicapAllowance && m.handicapAllowance !== "N/A" ? " "+m.handicapAllowance : ""}): ${aNames||"Team A"} vs ${bNames||"Team B"} — ${status}`;
+      if (nassau) {
+        const ovr = nassau.overall;
+        if (ovr.holesPlayed > 0) {
+          summary += `, Overall: ${ovr.aUp === 0 ? "All Square" : (ovr.aUp > 0 ? (aNames||"A") : (bNames||"B")) + " " + Math.abs(ovr.aUp) + " UP"} thru ${ovr.holesPlayed}`;
+          if (nassau.front.holesPlayed > 0) summary += `, Front: ${nassau.front.aUp === 0 ? "AS" : (nassau.front.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.front.aUp) + "up"}`;
+          if (nassau.back.holesPlayed > 0)  summary += `, Back: ${nassau.back.aUp === 0 ? "AS" : (nassau.back.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.back.aUp) + "up"}`;
+        }
+      }
+      // Add notable hole details (birdies, moments)
+      const holeScores = m.holeScores || {};
+      const holeDetail = m.holeDetail || {};
+      const holes = getScorecardForMatch(m).holes || [];
+      const notableHoles = [];
+      holes.forEach(h => {
+        const par = Number(h.par) || 4;
+        [...aIds, ...bIds].forEach(pid => {
+          const score = Number((holeScores[pid] || {})[h.hole]);
+          const detail = (holeDetail[pid] || {})[h.hole] || {};
+          const player = players.find(x => x.id === pid);
+          const name = player ? player.name : pid;
+          if (score && score <= par - 1) notableHoles.push(`${name} ${score <= par-2 ? "eagle" : "birdie"} hole ${h.hole}`);
+          if (detail.moment) notableHoles.push(`${name} hole ${h.hole}: "${detail.moment}"`);
+        });
+      });
+      if (notableHoles.length) summary += `. Notable: ${notableHoles.slice(0,5).join(", ")}`;
+      // Match moments
+      if (m.moments && m.moments.length) summary += `. Moments: ${m.moments.slice(-2).map(x => `"${x.text}"`).join(", ")}`;
+      // Value
+      const vs = m.valueSettings || {};
+      const valStr = Object.entries(vs).map(([k,v]) => `${k}:${v}`).join("/");
+      if (valStr) summary += `. Stakes: ${m.valueType||"Points"} ${valStr}`;
+      return summary;
+    }).join(" || ");
+
+    // ── EXPENSES ──────────────────────────────────────────────────────────────
+    const totalExpenses = expenses.reduce((t, e) => t + Number(e.amount || 0), 0);
+    const topExpenses = [...expenses]
+      .sort((a, b) => Number(b.amount||0) - Number(a.amount||0))
+      .slice(0, 3)
+      .map(e => {
+        const payer = players.find(p => p.id === e.paidById);
+        return `${e.description||"expense"} $${Number(e.amount||0).toFixed(0)} (paid by ${payer ? payer.name : "unknown"})`;
+      }).join(", ");
+    const expenseStr = totalExpenses > 0
+      ? `Total spent: $${totalExpenses.toFixed(0)}. Top: ${topExpenses}`
+      : "No expenses yet";
+
+    // ── WAGERS ────────────────────────────────────────────────────────────────
+    const wagerStr = wagers.length
+      ? wagers.slice(0, 4).map(w => {
+          const winners = (w.winnerIds || []).map(id => { const p = players.find(x => x.id === id); return p ? p.name : id; }).join("/");
+          const losers  = (w.loserIds  || []).map(id => { const p = players.find(x => x.id === id); return p ? p.name : id; }).join("/");
+          return `"${w.description||"wager"}" $${Number(w.amount||0).toFixed(0)}/loser${winners ? " → "+winners+" beat "+losers : ""}`;
+        }).join("; ")
+      : "No side wagers";
+
+    // ── PHOTO CAPTIONS ────────────────────────────────────────────────────────
+    const photoStr = photos.length
+      ? photos.filter(p => p.caption).slice(-4)
+          .map(p => `[${p.category||"photo"}] "${p.caption}"`).join(", ")
+      : "";
+
+    // ── RECENT HUMAN FEED COMMENTS ────────────────────────────────────────────
+    const recentHuman = [...feedPosts]
+      .filter(p => !p.isSwami && p.author !== "Swami Says" && p.author !== "Swami")
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 5)
-      .map(p => `${p.author}: "${p.text}"`)
+      .slice(0, 4)
+      .map(p => `${p.author}: "${(p.text||"").slice(0,80)}"`)
       .join(" | ");
-    // Collect all match moments across all matches
-    const allMoments = matches.flatMap(m =>
-      (m.moments || []).map(moment => `[${m.course || "match"} R${m.round || "1"}] ${moment.text}`)
-    ).slice(0, 8).join(" | ");
-    return `Trip: ${tripName}. Teams: ${teamA} (${teamAScore} pts) vs ${teamB} (${teamBScore} pts). Players: ${playerList || "none yet"}. Recent feed: ${recentFeed || "none"}.${allMoments ? " Match moments: " + allMoments : ""}`;
+
+    // ── ASSEMBLE ──────────────────────────────────────────────────────────────
+    let ctx = `Trip: "${tripName}". ${teamsStr}. Players: ${playerList||"none"}.`;
+    if (matchSummaries) ctx += ` Matches: ${matchSummaries}.`;
+    ctx += ` Expenses: ${expenseStr}. Side wagers: ${wagerStr}.`;
+    if (photoStr)    ctx += ` Photos: ${photoStr}.`;
+    if (recentHuman) ctx += ` Group chat: ${recentHuman}.`;
+    return ctx;
   }
 
 
