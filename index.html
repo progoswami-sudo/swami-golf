@@ -2780,10 +2780,9 @@
   async function getAiSwamiMedia(action, subject, swamiText) {
     // Decide: GIF or meme? GIFs for celebration moments, memes for roasts/observations
     const gifActions = ["matchComplete", "scoreUpdate", "momentAdd"];
-    const useGif = gifActions.includes(action) && Math.random() < 0.45;
+    const useGif = gifActions.includes(action) && Math.random() < 0.55;
 
-    if (useGif) {
-      const gif = await fetchSwamiGif(action, subject, swamiText);
+    if (useGif) {      const gif = await fetchSwamiGif(action, subject, swamiText);
       if (gif) return gif;
     }
 
@@ -5852,25 +5851,27 @@ Max 80 words total.`;
       const label = `${escapeHtml(player.name)} <span style="color:#94a3b8;font-size:11px;">${chLabel}${strokeLabel}</span>`;
 
       let row = `<tr><td style="white-space:nowrap;">${label}</td>`;
-      let outTotal = 0, inTotal = 0, total = 0;
+      let outGross = 0, inGross = 0, totalGross = 0;
 
       holes.forEach(function(hole) {
         const raw = ((existingScores[player.id] || {})[hole.hole]) || "";
-        const displayed = raw ? (Number(raw) - (isNet ? (data.strokeMap[hole.hole] || 0) : 0)) : "";
-        if (displayed !== "") {
-          total += Number(displayed);
-          if (Number(hole.hole) <= 9) outTotal += Number(displayed);
-          else inTotal += Number(displayed);
+        const gross = raw ? Number(raw) : null;
+        const net = gross !== null ? gross - (isNet ? (data.strokeMap[hole.hole] || 0) : 0) : null;
+        // Totals always use GROSS
+        if (gross !== null) {
+          totalGross += gross;
+          if (Number(hole.hole) <= 9) outGross += gross;
+          else inGross += gross;
         }
         const par = Number(hole.par) || 0;
-        const badgeHtml = raw ? scoreBadge(Number(raw), par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
+        const badgeHtml = raw ? scoreBadge(gross, par, isNet ? (data.strokeMap[hole.hole] || 0) : 0) : `<span style="color:#475569;font-size:11px;">–</span>`;
         const dotHtml = isNet && (data.strokeMap && data.strokeMap[hole.hole]) ? `<div class="stroke-dots">${renderStrokeDots(data.strokeMap[hole.hole])}</div>` : "";
         row += `<td class="score-tap-cell" data-match-id="${escapeAttr(activeScoreMatchId)}" data-player-id="${escapeAttr(player.id)}" data-hole="${Number(hole.hole)}" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:4px 2px;">
           <div class="score-cell-wrap">${dotHtml}<div id="score-badge-${escapeAttr(player.id)}-${hole.hole}">${badgeHtml}</div></div>
         </td>`;
-        if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outTotal || ""}</td>`;
+        if (Number(hole.hole) === 9) row += `<td id="ptotal-out-${player.id}">${outGross || ""}</td>`;
       });
-      row += `<td id="ptotal-in-${player.id}">${inTotal || ""}</td><td id="ptotal-tot-${player.id}">${total || ""}</td></tr>`;
+      row += `<td id="ptotal-in-${player.id}">${inGross || ""}</td><td id="ptotal-tot-${player.id}">${totalGross || ""}</td></tr>`;
       return row;
     }
 
@@ -8932,11 +8933,10 @@ ${closer}`;
 
   // Low-signal events get much lower Swami frequency
   const LOW_SIGNAL = ["itineraryEdit", "itineraryDelete", "matchEdit", "playerEdit"];
-  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.125 : 0.32;
-  // Exit early most of the time
+  const swamiFrequency = LOW_SIGNAL.includes(action) ? 0.15 : 0.40;
   if (Math.random() > swamiFrequency) return;
-  // When Swami fires, memes only 20% of the time
-  const hasMeme = Math.random() < 0.20;
+  // Memes/GIFs 35% of the time when Swami fires (~14% of all events)
+  const hasMeme = Math.random() < 0.35;
     const maxWords = hasMeme ? "5 words max. Single punchline only." : "1-2 sentences. Sharp, specific, funny.";
 
     const actionPrompts = {
