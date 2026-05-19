@@ -2484,11 +2484,12 @@
   const MEME_TEMPLATES = {
     drake: {
       url: "https://i.imgflip.com/30b1gx.jpg",
-      textStyle: "classic",  // white Impact text top/bottom
+      textStyle: "classic",
       boxes: [
         { x: 0.52, y: 0.02, w: 0.46, h: 0.46, align: "left",   valign: "middle" },
         { x: 0.52, y: 0.52, w: 0.46, h: 0.46, align: "left",   valign: "middle" }
-      ]
+      ],
+      guide: "rejecting sensible thing (top), approving chaotic thing (bottom) — 2 lines"
     },
     "distracted-boyfriend": {
       url: "https://i.imgflip.com/1ur9b0.jpg",
@@ -2497,7 +2498,8 @@
         { x: 0.0,  y: 0.6,  w: 0.32, h: 0.35, align: "center", valign: "bottom" },
         { x: 0.35, y: 0.0,  w: 0.3,  h: 0.35, align: "center", valign: "top"    },
         { x: 0.68, y: 0.45, w: 0.3,  h: 0.35, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "ignoring one thing for another — 3 labels: [girlfriend ignored], [distracted by], [the man]"
     },
     "this-is-fine": {
       url: "https://i.imgflip.com/wxica.jpg",
@@ -2505,7 +2507,8 @@
       boxes: [
         { x: 0.0, y: 0.0,  w: 1.0, h: 0.18, align: "center", valign: "middle" },
         { x: 0.0, y: 0.78, w: 1.0, h: 0.18, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "denial while things burn around you — top sets up the chaos, bottom is the calm response"
     },
     "two-buttons": {
       url: "https://i.imgflip.com/1g8my4.jpg",
@@ -2513,14 +2516,16 @@
       boxes: [
         { x: 0.0,  y: 0.0, w: 0.48, h: 0.25, align: "center", valign: "middle" },
         { x: 0.52, y: 0.0, w: 0.48, h: 0.25, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "sweating over impossible choice — 2 equally bad/good options"
     },
     "change-my-mind": {
       url: "https://i.imgflip.com/24y43o.jpg",
       textStyle: "classic",
       boxes: [
         { x: 0.25, y: 0.55, w: 0.5, h: 0.3, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "bold unprovable claim on the sign — 1 line, confident and slightly wrong"
     },
     "success-kid": {
       url: "https://i.imgflip.com/1bhk.jpg",
@@ -2528,7 +2533,8 @@
       boxes: [
         { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
         { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "small win that feels huge — top is the setup, bottom is the satisfying result"
     },
     "panik-kalm": {
       url: "https://i.imgflip.com/3qqcmh.jpg",
@@ -2536,7 +2542,8 @@
       boxes: [
         { x: 0.55, y: 0.05, w: 0.42, h: 0.38, align: "center", valign: "middle" },
         { x: 0.55, y: 0.55, w: 0.42, h: 0.38, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "panic then false calm — line 1 is the scary thing, line 2 is the rationalization"
     },
     "uno-reverse": {
       url: "https://i.imgflip.com/3oevdk.jpg",
@@ -2544,7 +2551,8 @@
       boxes: [
         { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
         { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "the tables get turned — top is what they tried, bottom is what came back on them"
     },
     "gru-plan": {
       url: "https://i.imgflip.com/26am.jpg",
@@ -2554,9 +2562,139 @@
         { x: 0.52, y: 0.26, w: 0.46, h: 0.23, align: "center", valign: "middle" },
         { x: 0.52, y: 0.51, w: 0.46, h: 0.23, align: "center", valign: "middle" },
         { x: 0.52, y: 0.76, w: 0.46, h: 0.23, align: "center", valign: "middle" }
-      ]
+      ],
+      guide: "plan that backfires — CRITICAL: line 1=confident plan step 1, line 2=confident plan step 2 (DIFFERENT from line 1), line 3=the unintended consequence (DIFFERENT from line 2), line 4=Gru's horrified realization of that consequence. All 4 lines MUST be different."
+    },
+    "is-this-a-pigeon": {
+      url: "https://i.imgflip.com/1o00in.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.6,  y: 0.72, w: 0.38, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0,  y: 0.0,  w: 0.55, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.62, y: 0.45, w: 0.36, h: 0.2,  align: "center", valign: "middle" }
+      ],
+      guide: "confidently misidentifying something — line 1=the person/thing holding the wrong belief, line 2=the obviously wrong thing, line 3='Is this [correct answer]?'"
+    },
+    "galaxy-brain": {
+      url: "https://i.imgflip.com/3lmzyx.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.5,  y: 0.02, w: 0.48, h: 0.22, align: "center", valign: "middle" },
+        { x: 0.5,  y: 0.26, w: 0.48, h: 0.22, align: "center", valign: "middle" },
+        { x: 0.5,  y: 0.51, w: 0.48, h: 0.22, align: "center", valign: "middle" },
+        { x: 0.5,  y: 0.75, w: 0.48, h: 0.22, align: "center", valign: "middle" }
+      ],
+      guide: "escalating logic that gets absurd — 4 steps of reasoning from normal to unhinged, each MORE extreme than the last"
+    },
+    "hide-the-pain-harold": {
+      url: "https://i.imgflip.com/gk5el.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
+      ],
+      guide: "suffering through something with a frozen smile — top is the painful situation, bottom is the cope"
+    },
+    "expanding-brain": {
+      url: "https://i.imgflip.com/1jwhww.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 0.55, h: 0.24, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.25, w: 0.55, h: 0.24, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.51, w: 0.55, h: 0.24, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.76, w: 0.55, h: 0.24, align: "center", valign: "middle" }
+      ],
+      guide: "escalating from normal to galaxy-brained — 4 options from obvious/sensible to transcendent/absurd"
+    },
+    "waiting-skeleton": {
+      url: "https://i.imgflip.com/2fm6x.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
+      ],
+      guide: "still waiting for something that never arrives — top is what you're waiting for, bottom is the grim reality"
+    },
+    "the-rock-driving": {
+      url: "https://i.imgflip.com/3lmzyx.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 0.5, h: 0.48, align: "center", valign: "middle" },
+        { x: 0.5, y: 0.0,  w: 0.5, h: 0.48, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.52, w: 0.5, h: 0.46, align: "center", valign: "middle" },
+        { x: 0.5, y: 0.52, w: 0.5, h: 0.46, align: "center", valign: "middle" }
+      ],
+      guide: "showing different reactions to different things — 4 quadrants, alternating expressions"
+    },
+    "finally": {
+      url: "https://i.imgflip.com/3lmzyx.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0, w: 1.0, h: 0.45, align: "center", valign: "middle" },
+        { x: 0.0, y: 0.52, w: 1.0, h: 0.45, align: "center", valign: "middle" }
+      ],
+      guide: "dramatic reveal — top is the long wait/expectation, bottom is the anticlimactic payoff"
+    },
+    "buff-doge-cheems": {
+      url: "https://i.imgflip.com/43a45p.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0,  y: 0.3,  w: 0.45, h: 0.4, align: "center", valign: "middle" },
+        { x: 0.55, y: 0.3,  w: 0.45, h: 0.4, align: "center", valign: "middle" }
+      ],
+      guide: "strong chad vs weak version — left=impressive version, right=pathetic version of same concept"
+    },
+    "woman-yelling-cat": {
+      url: "https://i.imgflip.com/345v97.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0,  y: 0.0,  w: 0.5, h: 1.0, align: "center", valign: "middle" },
+        { x: 0.5,  y: 0.0,  w: 0.5, h: 1.0, align: "center", valign: "middle" }
+      ],
+      guide: "outraged accusation vs calm unimpressed response — left=the angry claim, right=the cat's deadpan rebuttal"
+    },
+    "trade-offer": {
+      url: "https://i.imgflip.com/3oyvdh.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.55, w: 0.45, h: 0.4, align: "center", valign: "middle" },
+        { x: 0.55, y: 0.55, w: 0.45, h: 0.4, align: "center", valign: "middle" }
+      ],
+      guide: "lopsided deal — left=what they get, right=what you get (should be wildly uneven)"
+    },
+    "mr-incredible-becoming-uncanny": {
+      url: "https://i.imgflip.com/6cyrrn.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0,  w: 1.0, h: 0.2,  align: "center", valign: "middle" },
+        { x: 0.0, y: 0.78, w: 1.0, h: 0.2,  align: "center", valign: "middle" }
+      ],
+      guide: "slow descent from composed to unhinged — top is the thing that started it, bottom is where they ended up"
+    },
+    "pointing-rick-dalton": {
+      url: "https://i.imgflip.com/3lmzyx.jpg",
+      textStyle: "classic",
+      boxes: [
+        { x: 0.0, y: 0.0, w: 1.0, h: 0.3, align: "center", valign: "middle" }
+      ],
+      guide: "excited recognition — 1 line pointing out something very relatable or calling someone out"
     }
   };
+
+  // Track recently used templates to avoid repetition
+  const _recentMemeTemplates = [];
+  const MEME_DEDUP_COUNT = 6; // don't repeat within last 6 uses
+
+  function getAvailableTemplates() {
+    const all = Object.keys(MEME_TEMPLATES);
+    const available = all.filter(k => !_recentMemeTemplates.includes(k));
+    return available.length >= 4 ? available : all; // fallback if too many excluded
+  }
+
+  function markTemplateUsed(key) {
+    _recentMemeTemplates.push(key);
+    if (_recentMemeTemplates.length > MEME_DEDUP_COUNT) _recentMemeTemplates.shift();
+  }
 
   async function fetchMemeAsDataUrl(imgUrl) {
     try {
@@ -2640,69 +2778,81 @@
   }
 
   async function getAiSwamiMedia(action, subject, swamiText) {
-    const templateKeys = Object.keys(MEME_TEMPLATES).join(", ");
-    const memePrompt = `Pick a meme template and write text for this golf trip moment: "${swamiText}"
+    // Decide: GIF or meme? GIFs for celebration moments, memes for roasts/observations
+    const gifActions = ["matchComplete", "scoreUpdate", "momentAdd"];
+    const useGif = gifActions.includes(action) && Math.random() < 0.45;
 
-Available templates: ${templateKeys}
+    if (useGif) {
+      const gif = await fetchSwamiGif(action, subject, swamiText);
+      if (gif) return gif;
+    }
 
-Guide:
-- drake = rejecting sensible thing (top), approving dumb thing (bottom) — 2 lines
-- distracted-boyfriend = ignoring one thing for another — 3 labels: [ignored], [distracted by], [the person]
-- this-is-fine = denial while everything burns — 1-2 lines
-- two-buttons = sweating over impossible choice — 2 lines (one per button)
-- change-my-mind = bold unprovable golf claim — 1 line for the sign
-- success-kid = small victory, huge satisfaction — top and bottom
-- panik-kalm = panic/calm reaction — 2 lines (top panel, bottom panel)
-- uno-reverse = turning something back — 1-2 lines
-- gru-plan = plan that backfires — 4 lines (steps 1, 2, 3 same as step 2 but realized)
+    // Build meme prompt with available (non-recent) templates
+    const availableKeys = getAvailableTemplates();
+    const templateGuides = availableKeys.map(k =>
+      `- ${k}: ${MEME_TEMPLATES[k].guide}`
+    ).join("\n");
 
-Rules: max 6 words per line, golf-trip specific, use real player names if available, be specific not generic
-Respond ONLY with valid JSON, nothing else:
-{"template":"template-key","lines":["line1","line2"]}`;
+    const memePrompt = `Pick the BEST meme template for this golf trip moment and write sharp, specific text.
+
+Swami's take: "${swamiText}"
+Event: ${subject}
+
+Available templates (choose only from these):
+${templateGuides}
+
+CRITICAL RULES:
+- Use real player names and specific details — never be generic
+- Max 6 words per line, punchy and specific
+- For gru-plan: all 4 lines MUST be completely different from each other — line 3 is the surprise consequence, line 4 is Gru's reaction to that consequence
+- For galaxy-brain/expanding-brain: each line must escalate more than the last
+- Pick the template that best fits the joke, not just the easiest
+- Do NOT use the same structure two lines in a row
+
+Respond ONLY with valid JSON:
+{"template":"template-key","lines":["line1","line2",...]}`;
 
     let memeData = null;
     try {
-      const raw = await callSwami(memePrompt, 100);
-      console.log("Meme raw response:", raw);
+      const raw = await callSwami(memePrompt, 120);
       if (raw) {
-        // Strip markdown code fences then find the JSON object
         const stripped = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
         const start = stripped.indexOf("{");
         const end = stripped.lastIndexOf("}");
-        console.log("Meme stripped, start:", start, "end:", end);
         if (start !== -1 && end !== -1 && end > start) {
-          const jsonStr = stripped.slice(start, end + 1);
-          console.log("Meme JSON string:", jsonStr);
-          memeData = JSON.parse(jsonStr);
-        } else {
-          console.warn("No JSON object found in meme response");
+          memeData = JSON.parse(stripped.slice(start, end + 1));
         }
       }
-    } catch (e) {
+    } catch(e) {
       console.warn("Meme JSON parse failed:", e);
     }
 
-    console.log("Meme data:", JSON.stringify(memeData));
+    if (memeData && memeData.template && MEME_TEMPLATES[memeData.template] &&
+        Array.isArray(memeData.lines) && memeData.lines.length) {
 
-    if (memeData && memeData.template && Array.isArray(memeData.lines) && memeData.lines.length) {
-      try {
-        console.log("Building canvas for template:", memeData.template, "lines:", memeData.lines);
-        const imageUrl = await buildMemeCanvas(memeData.template, memeData.lines);
-        console.log("Canvas result:", imageUrl ? `${imageUrl.length} chars` : "NULL");
-        if (imageUrl) {
-          return {
-            mediaType: "image",
-            imageUrl,
-            imageCaption: memeData.lines.filter(Boolean).join(" / ")
-          };
+      // Validate gru-plan: all 4 lines must be distinct
+      if (memeData.template === "gru-plan" && memeData.lines.length === 4) {
+        const unique = new Set(memeData.lines.map(l => l.trim().toLowerCase()));
+        if (unique.size < 4) {
+          console.warn("gru-plan had duplicate lines, falling back");
+          memeData = null;
         }
-      } catch (e) {
-        console.warn("Canvas meme build failed:", e);
+      }
+
+      if (memeData) {
+        try {
+          const imageUrl = await buildMemeCanvas(memeData.template, memeData.lines);
+          if (imageUrl) {
+            markTemplateUsed(memeData.template);
+            return { mediaType: "image", imageUrl, imageCaption: memeData.lines.filter(Boolean).join(" / ") };
+          }
+        } catch(e) {
+          console.warn("Canvas meme build failed:", e);
+        }
       }
     }
 
-    // Fallback: SVG meme card (still better than nothing)
-    console.warn("Falling back to SVG meme. memeData:", JSON.stringify(memeData));
+    // Fallback SVG
     const tone = ["itineraryAdd","itineraryEdit","itineraryDelete"].includes(action) ? "schedule"
       : ["playerAdd","playerEdit"].includes(action) ? "player"
       : ["teams"].includes(action) ? "team" : "chat";
@@ -2711,6 +2861,39 @@ Respond ONLY with valid JSON, nothing else:
       imageUrl: buildSwamiMemeSvg("Swami Says", swamiText.slice(0, 80), tone),
       imageCaption: swamiText.slice(0, 80)
     };
+  }
+
+  async function fetchSwamiGif(action, subject, swamiText) {
+    // Build a golf-specific Tenor search query using Claude
+    const queryPrompt = `Golf trip moment: "${swamiText}" (${subject}).
+Give a short 2-4 word Tenor GIF search query that would find a funny, relevant reaction GIF.
+Examples: "tiger woods fist pump", "happy dance celebration", "shocked face", "slow clap", "walking away", "mind blown"
+Respond with ONLY the search query, nothing else.`;
+
+    try {
+      const query = (await callSwami(queryPrompt, 30) || "").trim().replace(/['"]/g, "");
+      if (!query) return null;
+
+      // Call Tenor API
+      const tenorKey = "AIzaSyAyimkuYQYF_y7VMWLuQSnJBrKE5s7ZLow"; // public demo key
+      const url = "https://tenor.googleapis.com/v2/search?q=" + encodeURIComponent(query + " golf") +
+        "&key=" + tenorKey + "&limit=8&contentfilter=medium&media_filter=gif";
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const results = data.results || [];
+      if (!results.length) return null;
+
+      // Pick a random result from top 5 to add variety
+      const pick = results[Math.floor(Math.random() * Math.min(5, results.length))];
+      const gifUrl = pick.media_formats && pick.media_formats.gif && pick.media_formats.gif.url;
+      if (!gifUrl) return null;
+
+      return { mediaType: "gif", imageUrl: gifUrl, imageCaption: query };
+    } catch(e) {
+      console.warn("GIF fetch failed:", e);
+      return null;
+    }
   }
 
   function escSvg(text) {
@@ -8470,10 +8653,15 @@ ${closer}`;
       const expandBtn = isLong
         ? '<span class="feed-expand-btn">' + (isExpanded ? "Show less ▲" : "Show more ▼") + '</span>'
         : "";
+      const isGif = post.mediaType === "gif";
       const mediaHtml = post.imageUrl
-        ? '<div class="feed-media"><img id="' + imgId + '" alt="' + escapeHtml(post.imageCaption || "") + '" style="display:block;width:100%;border-radius:10px;">'
-          + (post.imageCaption ? '<div class="feed-media-caption">' + escapeHtml(post.imageCaption) + '</div>' : '')
-          + '</div>'
+        ? '<div class="feed-media">' +
+          '<img id="' + imgId + '" alt="' + escapeHtml(post.imageCaption || "") + '" ' +
+          'style="display:block;width:100%;border-radius:10px;' + (isGif ? 'image-rendering:auto;' : '') + '"' +
+          (isGif ? ' class="swami-gif"' : '') + '>' +
+          (isGif ? '<div style="font-size:10px;color:#475569;text-align:right;margin-top:2px;">GIF via Tenor</div>' : '') +
+          (post.imageCaption && !isGif ? '<div class="feed-media-caption">' + escapeHtml(post.imageCaption) + '</div>' : '') +
+          '</div>'
         : "";
 
       div.innerHTML = `
@@ -8647,7 +8835,22 @@ ${closer}`;
 
   async function addSwamiPost(action, subject) {
     const ctx = buildTripContext();
-    const variationSeed = ["Lead with the punchline.", "Build slowly then land hard.", "Be observational.", "Be prophetic.", "Be mock-serious.", "Reference a movie or show.", "Reference a sports moment.", "Use an analogy.", "Ask a rhetorical question.", "Be suspicious of someone's motives."][Math.floor(Math.random() * 10)];
+    const variationSeed = [
+      "Lead with the punchline — context last.",
+      "Build slowly, land hard on the last word.",
+      "Be observational — notice what others don't.",
+      "Be prophetic — predict what will go wrong.",
+      "Be mock-serious, like ESPN covering a backyard game.",
+      "Reference a movie, show, or cultural moment obliquely.",
+      "Reference a real sports moment or athlete.",
+      "Use a specific analogy that shouldn't work but does.",
+      "Ask a rhetorical question that hangs in the air.",
+      "Be suspicious of someone's motives — why are they REALLY here?",
+      "Be a disappointed coach who saw it coming.",
+      "Sound like a commentator who's seen too much.",
+      "Make it sound like a headline from a newspaper that covers only this trip.",
+      "Sound like a sideline reporter who knows too much."
+    ][Math.floor(Math.random() * 14)];
 
   // Low-signal events get much lower Swami frequency
   const LOW_SIGNAL = ["itineraryEdit", "itineraryDelete", "matchEdit", "playerEdit"];
