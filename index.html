@@ -5196,6 +5196,8 @@ Max 80 words total.`;
   function isStrokePlayFormat(match) {
     return (match.playType || "Match Play") === "Stroke Play";
   }
+
+  function isBestBallLike(match) {
     // Singles behaves exactly like Best Ball (just 1 player per side)
     const f = match.format || "";
     return f === "Best Ball" || f === "Singles";
