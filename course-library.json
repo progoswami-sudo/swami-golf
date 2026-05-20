@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1",
   "libraryName": "Swami Golf Course Library",
-  "updatedAt": "2026-05-09",
+  "updatedAt": "2026-05-20",
   "courses": {
     "pinehurst-no-1": {
       "id": "pinehurst-no-1",
@@ -9091,6 +9091,611 @@
           ]
         }
       ]
+    },
+    "bellewood-country-club": {
+      "id": "bellewood-country-club",
+      "name": "Bellewood Country Club",
+      "location": "",
+      "par": 71,
+      "status": "active",
+      "notes": "Par 71. Men's and Women's handicap indexes differ.",
+      "tees": {
+        "dog": {
+          "teeName": "Dog",
+          "totalYardage": 6825,
+          "totalPar": 71,
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 389,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 505,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 383,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 4,
+              "yardage": 455,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 432,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 165,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 548,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 220,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 439,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 582,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 11,
+              "yardage": 426,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 12,
+              "yardage": 194,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 373,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 187,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 396,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 401,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 182,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 548,
+              "par": 5,
+              "hcp": 12
+            }
+          ],
+          "rating": 72.2,
+          "ratingMen": 72.2,
+          "slope": 138,
+          "slopeMen": 138
+        },
+        "wood": {
+          "teeName": "Wood",
+          "totalYardage": 6453,
+          "totalPar": 71,
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 366,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 477,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 364,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 4,
+              "yardage": 416,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 411,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 526,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 206,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 427,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 557,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 11,
+              "yardage": 397,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 12,
+              "yardage": 177,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 363,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 169,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 381,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 387,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 163,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 515,
+              "par": 5,
+              "hcp": 12
+            }
+          ],
+          "rating": 71.4,
+          "ratingMen": 71.4,
+          "slope": 136,
+          "slopeMen": 136
+        },
+        "eagle": {
+          "teeName": "Eagle",
+          "totalYardage": 6111,
+          "totalPar": 71,
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 339,
+              "par": 4,
+              "hcp": 15
+            },
+            {
+              "hole": 2,
+              "yardage": 467,
+              "par": 5,
+              "hcp": 13
+            },
+            {
+              "hole": 3,
+              "yardage": 344,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 4,
+              "yardage": 406,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 377,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 137,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 503,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 8,
+              "yardage": 184,
+              "par": 3,
+              "hcp": 9
+            },
+            {
+              "hole": 9,
+              "yardage": 407,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 538,
+              "par": 5,
+              "hcp": 8
+            },
+            {
+              "hole": 11,
+              "yardage": 359,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 12,
+              "yardage": 164,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 335,
+              "par": 4,
+              "hcp": 14
+            },
+            {
+              "hole": 14,
+              "yardage": 159,
+              "par": 3,
+              "hcp": 10
+            },
+            {
+              "hole": 15,
+              "yardage": 371,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 16,
+              "yardage": 365,
+              "par": 4,
+              "hcp": 4
+            },
+            {
+              "hole": 17,
+              "yardage": 151,
+              "par": 3,
+              "hcp": 18
+            },
+            {
+              "hole": 18,
+              "yardage": 505,
+              "par": 5,
+              "hcp": 12
+            }
+          ],
+          "rating": 68.6,
+          "ratingMen": 68.6,
+          "slope": 131,
+          "slopeMen": 131
+        },
+        "belle": {
+          "teeName": "Belle",
+          "totalYardage": 5357,
+          "totalPar": 71,
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 430,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 3,
+              "yardage": 309,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 4,
+              "yardage": 390,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 347,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 111,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 471,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 142,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 358,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 492,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 325,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 215,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 143,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 261,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 16,
+              "yardage": 346,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 17,
+              "yardage": 133,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 453,
+              "par": 5,
+              "hcp": 10
+            }
+          ],
+          "ratingWomen": 71.2,
+          "slopeWomen": 128
+        },
+        "family": {
+          "teeName": "Family",
+          "totalYardage": 3543,
+          "totalPar": 71,
+          "holes": [
+            {
+              "hole": 1,
+              "yardage": 223,
+              "par": 4,
+              "hcp": 13
+            },
+            {
+              "hole": 2,
+              "yardage": 195,
+              "par": 5,
+              "hcp": 11
+            },
+            {
+              "hole": 3,
+              "yardage": 219,
+              "par": 4,
+              "hcp": 5
+            },
+            {
+              "hole": 4,
+              "yardage": 255,
+              "par": 4,
+              "hcp": 1
+            },
+            {
+              "hole": 5,
+              "yardage": 191,
+              "par": 4,
+              "hcp": 7
+            },
+            {
+              "hole": 6,
+              "yardage": 105,
+              "par": 3,
+              "hcp": 17
+            },
+            {
+              "hole": 7,
+              "yardage": 267,
+              "par": 5,
+              "hcp": 9
+            },
+            {
+              "hole": 8,
+              "yardage": 140,
+              "par": 3,
+              "hcp": 15
+            },
+            {
+              "hole": 9,
+              "yardage": 218,
+              "par": 4,
+              "hcp": 3
+            },
+            {
+              "hole": 10,
+              "yardage": 278,
+              "par": 5,
+              "hcp": 4
+            },
+            {
+              "hole": 11,
+              "yardage": 212,
+              "par": 4,
+              "hcp": 8
+            },
+            {
+              "hole": 12,
+              "yardage": 115,
+              "par": 3,
+              "hcp": 16
+            },
+            {
+              "hole": 13,
+              "yardage": 180,
+              "par": 4,
+              "hcp": 18
+            },
+            {
+              "hole": 14,
+              "yardage": 130,
+              "par": 3,
+              "hcp": 12
+            },
+            {
+              "hole": 15,
+              "yardage": 195,
+              "par": 4,
+              "hcp": 6
+            },
+            {
+              "hole": 16,
+              "yardage": 203,
+              "par": 4,
+              "hcp": 2
+            },
+            {
+              "hole": 17,
+              "yardage": 122,
+              "par": 3,
+              "hcp": 14
+            },
+            {
+              "hole": 18,
+              "yardage": 295,
+              "par": 5,
+              "hcp": 10
+            }
+          ],
+          "rating": 59.2,
+          "ratingMen": 59.2,
+          "ratingWomen": 61.4,
+          "slope": 104,
+          "slopeMen": 104,
+          "slopeWomen": 108
+        }
+      }
     }
   }
 }
