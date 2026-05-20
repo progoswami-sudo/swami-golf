@@ -1671,9 +1671,10 @@
       <select id="matchFormat" onchange="handleMatchFormatChange()">
         <option value="Best Ball">Best Ball</option>
         <option value="Best Ball (Nassau)">Best Ball (Nassau)</option>
+        <option value="Singles">Singles</option>
+        <option value="Singles (Nassau)">Singles (Nassau)</option>
         <option value="Scramble">Scramble</option>
         <option value="Scramble (Nassau)">Scramble (Nassau)</option>
-        <option value="Stableford">Stableford</option>
       </select>
 
       <label class="form-label" for="matchScoringType">Gross / Net</label>
@@ -4152,7 +4153,7 @@ Respond with ONLY the search query, nothing else.`;
     const isNet = scoring === "Net";
     const nassauHelp = document.getElementById("nassauHelp");
     if (nassauHelp) nassauHelp.classList.toggle("hidden",
-      format !== "Best Ball (Nassau)" && format !== "Scramble (Nassau)");
+      format !== "Best Ball (Nassau)" && format !== "Scramble (Nassau)" && format !== "Singles (Nassau)");
 
     // Populate Handicap Allowance options
     const haSelect = document.getElementById("matchHandicapAllowance");
@@ -4165,7 +4166,7 @@ Respond with ONLY the search query, nothing else.`;
       if (!isNet) {
         options = ["N/A"];
         haSelect.disabled = true;
-      } else if (format === "Best Ball" || format === "Best Ball (Nassau)") {
+      } else if (["Best Ball", "Best Ball (Nassau)", "Singles", "Singles (Nassau)"].includes(format)) {
         options = ["100%", "90%"];
       } else if (format === "Scramble" || format === "Scramble (Nassau)") {
         options = [
@@ -4189,6 +4190,13 @@ Respond with ONLY the search query, nothing else.`;
       else haSelect.value = options[0];
     }
 
+    // Show player limit hint for Singles formats
+    const singles = format === "Singles" || format === "Singles (Nassau)";
+    const aLabel = document.getElementById("matchTeamALabel");
+    const bLabel = document.getElementById("matchTeamBLabel");
+    if (aLabel) aLabel.textContent = singles ? "Team A Player (1 only)" : "Team A";
+    if (bLabel) bLabel.textContent = singles ? "Team B Player (1 only)" : "Team B";
+
     renderMatchValueFields();
   }
 
@@ -4211,7 +4219,7 @@ Respond with ONLY the search query, nothing else.`;
       "Double or Worse (2+ over)": "0.00"
     };
 
-    if (format === "Best Ball (Nassau)" || format === "Scramble (Nassau)") {
+    if (format === "Best Ball (Nassau)" || format === "Scramble (Nassau)" || format === "Singles (Nassau)") {
       fields = ["Front 9", "Back 9", "Overall"];
     } else if (format === "Stableford") {
       fields = [
@@ -4411,6 +4419,9 @@ Max 80 words total.`;
       if (!matchDate) return void alert("Please select a date.");
       if (!course) return void alert("Please enter a golf course.");
       if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return void alert("Please select player(s) for both sides.");
+      const isSingles = format === "Singles" || format === "Singles (Nassau)";
+      if (isSingles && teamAPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
+      if (isSingles && teamBPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
 
       const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
       console.log("Saving match, competitionId:", activeCompetitionId, "tripId:", activeTripId);
@@ -4508,8 +4519,8 @@ Max 80 words total.`;
     const teamBName = (teams[1] && teams[1].name) || activeTripData.teamB || "Team B";
     const teamAPlayers = getPlayerNames(match.teamAPlayerIds || []);
     const teamBPlayers = getPlayerNames(match.teamBPlayerIds || []);
-    const isNassau = (match.format || "").includes("Nassau");
-    const isBestBall = (match.format || "") === "Best Ball" || (match.format || "") === "Scramble";
+    const isNassau = isNassauFormat(match);
+    const isBestBall = isBestBallLike(match) || isScrambleFormat(match);
     const status = nassauStatusLabel(match);
     const isComplete = !!match.isComplete;
     const isStarted = status !== "Not Started";
@@ -4813,7 +4824,7 @@ Max 80 words total.`;
 
     const nassau = computeNassau(match);
     const isNassauMatch = (match.format || "").includes("Nassau");
-    const isBestBallMatch = (match.format || "") === "Best Ball";
+    const isBestBallMatch = isBestBallLike(match);
     const teams = getTeams();
     const teamAName = (teams[0] && teams[0].name) || "Team A";
     const teamBName = (teams[1] && teams[1].name) || "Team B";
@@ -5107,6 +5118,20 @@ Max 80 words total.`;
 
   function isScrambleFormat(match) {
     return (match.format || "").toLowerCase().startsWith("scramble");
+  }
+
+  function isSinglesFormat(match) {
+    return (match.format || "").startsWith("Singles");
+  }
+
+  function isBestBallLike(match) {
+    // Singles behaves exactly like Best Ball (just 1 player per side)
+    const f = match.format || "";
+    return f === "Best Ball" || f === "Singles";
+  }
+
+  function isNassauFormat(match) {
+    return (match.format || "").includes("Nassau");
   }
 
   function computeScrambleHandicap(teamIds, tee, allowance) {
@@ -5644,8 +5669,8 @@ Max 80 words total.`;
     const playersForMatch = getPlayersForMatch(match);
     const scoringType = match.scoringType || "Gross";
     const isNet = scoringType === "Net";
-    const isNassau = (match.format || "").includes("Nassau");
-    const isBestBall = (match.format || "") === "Best Ball";
+    const isNassau = isNassauFormat(match);
+    const isBestBall = isBestBallLike(match);
     const scramble = isScrambleFormat(match);
     const existingScores = match.holeScores || {};
     const allowance = match.handicapAllowance || "N/A";
