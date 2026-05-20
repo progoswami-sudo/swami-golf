@@ -1303,7 +1303,6 @@
         <span style="font-size:16px;">🔮</span>
         <span style="font-size:11px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.05em;">Swami</span>
         <span id="compSwamiTime" style="font-size:11px;color:#475569;margin-left:auto;"></span>
-        <button onclick="requestCompSwamiAlert()" id="compSwamiRefreshBtn" style="width:auto;padding:3px 8px;margin:0;font-size:11px;background:transparent;border:1px solid #375984;color:#93c5fd;border-radius:8px;">↻</button>
       </div>
       <div id="compSwamiText" style="font-size:13px;color:#64748b;line-height:1.5;font-style:italic;">Waiting for the action to start...</div>
     </div>
@@ -1681,6 +1680,12 @@
       <select id="matchScoringType" onchange="handleMatchFormatChange()">
         <option value="Gross">Gross</option>
         <option value="Net">Net</option>
+      </select>
+
+      <label class="form-label" for="matchPlayType" style="margin-top:8px;">Stroke Play / Match Play</label>
+      <select id="matchPlayType">
+        <option value="Match Play" selected>Match Play</option>
+        <option value="Stroke Play">Stroke Play</option>
       </select>
 
       <label class="form-label" for="matchHandicapAllowance" style="margin-top:8px;">Handicap Allowance</label>
@@ -4078,6 +4083,8 @@ Respond with ONLY the search query, nothing else.`;
       // Format, Scoring, Value Type
       document.getElementById("matchFormat").value = sourceMatch.format || "Best Ball";
       document.getElementById("matchScoringType").value = sourceMatch.scoringType || "Gross";
+      const playTypeEl = document.getElementById("matchPlayType");
+      if (playTypeEl) playTypeEl.value = sourceMatch.playType || "Match Play";
       document.getElementById("matchValueType").value = sourceMatch.valueType || "Points";
 
       // Render the correct value/point fields and HA options for this format
@@ -4409,6 +4416,7 @@ Max 80 words total.`;
       const round = String(document.getElementById("matchRound").value || "1");
       const format = document.getElementById("matchFormat").value;
       const scoringType = document.getElementById("matchScoringType").value;
+      const playType = (document.getElementById("matchPlayType") || {}).value || "Match Play";
       const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
       const valueType = document.getElementById("matchValueType").value;
       const valueSettings = getMatchValueSettings();
@@ -4431,7 +4439,7 @@ Max 80 words total.`;
         teeRating: selectedTee ? selectedTee.rating : null,
         teeSlope: selectedTee ? selectedTee.slope : null,
         teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
-        numberOfHoles, startingHole, round, format, scoringType, handicapAllowance, valueType, valueSettings,
+        numberOfHoles, startingHole, round, format, scoringType, playType, handicapAllowance, valueType, valueSettings,
         teamAPlayerIds, teamBPlayerIds,
         teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
         frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
@@ -4564,7 +4572,7 @@ Max 80 words total.`;
 
       // In progress — live Nassau arrows
       if (!s) return '<td>—</td>';
-      const disp = nassauSegmentDisplay(s, false);
+      const disp = nassauSegmentDisplay(s, false, nassau && nassau.isStrokePlay);
       const val = team === "a" ? disp.a : disp.b;
       const isUp = team === "a" ? disp.aUp : disp.bUp;
       const color = isUp ? "#4ade80" : disp.tied ? "#93c5fd" : "#f87171";
@@ -4647,7 +4655,55 @@ Max 80 words total.`;
     const holeScores = match.holeScores || {};
     const isNet = (match.scoringType || "Gross") === "Net";
     const scramble = isScrambleFormat(match);
+    const strokePlay = isStrokePlayFormat(match);
     const allowance = match.handicapAllowance || "N/A";
+
+    // ── STROKE PLAY: compare total scores per segment ────────────────────────
+    if (strokePlay) {
+      // Build stroke maps same as match play
+      const strokeMaps = {};
+      const allIds = aIds.concat(bIds);
+      if (isNet && !scramble) {
+        const validChs = allIds.map(id => {
+          const p = players.find(x => x.id === id);
+          return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+        }).filter(x => x !== null);
+        const lowCh = validChs.length ? Math.min(...validChs) : null;
+        allIds.forEach(id => {
+          const p = players.find(x => x.id === id);
+          const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+          const strokes = ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
+          strokeMaps[id] = calculateStrokeMap(strokes, holes);
+        });
+      }
+
+      function teamTotal(teamIds, segHoles) {
+        // Best score per hole across team, summed — same best-ball logic but totaled
+        let total = 0, played = 0;
+        segHoles.forEach(hole => {
+          const scores = teamIds.map(id => {
+            const raw = Number((holeScores[id] || {})[hole.hole]);
+            if (!raw) return null;
+            return raw - (isNet ? ((strokeMaps[id] || {})[hole.hole] || 0) : 0);
+          }).filter(s => s !== null);
+          if (scores.length) { total += Math.min(...scores); played++; }
+        });
+        return { total, played };
+      }
+
+      function spSegment(segHoles) {
+        const a = teamTotal(aIds, segHoles);
+        const b = teamTotal(bIds, segHoles);
+        const played = Math.min(a.played, b.played);
+        // aUp: positive means A has LOWER (better) total
+        const aUp = played > 0 ? b.total - a.total : 0; // positive = A winning
+        return { aUp, aTotal: a.total, bTotal: b.total, holesPlayed: played, total: segHoles.length, remaining: segHoles.length - played, dominated: played === segHoles.length };
+      }
+
+      const frontHoles = holes.filter(h => Number(h.hole) <= 9);
+      const backHoles  = holes.filter(h => Number(h.hole) >= 10);
+      return { front: spSegment(frontHoles), back: spSegment(backHoles), overall: spSegment(holes), isStrokePlay: true };
+    }
 
     let strokeMaps = {};
 
@@ -4777,22 +4833,31 @@ Max 80 words total.`;
     return "In Progress | Thru " + thru;
   }
 
-  function nassauSegmentDisplay(seg, isComplete) {
+  function nassauSegmentDisplay(seg, isComplete, isStrokePlay) {
     if (!seg || seg.holesPlayed === 0) return { a: "—", b: "—" };
 
-    // Final result format only for truly completed matches
+    // Stroke Play: show running totals instead of up/down
+    if (isStrokePlay || seg.isStrokePlay) {
+      const aVal = seg.aTotal !== undefined ? String(seg.aTotal) : "—";
+      const bVal = seg.bTotal !== undefined ? String(seg.bTotal) : "—";
+      const aWinning = seg.aUp > 0;
+      const bWinning = seg.aUp < 0;
+      return {
+        a: aVal, b: bVal,
+        aUp: aWinning, bUp: bWinning, tied: seg.aUp === 0
+      };
+    }
+
+    // Match Play completed
     if (isComplete) {
       const margin = Math.abs(seg.aUp);
       const holesLeft = seg.total - seg.holesPlayed;
       if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
       const label = holesLeft === 0 ? (margin + " UP") : (margin + "&" + holesLeft);
-      return {
-        a: label, b: label,
-        aWon: seg.aUp > 0, bWon: seg.aUp < 0, tied: false
-      };
+      return { a: label, b: label, aWon: seg.aUp > 0, bWon: seg.aUp < 0, tied: false };
     }
 
-    // In progress (including dominated) — always show arrows
+    // Match Play in progress — arrows
     const margin = Math.abs(seg.aUp);
     if (seg.aUp === 0) return { a: "E", b: "E", tied: true };
     const upLabel = "▲ " + margin;
@@ -4838,34 +4903,38 @@ Max 80 words total.`;
     const overallVal = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || vs["Total"] || 0);
 
     function segResult(seg, segVal) {
-      // Returns { aLabel, bLabel, aPts, bPts }
       if (seg.holesPlayed === 0) return { aLabel: "—", bLabel: "—", aPts: 0, bPts: 0 };
+
+      // Stroke Play: aUp = b.total - a.total (positive = A has lower/better score)
+      // Match Play: aUp = aWins - bWins (positive = A won more holes)
+      // Both: aUp > 0 means Team A is winning
 
       if (isWager && segVal > 0) {
         if (seg.aUp === 0) return { aLabel: "E", bLabel: "E", aPts: 0, bPts: 0 };
         const winLabel  = "+$" + segVal.toFixed(2);
         const loseLabel = "-$" + segVal.toFixed(2);
-        return {
-          aLabel: seg.aUp > 0 ? winLabel : loseLabel,
-          bLabel: seg.aUp < 0 ? winLabel : loseLabel,
-          aPts: 0, bPts: 0  // wager amounts tracked separately
-        };
+        return { aLabel: seg.aUp > 0 ? winLabel : loseLabel, bLabel: seg.aUp < 0 ? winLabel : loseLabel, aPts: 0, bPts: 0 };
       }
 
-      // Points match — store actual points earned
       const aPts = seg.aUp > 0 ? segVal : seg.aUp < 0 ? 0 : segVal / 2;
       const bPts = seg.aUp < 0 ? segVal : seg.aUp > 0 ? 0 : segVal / 2;
-      const margin = Math.abs(seg.aUp);
-      const holesLeft = seg.total - seg.holesPlayed;
-      const scoreLabel = seg.aUp === 0 ? "E" : (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
 
-      // Display: points won + score label e.g. "2 pts (3&1)"
-      const aDisplay = segVal > 0
-        ? (aPts === segVal ? segVal + " pt" + (segVal !== 1 ? "s" : "") : aPts + " pt" + (aPts !== 1 ? "s" : "")) + (scoreLabel !== "E" ? "" : "")
-        : scoreLabel;
-      const bDisplay = segVal > 0
-        ? (bPts === segVal ? segVal + " pt" + (segVal !== 1 ? "s" : "") : bPts + " pt" + (bPts !== 1 ? "s" : "")) + (scoreLabel !== "E" ? "" : "")
-        : scoreLabel;
+      let aDisplay, bDisplay;
+      if (nassau.isStrokePlay) {
+        // Show total scores for Stroke Play
+        aDisplay = segVal > 0
+          ? (aPts + " pt" + (aPts !== 1 ? "s" : "")) + (seg.aTotal !== undefined ? " (" + seg.aTotal + ")" : "")
+          : (seg.aTotal !== undefined ? String(seg.aTotal) : "—");
+        bDisplay = segVal > 0
+          ? (bPts + " pt" + (bPts !== 1 ? "s" : "")) + (seg.bTotal !== undefined ? " (" + seg.bTotal + ")" : "")
+          : (seg.bTotal !== undefined ? String(seg.bTotal) : "—");
+      } else {
+        const margin = Math.abs(seg.aUp);
+        const holesLeft = seg.total - seg.holesPlayed;
+        const scoreLabel = seg.aUp === 0 ? "E" : (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
+        aDisplay = segVal > 0 ? (aPts + " pt" + (aPts !== 1 ? "s" : "")) : scoreLabel;
+        bDisplay = segVal > 0 ? (bPts + " pt" + (bPts !== 1 ? "s" : "")) : scoreLabel;
+      }
 
       if (seg.aUp === 0) return { aLabel: segVal > 0 ? aPts + " pt" : "E", bLabel: segVal > 0 ? bPts + " pt" : "E", aPts, bPts };
       return { aLabel: aDisplay, bLabel: bDisplay, aPts, bPts };
@@ -5124,7 +5193,9 @@ Max 80 words total.`;
     return (match.format || "").startsWith("Singles");
   }
 
-  function isBestBallLike(match) {
+  function isStrokePlayFormat(match) {
+    return (match.playType || "Match Play") === "Stroke Play";
+  }
     // Singles behaves exactly like Best Ball (just 1 player per side)
     const f = match.format || "";
     return f === "Best Ball" || f === "Singles";
@@ -5727,7 +5798,7 @@ Max 80 words total.`;
 
     function nassauCell(seg, isA) {
       // Always use arrows on the scorecard (even for completed matches)
-      const disp = nassauSegmentDisplay(seg, false);
+      const disp = nassauSegmentDisplay(seg, false, nassau && nassau.isStrokePlay);
       const val = isA ? disp.a : disp.b;
       const isUp = isA ? disp.aUp : disp.bUp;
       if (!val || val === "—") return val || "—";
@@ -5807,7 +5878,7 @@ Max 80 words total.`;
 
         // Define nassauCell before any reference to it
         function nassauCell(seg, isTeamA) {
-          const disp = nassauSegmentDisplay(seg, false);
+          const disp = nassauSegmentDisplay(seg, false, nassau && nassau.isStrokePlay);
           const val = isTeamA ? disp.a : disp.b;
           const isUp = isTeamA ? disp.aUp : disp.bUp;
           if (!val || val === "—") return val || "—";
