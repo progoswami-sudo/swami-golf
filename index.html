@@ -5817,7 +5817,7 @@ Max 80 words total.`;
       holes.forEach(function(hole) {
         const val = teamScore(teamIds, hole);
         const opp = teamScore(oppIds, hole);
-        const cls = val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
+        const cls = !strokePlay && val !== "" && opp !== "" && Number(val) < Number(opp) ? "team-score-win" : "";
         out += '<td id="tscore-' + prefix + '-' + hole.hole + '" class="' + cls + '">' + val + '</td>';
         if (Number(hole.hole) === 9) {
           // Best Ball or Scramble (no Nassau): raw score for OUT
@@ -5908,7 +5908,7 @@ Max 80 words total.`;
           const oppSd = scrambleStrokeData[oppTeamId] || { strokeMap: {} };
           const oppNet = oppRaw ? oppRaw - (isNet ? (oppSd.strokeMap[hole.hole] || 0) : 0) : null;
           const netWin = net !== null && oppNet !== null && net < oppNet;
-          const netBg = netWin ? 'background:#166534;' : '';
+          const netBg = !isNassau && netWin ? 'background:#166534;' : '';
           const netLabel = net !== null ? String(net) : '—';
           netRow += '<td style="text-align:center;' + netBg + '">' + netLabel + '</td>';
 
@@ -6089,6 +6089,7 @@ Max 80 words total.`;
     // Update team score rows
     const teamAIds = match.teamAPlayerIds || [];
     const teamBIds = match.teamBPlayerIds || [];
+    const spMode = isStrokePlayFormat(match);
 
     [
       { ids: teamAIds, opp: teamBIds, prefix: "ta" },
@@ -6101,7 +6102,7 @@ Max 80 words total.`;
         const cell = document.getElementById(`tscore-${team.prefix}-${hole.hole}`);
         if (cell) {
           cell.textContent = v !== "" ? v : "";
-          cell.className = v !== "" && oppV !== "" && Number(v) < Number(oppV) ? "team-score-win" : "";
+          cell.className = !spMode && v !== "" && oppV !== "" && Number(v) < Number(oppV) ? "team-score-win" : "";
         }
         if (v !== "") {
           total += Number(v);
@@ -6115,9 +6116,9 @@ Max 80 words total.`;
       const oppOut  = outHoles.reduce(function(s, h) { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
       const oppIn   = inHoles.reduce(function(s, h)  { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
       const oppTot  = holes.reduce(function(s, h)    { const v = teamScore(team.opp, h); return s + (v !== "" ? Number(v) : 0); }, 0);
-      if (outCell) { outCell.textContent = out  || ""; outCell.className = out  && oppOut  && out  < oppOut  ? "team-score-win" : ""; }
-      if (inCell)  { inCell.textContent  = inT  || ""; inCell.className  = inT  && oppIn   && inT  < oppIn   ? "team-score-win" : ""; }
-      if (totCell) { totCell.textContent = total || ""; totCell.className = total && oppTot && total < oppTot ? "team-score-win" : ""; }
+      if (outCell) { outCell.textContent = out  || ""; outCell.className = !spMode && out  && oppOut  && out  < oppOut  ? "team-score-win" : ""; }
+      if (inCell)  { inCell.textContent  = inT  || ""; inCell.className  = !spMode && inT  && oppIn   && inT  < oppIn   ? "team-score-win" : ""; }
+      if (totCell) { totCell.textContent = total || ""; totCell.className = !spMode && total && oppTot && total < oppTot ? "team-score-win" : ""; }
     });
   }
 
