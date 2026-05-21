@@ -1674,6 +1674,7 @@
         <option value="Singles (Nassau)">Singles (Nassau)</option>
         <option value="Scramble">Scramble</option>
         <option value="Scramble (Nassau)">Scramble (Nassau)</option>
+        <option value="Individual">Individual</option>
       </select>
 
       <label class="form-label" for="matchScoringType">Gross / Net</label>
@@ -1693,11 +1694,20 @@
         <option value="N/A">N/A</option>
       </select>
 
-      <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
-      <select id="matchTeamAPlayers" class="multi-select" multiple></select>
+      <!-- Team selectors (hidden for Individual) -->
+      <div id="matchTeamSelectorsDiv">
+        <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
+        <select id="matchTeamAPlayers" class="multi-select" multiple></select>
+        <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B</label>
+        <select id="matchTeamBPlayers" class="multi-select" multiple></select>
+      </div>
 
-      <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B</label>
-      <select id="matchTeamBPlayers" class="multi-select" multiple></select>
+      <!-- Individual player selector (shown only for Individual format) -->
+      <div id="matchIndividualDiv" style="display:none;">
+        <label class="form-label" for="matchIndividualPlayers">Players</label>
+        <select id="matchIndividualPlayers" class="multi-select" multiple></select>
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">Select all players in this tournament. Each plays their own round.</div>
+      </div>
 
       <label class="form-label" for="matchValueType">Points / Cash</label>
       <select id="matchValueType" onchange="renderMatchValueFields()">
@@ -4090,6 +4100,16 @@ Respond with ONLY the search query, nothing else.`;
       // Render the correct value/point fields and HA options for this format
       handleMatchFormatChange();
 
+      // Restore Individual player selections and payout rows
+      if (sourceMatch.format === "Individual") {
+        setMultiSelectValues("matchIndividualPlayers", sourceMatch.individualPlayerIds || []);
+        _individualPayoutRows = Object.entries(sourceMatch.valueSettings || {}).map(function([pos, value]) {
+          return { pos, value: String(value) };
+        });
+        if (!_individualPayoutRows.length) _individualPayoutRows = [{ pos: "1st", value: "" }];
+        renderMatchValueFields();
+      }
+
       // Restore handicap allowance after handleMatchFormatChange populates the options
       setTimeout(function() {
         const haEl = document.getElementById("matchHandicapAllowance");
@@ -4158,6 +4178,21 @@ Respond with ONLY the search query, nothing else.`;
     const format = document.getElementById("matchFormat").value;
     const scoring = document.getElementById("matchScoringType").value;
     const isNet = scoring === "Net";
+    const isIndividual = format === "Individual";
+
+    // Show/hide team vs individual player selectors
+    const teamDiv = document.getElementById("matchTeamSelectorsDiv");
+    const indivDiv = document.getElementById("matchIndividualDiv");
+    if (teamDiv) teamDiv.style.display = isIndividual ? "none" : "block";
+    if (indivDiv) indivDiv.style.display = isIndividual ? "block" : "none";
+
+    // Force Stroke Play for Individual
+    const playTypeEl = document.getElementById("matchPlayType");
+    if (playTypeEl) {
+      playTypeEl.value = isIndividual ? "Stroke Play" : (playTypeEl.value || "Match Play");
+      playTypeEl.disabled = isIndividual;
+    }
+
     const nassauHelp = document.getElementById("nassauHelp");
     if (nassauHelp) nassauHelp.classList.toggle("hidden",
       format !== "Best Ball (Nassau)" && format !== "Scramble (Nassau)" && format !== "Singles (Nassau)");
@@ -4168,36 +4203,27 @@ Respond with ONLY the search query, nothing else.`;
       const currentVal = haSelect.value;
       haSelect.innerHTML = "";
       haSelect.disabled = false;
-
       let options = [];
-      if (!isNet) {
+      if (!isNet || isIndividual) {
         options = ["N/A"];
         haSelect.disabled = true;
       } else if (["Best Ball", "Best Ball (Nassau)", "Singles", "Singles (Nassau)"].includes(format)) {
         options = ["100%", "90%"];
       } else if (format === "Scramble" || format === "Scramble (Nassau)") {
-        options = [
-          "35% low / 15% high",
-          "30% low / 20% / 10% high",
-          "25% low / 20% / 15% / 10% high"
-        ];
+        options = ["35% low / 15% high", "30% low / 20% / 10% high", "25% low / 20% / 15% / 10% high"];
       } else {
         options = ["100%"];
       }
-
       options.forEach(function(opt) {
         const el = document.createElement("option");
-        el.value = opt;
-        el.textContent = opt;
+        el.value = opt; el.textContent = opt;
         haSelect.appendChild(el);
       });
-
-      // Restore previous value if still valid, else default to first
       if (options.includes(currentVal)) haSelect.value = currentVal;
       else haSelect.value = options[0];
     }
 
-    // Show player limit hint for Singles formats
+    // Update player label hints
     const singles = format === "Singles" || format === "Singles (Nassau)";
     const aLabel = document.getElementById("matchTeamALabel");
     const bLabel = document.getElementById("matchTeamBLabel");
@@ -4226,28 +4252,35 @@ Respond with ONLY the search query, nothing else.`;
       "Double or Worse (2+ over)": "0.00"
     };
 
+    if (format === "Individual") {
+      // Position-based payout — dynamic rows
+      const existing = _individualPayoutRows || [{ pos: "1st", value: "" }];
+      container.innerHTML =
+        '<div id="individualPayoutRows">' +
+        existing.map(function(row, i) {
+          return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">' +
+            '<input value="' + escapeHtml(row.pos) + '" placeholder="e.g. 1st" style="width:80px;flex-shrink:0;" oninput="updateIndivPayoutRow(' + i + ', \'pos\', this.value)">' +
+            '<input type="number" value="' + escapeHtml(row.value) + '" placeholder="' + (valueType === "Cash" ? "$" : "pts") + '" style="flex:1;" oninput="updateIndivPayoutRow(' + i + ', \'value\', this.value)">' +
+            '<button onclick="removeIndivPayoutRow(' + i + ')" style="width:32px;padding:0;background:#7f1d1d;flex-shrink:0;">×</button>' +
+          '</div>';
+        }).join("") +
+        '</div>' +
+        '<button onclick="addIndivPayoutRow()" class="secondary" style="width:auto;padding:6px 12px;font-size:13px;margin-top:4px;">+ Add Position</button>';
+      return;
+    }
+
     if (format === "Best Ball (Nassau)" || format === "Scramble (Nassau)" || format === "Singles (Nassau)") {
       fields = ["Front 9", "Back 9", "Overall"];
-    } else if (format === "Stableford") {
-      fields = [
-        "Albatross (3 under)",
-        "Eagle (2 under)",
-        "Birdie (1 under)",
-        "Par",
-        "Bogey (1 over)",
-        "Double or Worse (2+ over)"
-      ];
     } else {
       fields = ["Overall"];
     }
 
     fields.forEach(label => {
       const key = makeValueKey(label);
-      const defaultValue = format === "Stableford" ? stablefordDefaults[label] : "";
       const wrapper = document.createElement("div");
       wrapper.innerHTML = `
         <label class="form-label" for="value-${key}">${label}</label>
-        <input id="value-${key}" inputmode="decimal" pattern="^\\d+(\\.\\d{1,2})?$" placeholder="0.00" value="${defaultValue}">
+        <input id="value-${key}" inputmode="decimal" pattern="^\\d+(\\.\\d{1,2})?$" placeholder="0.00" value="">
       `;
       container.appendChild(wrapper);
     });
@@ -4297,6 +4330,9 @@ Respond with ONLY the search query, nothing else.`;
 
     fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
     fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
+
+    // Individual format — all players available
+    fillPlayerSelect("matchIndividualPlayers", players);
   }
 
   async function runConfidenceMeter() {
@@ -4427,10 +4463,31 @@ Max 80 words total.`;
       if (!valueSettings) return;
       if (!matchDate) return void alert("Please select a date.");
       if (!course) return void alert("Please enter a golf course.");
-      if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return void alert("Please select player(s) for both sides.");
       const isSingles = format === "Singles" || format === "Singles (Nassau)";
-      if (isSingles && teamAPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
-      if (isSingles && teamBPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
+      const isIndiv = format === "Individual";
+
+      let teamAPlayerIds = [], teamBPlayerIds = [], individualPlayerIds = [];
+      if (isIndiv) {
+        individualPlayerIds = getMultiSelectValues("matchIndividualPlayers");
+        if (!individualPlayerIds.length) return void alert("Please select at least 2 players.");
+      } else {
+        teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
+        teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
+        if (teamAPlayerIds.length === 0 || teamBPlayerIds.length === 0) return void alert("Please select player(s) for both sides.");
+        if (isSingles && teamAPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
+        if (isSingles && teamBPlayerIds.length > 1) return void alert("Singles format: select only 1 player per side.");
+      }
+
+      // For Individual, read position payouts
+      let valueSettings = getMatchValueSettings();
+      if (isIndiv) {
+        // Read from _individualPayoutRows
+        valueSettings = {};
+        _individualPayoutRows.forEach(function(row) {
+          if (row.pos && row.value) valueSettings[row.pos.trim()] = row.value;
+        });
+      }
+      if (!valueSettings) return;
 
       const baseScores = editingMatchId ? (matches.find(match => match.id === editingMatchId) || {}) : {};
       console.log("Saving match, competitionId:", activeCompetitionId, "tripId:", activeTripId);
@@ -4441,7 +4498,7 @@ Max 80 words total.`;
         teeSlope: selectedTee ? selectedTee.slope : null,
         teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
         numberOfHoles, startingHole, round, format, scoringType, playType, handicapAllowance, valueType, valueSettings,
-        teamAPlayerIds, teamBPlayerIds,
+        teamAPlayerIds, teamBPlayerIds, individualPlayerIds,
         teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
         frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
         backA: baseScores.backA || "0", backB: baseScores.backB || "0",
@@ -4522,6 +4579,55 @@ Max 80 words total.`;
     expandedRounds[activeTripId][round] = expandedRounds[activeTripId][round] === false ? true : false;
     localStorage.setItem("swamiGolf.expandedRounds", JSON.stringify(expandedRounds));
     renderMatchList();
+  }
+
+  function renderIndividualLeaderboardHtml(match) {
+    const board = computeIndividualLeaderboard(match);
+    const isNet = (match.scoringType || "Gross") === "Net";
+    const isComplete = !!match.isComplete;
+    const pts = isComplete ? computeIndividualPoints(match) : {};
+
+    if (!board.length) {
+      return '<div style="color:#475569;font-size:13px;padding:8px 0;">No scores yet.</div>';
+    }
+
+    let html = '<table class="scorecard-table" style="width:100%;">';
+    html += '<tr><th>#</th><th style="text-align:left;">Player</th>';
+    html += '<th>Score</th>';
+    if (isNet) html += '<th>Net</th>';
+    html += '<th>Thru</th>';
+    if (isComplete && Object.keys(match.valueSettings || {}).length) html += '<th>Pts</th>';
+    html += '</tr>';
+
+    let rank = 1;
+    board.forEach(function(r, i) {
+      // Determine rank accounting for ties
+      if (i > 0) {
+        const prev = board[i - 1];
+        const prevScore = isNet ? prev.net : prev.gross;
+        const curScore  = isNet ? r.net  : r.gross;
+        if (prevScore !== curScore) rank = i + 1;
+      }
+      const relGross = formatRelativePar(r.relGross);
+      const relNet   = formatRelativePar(r.relNet);
+      const thru     = r.isFinished ? "F" : (r.holesPlayed > 0 ? String(r.holesPlayed) : "—");
+      const scoreColor = r.relGross < 0 ? "#4ade80" : r.relGross > 0 ? "#f87171" : "#e2e8f0";
+      const netColor   = r.relNet !== null ? (r.relNet < 0 ? "#4ade80" : r.relNet > 0 ? "#f87171" : "#e2e8f0") : "#e2e8f0";
+
+      html += '<tr>';
+      html += '<td style="color:#64748b;">' + rank + '</td>';
+      html += '<td style="text-align:left;font-weight:600;">' + escapeHtml(r.name) + '</td>';
+      html += '<td style="color:' + scoreColor + ';font-weight:700;">' + relGross + '</td>';
+      if (isNet) html += '<td style="color:' + netColor + ';font-weight:700;">' + relNet + '</td>';
+      html += '<td style="color:#94a3b8;">' + thru + '</td>';
+      if (isComplete && Object.keys(match.valueSettings || {}).length) {
+        const p = pts[r.playerId] || 0;
+        html += '<td style="color:' + (p > 0 ? "#4ade80" : "#475569") + ';font-weight:700;">' + (p % 1 === 0 ? p : p.toFixed(1)) + '</td>';
+      }
+      html += '</tr>';
+    });
+    html += '</table>';
+    return html;
   }
 
   function renderMatchCard(match) {
@@ -4618,7 +4724,9 @@ Max 80 words total.`;
 
         renderMatchValueSummary(match) +
 
-        (isNassau
+        (isIndividualFormat(match)
+          ? renderIndividualLeaderboardHtml(match, false)
+          : isNassau
           ? '<table class="scorecard-table">' +
               '<tr><th></th><th>Front 9</th><th>Back 9</th><th>Overall</th></tr>' +
               '<tr><th>' + escapeHtml(teamAName) + '</th>' + segCell("front","a") + segCell("back","a") + segCell("overall","a") + '</tr>' +
@@ -4821,18 +4929,26 @@ Max 80 words total.`;
     if (match.isComplete) return "Completed";
 
     let allIds;
-    if (isScrambleFormat(match)) {
+    if (isIndividualFormat(match)) {
+      allIds = match.individualPlayerIds || [];
+      // For individual, count how many holes at least one player has scored
+      let maxThru = 0;
+      holes.forEach(function(hole) {
+        if (allIds.some(function(id) { return Number((holeScores[id] || {})[hole.hole]) > 0; })) maxThru++;
+      });
+      if (maxThru === 0) return "Not Started";
+      return "In Progress | Thru " + maxThru;
+    } else if (isScrambleFormat(match)) {
       const compTeams = getTeams();
-      allIds = compTeams.map(t => t.id);
+      allIds = compTeams.map(function(t) { return t.id; });
     } else {
       allIds = (match.teamAPlayerIds || []).concat(match.teamBPlayerIds || []);
     }
 
     let thru = 0;
-    holes.forEach(hole => {
-      if (allIds.every(id => Number((holeScores[id] || {})[hole.hole]) > 0)) thru++;
+    holes.forEach(function(hole) {
+      if (allIds.every(function(id) { return Number((holeScores[id] || {})[hole.hole]) > 0; })) thru++;
     });
-
     if (thru === 0) return "Not Started";
     return "In Progress | Thru " + thru;
   }
@@ -4890,6 +5006,53 @@ Max 80 words total.`;
 
     const match = matches.find(m => m.id === matchId);
     if (!match) return;
+
+    // ── INDIVIDUAL FORMAT ─────────────────────────────────────────────────────
+    if (isIndividualFormat(match)) {
+      const board = computeIndividualLeaderboard(match);
+      const pts = computeIndividualPoints(match);
+      const isNet = (match.scoringType || "Gross") === "Net";
+
+      // Build result labels for each player
+      const playerResults = {};
+      board.forEach(function(r, i) {
+        let rank = 1;
+        if (i > 0) {
+          const prev = board[i-1];
+          if ((isNet ? prev.net : prev.gross) !== (isNet ? r.net : r.gross)) rank = i + 1;
+          else rank = board.slice(0, i).findIndex(function(x, j) {
+            return j === 0 || (isNet ? board[j-1].net : board[j-1].gross) !== (isNet ? x.net : x.gross);
+          }) + 1 || 1;
+        }
+        playerResults[r.playerId] = {
+          rank: i + 1,
+          gross: r.gross,
+          net: r.net,
+          ptsEarned: pts[r.playerId] || 0,
+          label: '#' + (i+1) + ' ' + r.name + ': ' + (r.gross || '?') + ' (' + formatRelativePar(r.relGross) + ')'
+        };
+      });
+
+      const updates = {
+        isComplete: true,
+        completedAt: new Date().toISOString(),
+        individualResults: playerResults,
+        updatedAt: new Date().toISOString()
+      };
+
+      await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", matchId), updates);
+      const idx = matches.findIndex(function(m) { return m.id === matchId; });
+      if (idx !== -1) matches[idx] = Object.assign({}, matches[idx], updates);
+
+      const winner = board[0];
+      if (winner) {
+        const label = match.format + ' at ' + (match.course || 'the course') + ' — ' + winner.name + ' wins with ' + winner.gross + ' (' + formatRelativePar(winner.relGross) + ')';
+        await addSwamiPost("matchComplete", label);
+      }
+      renderScoreEntry();
+      return;
+    }
+    // ── END INDIVIDUAL ────────────────────────────────────────────────────────
 
     const nassau = computeNassau(match);
     const isNassauMatch = (match.format || "").includes("Nassau");
@@ -5199,8 +5362,127 @@ Max 80 words total.`;
 
   let activeScorecardPlayType = "Match Play"; // set when scorecard opens
 
+  let _individualPayoutRows = [{ pos: "1st", value: "" }];
+
+  function updateIndivPayoutRow(i, field, val) {
+    if (_individualPayoutRows[i]) _individualPayoutRows[i][field] = val;
+  }
+  function addIndivPayoutRow() {
+    const ordinals = ["1st","2nd","3rd","4th","5th","6th","7th","8th"];
+    _individualPayoutRows.push({ pos: ordinals[_individualPayoutRows.length] || (_individualPayoutRows.length + 1 + "th"), value: "" });
+    renderMatchValueFields();
+  }
+  function removeIndivPayoutRow(i) {
+    _individualPayoutRows.splice(i, 1);
+    renderMatchValueFields();
+  }
+
+  function isIndividualFormat(match) {
+    return (match.format || "") === "Individual";
+  }
+
+  function computeIndividualLeaderboard(match) {
+    // Returns sorted array of { playerId, name, gross, net, relGross, relNet, holesPlayed, isFinished }
+    const holes = getScorecardForMatch(match).holes || [];
+    const tee = getTeeForMatch(match);
+    const isNet = (match.scoringType || "Gross") === "Net";
+    const playerIds = match.individualPlayerIds || [];
+    const holeScores = match.holeScores || {};
+    const totalPar = holes.reduce(function(t, h) { return t + Number(h.par || 4); }, 0);
+
+    // Build course handicaps
+    const chs = {};
+    playerIds.forEach(function(id) {
+      const p = players.find(function(x) { return x.id === id; });
+      chs[id] = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+    });
+
+    return playerIds.map(function(id) {
+      const p = players.find(function(x) { return x.id === id; });
+      const scores = holeScores[id] || {};
+      const ch = chs[id] || 0;
+      let grossTotal = 0, netTotal = 0, holesPlayed = 0;
+      let parPlayed = 0;
+
+      holes.forEach(function(h) {
+        const raw = Number(scores[h.hole]);
+        if (!raw) return;
+        const strokeMap = calculateStrokeMap(ch, holes);
+        const strokesOnHole = isNet ? (strokeMap[h.hole] || 0) : 0;
+        grossTotal += raw;
+        netTotal += raw - strokesOnHole;
+        parPlayed += Number(h.par || 4);
+        holesPlayed++;
+      });
+
+      const isFinished = holesPlayed === holes.length;
+      const parBase = isFinished ? totalPar : parPlayed;
+
+      return {
+        playerId: id,
+        name: p ? p.name : id,
+        ch,
+        gross: grossTotal,
+        net: netTotal,
+        relGross: grossTotal ? grossTotal - parBase : null,
+        relNet: (isNet && netTotal) ? netTotal - parBase : null,
+        holesPlayed,
+        isFinished
+      };
+    })
+    .filter(function(r) { return r.gross > 0; }) // only show players who have scored
+    .sort(function(a, b) {
+      // Sort by net if Net scoring, else gross; lowest first
+      const aScore = isNet ? a.net : a.gross;
+      const bScore = isNet ? b.net : b.gross;
+      if (aScore !== bScore) return aScore - bScore;
+      return b.holesPlayed - a.holesPlayed; // more holes played = better position on equal score
+    });
+  }
+
+  function formatRelativePar(rel) {
+    if (rel === null) return "—";
+    if (rel === 0) return "E";
+    return rel > 0 ? "+" + rel : String(rel);
+  }
+
+  function computeIndividualPoints(match) {
+    // Returns { playerId: ptsEarned } with tie-splitting
+    const board = computeIndividualLeaderboard(match);
+    if (!board.length) return {};
+    const isNet = (match.scoringType || "Gross") === "Net";
+    const vs = match.valueSettings || {};
+    const positions = Object.keys(vs); // ["1st","2nd","3rd",...]
+    const result = {};
+    board.forEach(function(r) { result[r.playerId] = 0; });
+
+    let i = 0;
+    while (i < board.length) {
+      // Find all players tied at this position
+      const baseScore = isNet ? board[i].net : board[i].gross;
+      let j = i;
+      while (j < board.length) {
+        const s = isNet ? board[j].net : board[j].gross;
+        if (s !== baseScore) break;
+        j++;
+      }
+      // Positions i..j-1 are tied — sum their point values and split
+      let totalPts = 0;
+      for (let k = i; k < j; k++) {
+        const posLabel = positions[k];
+        totalPts += posLabel ? Number(vs[posLabel] || 0) : 0;
+      }
+      const split = j > i ? totalPts / (j - i) : totalPts;
+      for (let k = i; k < j; k++) {
+        result[board[k].playerId] = split;
+      }
+      i = j;
+    }
+    return result;
+  }
+
   function isStrokePlayFormat(match) {
-    // Check match data first, then fall back to the actively selected value
+    if (isIndividualFormat(match)) return true; // Individual is always Stroke Play
     if (match && match.playType) return match.playType === "Stroke Play";
     return activeScorecardPlayType === "Stroke Play";
   }
@@ -5627,12 +5909,24 @@ Max 80 words total.`;
       }
 
       const updatedHoleScores = JSON.parse(JSON.stringify(match.holeScores || {}));
-      Object.entries(holeDetailData).forEach(([pid, holes]) => {
-        if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
-        Object.entries(holes).forEach(([holeNum, pd]) => {
-          if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
+      const isIndiv = isIndividualFormat(match);
+
+      if (isIndiv) {
+        // Individual: ONLY save the tapped player's score — never touch other players
+        const pid = holeDetailPlayerId;
+        const pd = holeDetailData[pid] && holeDetailData[pid][holeDetailHoleNum];
+        if (pd && pd.score) {
+          if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
+          updatedHoleScores[pid][String(holeDetailHoleNum)] = String(pd.score);
+        }
+      } else {
+        Object.entries(holeDetailData).forEach(([pid, holes]) => {
+          if (!updatedHoleScores[pid]) updatedHoleScores[pid] = {};
+          Object.entries(holes).forEach(([holeNum, pd]) => {
+            if (pd.score) updatedHoleScores[pid][holeNum] = String(pd.score);
+          });
         });
-      });
+      }
 
       await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", holeDetailMatchId), {
         holeScores: updatedHoleScores,
@@ -5692,6 +5986,107 @@ Max 80 words total.`;
       return `<span class="stroke-dot"></span>`;
     }).join("");
     return `<span class="stroke-dots">${dots}</span>`;
+  }
+
+  function renderIndividualScorecard(match, wrap, info, holes, tee, isNet) {
+    const playerIds = match.individualPlayerIds || [];
+    const holeScores = match.holeScores || {};
+    const existingScores = holeScores;
+    const scoringType = match.scoringType || "Gross";
+
+    // Header
+    info.innerHTML = '<strong>' + escapeHtml(match.format || "Individual") + '</strong><br>' +
+      escapeHtml(match.course || "Course TBD") + ' • ' + escapeHtml(match.tees || "Tees TBD") + '<br>' +
+      'Rating ' + (tee && tee.rating != null ? escapeHtml(String(tee.rating)) : "N/A") +
+      ' / Slope ' + (tee && tee.slope != null ? escapeHtml(String(tee.slope)) : "N/A") +
+      ' • ' + escapeHtml(scoringType) + ' • Stroke Play<br>' +
+      escapeHtml(formatMatchDate(match.matchDate)) + ' • Round ' + escapeHtml(match.round || "1");
+
+    // Build stroke maps
+    const chs = {};
+    const strokeMaps = {};
+    playerIds.forEach(function(id) {
+      const p = players.find(function(x) { return x.id === id; });
+      const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      chs[id] = ch;
+      strokeMaps[id] = isNet && ch !== null ? calculateStrokeMap(ch, holes) : {};
+    });
+
+    const outHoles = holes.filter(function(h) { return Number(h.hole) <= 9; });
+    const inHoles  = holes.filter(function(h) { return Number(h.hole) >= 10; });
+    const frontPar = outHoles.reduce(function(t, h) { return t + Number(h.par || 4); }, 0);
+    const backPar  = inHoles.reduce(function(t, h) { return t + Number(h.par || 4); }, 0);
+    const totalPar = frontPar + backPar;
+
+    // Build table HTML
+    let html = '<div style="overflow-x:auto;"><table class="scorecard-table" style="min-width:700px;">';
+
+    // Header row
+    html += '<thead><tr><th style="text-align:left;min-width:90px;">Player</th>';
+    holes.forEach(function(h) {
+      html += '<th>' + h.hole + '</th>';
+      if (Number(h.hole) === 9) html += '<th>OUT</th>';
+    });
+    html += '<th>IN</th><th>TOT</th>';
+    if (isNet) html += '<th>NET</th>';
+    html += '</tr>';
+
+    // Par row
+    html += '<tr style="color:#94a3b8;font-size:11px;"><td>Par</td>';
+    holes.forEach(function(h) {
+      html += '<td>' + h.par + '</td>';
+      if (Number(h.hole) === 9) html += '<td>' + frontPar + '</td>';
+    });
+    html += '<td>' + backPar + '</td><td>' + totalPar + '</td>';
+    if (isNet) html += '<td></td>';
+    html += '</tr></thead>';
+
+    // Player rows
+    html += '<tbody>';
+    playerIds.forEach(function(pid) {
+      const p = players.find(function(x) { return x.id === pid; });
+      const pName = p ? p.name : pid;
+      const ch = chs[pid];
+      const sm = strokeMaps[pid] || {};
+      const pScores = existingScores[pid] || {};
+      let outGross = 0, inGross = 0, outNet = 0, inNet = 0, holesPlayed = 0;
+
+      const nameLabel = pName + (isNet && ch !== null ? '<span style="color:#94a3b8;font-size:10px;"> (CH ' + ch + ')</span>' : '');
+
+      html += '<tr><td style="text-align:left;font-weight:600;white-space:nowrap;">' + nameLabel + '</td>';
+
+      holes.forEach(function(h) {
+        const raw = Number(pScores[h.hole]) || 0;
+        const par = Number(h.par) || 4;
+        const strokes = isNet ? (sm[h.hole] || 0) : 0;
+        const net = raw ? raw - strokes : null;
+        const dotHtml = isNet && strokes ? '<div class="stroke-dots">' + renderStrokeDots(strokes) + '</div>' : '';
+        const badgeHtml = raw ? scoreBadge(raw, par, strokes) : '<span style="color:#475569;font-size:11px;">–</span>';
+
+        html += '<td class="score-tap-cell" data-match-id="' + escapeAttr(activeScoreMatchId) +
+          '" data-player-id="' + escapeAttr(pid) +
+          '" data-hole="' + Number(h.hole) +
+          '" style="cursor:pointer;touch-action:manipulation;min-width:32px;padding:3px 1px;">' +
+          '<div class="score-cell-wrap">' + dotHtml + '<div id="score-badge-' + escapeAttr(pid) + '-' + h.hole + '">' + badgeHtml + '</div></div></td>';
+
+        if (raw) {
+          if (Number(h.hole) <= 9) { outGross += raw; if (net !== null) outNet += net; }
+          else { inGross += raw; if (net !== null) inNet += net; }
+          holesPlayed++;
+        }
+        if (Number(h.hole) === 9) html += '<td id="indiv-out-' + escapeAttr(pid) + '" class="subtotal-cell">' + (outGross || '') + '</td>';
+      });
+
+      const totGross = outGross + inGross;
+      const totNet = outNet + inNet;
+      html += '<td id="indiv-in-' + escapeAttr(pid) + '" class="subtotal-cell">' + (inGross || '') + '</td>';
+      html += '<td id="indiv-tot-' + escapeAttr(pid) + '" class="subtotal-cell">' + (totGross || '') + '</td>';
+      if (isNet) html += '<td class="subtotal-cell">' + (totNet || '') + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
   }
 
   function getPlayersForMatch(match) {
@@ -5757,7 +6152,13 @@ Max 80 words total.`;
     const isBestBall = isBestBallLike(match);
     const scramble = isScrambleFormat(match);
     const strokePlay = isStrokePlayFormat(match);
-    console.log("Scorecard match:", match.id, "playType:", match.playType, "activeScorecardPlayType:", activeScorecardPlayType, "strokePlay:", strokePlay);
+    const isIndiv = isIndividualFormat(match);
+
+    // Individual format — render leaderboard + hole-by-hole grid
+    if (isIndiv) {
+      renderIndividualScorecard(match, wrap, info, holes, tee, isNet);
+      return;
+    }
     const existingScores = match.holeScores || {};
     const allowance = match.handicapAllowance || "N/A";
 
@@ -11633,6 +12034,9 @@ ${closer}`;
   window.goTeamRosterScreen = goTeamRosterScreen;
   window.viewReceiptFullScreen = viewReceiptFullScreen;
   window.openScorecardAddPhoto = openScorecardAddPhoto;
+  window.updateIndivPayoutRow = updateIndivPayoutRow;
+  window.addIndivPayoutRow = addIndivPayoutRow;
+  window.removeIndivPayoutRow = removeIndivPayoutRow;
   window.renderScorecardPhotos = renderScorecardPhotos;
   window.selectGrintPlayer = selectGrintPlayer;
   window.grintSaveImage = grintSaveImage;
