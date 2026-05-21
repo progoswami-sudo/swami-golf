@@ -5193,8 +5193,12 @@ Max 80 words total.`;
     return (match.format || "").startsWith("Singles");
   }
 
+  let activeScorecardPlayType = "Match Play"; // set when scorecard opens
+
   function isStrokePlayFormat(match) {
-    return (match.playType || "Match Play") === "Stroke Play";
+    // Check match data first, then fall back to the actively selected value
+    if (match && match.playType) return match.playType === "Stroke Play";
+    return activeScorecardPlayType === "Stroke Play";
   }
 
   function isBestBallLike(match) {
@@ -5258,6 +5262,9 @@ Max 80 words total.`;
 
   function openEnterScore(matchId) {
     activeScoreMatchId = matchId;
+    // Capture playType from match data (or default)
+    const m = matches.find(function(x) { return x.id === matchId; });
+    activeScorecardPlayType = (m && m.playType) || "Match Play";
     show("scoreEntryScreen");
     setTimeout(function() {
       renderScoreEntry();
@@ -5746,7 +5753,7 @@ Max 80 words total.`;
     const isBestBall = isBestBallLike(match);
     const scramble = isScrambleFormat(match);
     const strokePlay = isStrokePlayFormat(match);
-    console.log("Scorecard matchId:", match.id, "playType:", match.playType, "strokePlay:", strokePlay);
+    console.log("Scorecard match:", match.id, "playType:", match.playType, "activeScorecardPlayType:", activeScorecardPlayType, "strokePlay:", strokePlay);
     const existingScores = match.holeScores || {};
     const allowance = match.handicapAllowance || "N/A";
 
