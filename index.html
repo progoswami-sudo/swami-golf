@@ -5746,6 +5746,7 @@ Max 80 words total.`;
     const isBestBall = isBestBallLike(match);
     const scramble = isScrambleFormat(match);
     const strokePlay = isStrokePlayFormat(match);
+    console.log("Scorecard matchId:", match.id, "playType:", match.playType, "strokePlay:", strokePlay);
     const existingScores = match.holeScores || {};
     const allowance = match.handicapAllowance || "N/A";
 
