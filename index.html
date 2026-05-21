@@ -4417,6 +4417,7 @@ Max 80 words total.`;
       const format = document.getElementById("matchFormat").value;
       const scoringType = document.getElementById("matchScoringType").value;
       const playType = (document.getElementById("matchPlayType") || {}).value || "Match Play";
+      console.log("saveMatch playType:", playType, "editingMatchId:", editingMatchId);
       const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
       const valueType = document.getElementById("matchValueType").value;
       const valueSettings = getMatchValueSettings();
@@ -4453,6 +4454,9 @@ Max 80 words total.`;
 
       if (editingMatchId) {
         await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", editingMatchId), matchData);
+        // Update in-memory match immediately so scorecard doesn't wait for onSnapshot
+        const idx = matches.findIndex(m => m.id === editingMatchId);
+        if (idx !== -1) matches[idx] = { ...matches[idx], ...matchData };
       } else {
         await addDoc(matchesCollection(), { ...matchData, createdAt: new Date().toISOString() });
       }
@@ -5848,7 +5852,7 @@ Max 80 words total.`;
     }
 
     const scorecardWarning = tee ? "" : '<br><span style="color:#fecaca">No matching scorecard found. Check course/tee selection and confirm the JSON file is uploaded beside index.html.</span>';
-    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(scoringType)} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${scorecardWarning}`;
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(scoringType)} • ${escapeHtml(match.playType || "Match Play")} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${scorecardWarning}`;
 
     function statRow(label, field) {
       let cells = "";
