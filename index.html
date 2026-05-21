@@ -4456,11 +4456,7 @@ Max 80 words total.`;
       console.log("saveMatch playType:", playType, "editingMatchId:", editingMatchId);
       const handicapAllowance = (document.getElementById("matchHandicapAllowance") || {}).value || "N/A";
       const valueType = document.getElementById("matchValueType").value;
-      const valueSettings = getMatchValueSettings();
-      const teamAPlayerIds = getMultiSelectValues("matchTeamAPlayers");
-      const teamBPlayerIds = getMultiSelectValues("matchTeamBPlayers");
 
-      if (!valueSettings) return;
       if (!matchDate) return void alert("Please select a date.");
       if (!course) return void alert("Please enter a golf course.");
       const isSingles = format === "Singles" || format === "Singles (Nassau)";
@@ -4479,13 +4475,14 @@ Max 80 words total.`;
       }
 
       // For Individual, read position payouts
-      let valueSettings = getMatchValueSettings();
+      let valueSettings;
       if (isIndiv) {
-        // Read from _individualPayoutRows
         valueSettings = {};
         _individualPayoutRows.forEach(function(row) {
           if (row.pos && row.value) valueSettings[row.pos.trim()] = row.value;
         });
+      } else {
+        valueSettings = getMatchValueSettings();
       }
       if (!valueSettings) return;
 
