@@ -5745,6 +5745,7 @@ Max 80 words total.`;
     const isNassau = isNassauFormat(match);
     const isBestBall = isBestBallLike(match);
     const scramble = isScrambleFormat(match);
+    const strokePlay = isStrokePlayFormat(match);
     const existingScores = match.holeScores || {};
     const allowance = match.handicapAllowance || "N/A";
 
