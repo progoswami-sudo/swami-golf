@@ -5852,7 +5852,7 @@ Max 80 words total.`;
     }
 
     const scorecardWarning = tee ? "" : '<br><span style="color:#fecaca">No matching scorecard found. Check course/tee selection and confirm the JSON file is uploaded beside index.html.</span>';
-    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(scoringType)} • ${escapeHtml(match.playType || "Match Play")} • ${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${scorecardWarning}`;
+    info.innerHTML = `<strong>${escapeHtml(match.format || "Match")}</strong><br>${escapeHtml(match.course || "Course TBD")} • ${escapeHtml(match.tees || "Tees TBD")}<br>Rating ${tee && tee.rating != null ? escapeHtml(tee.rating) : "N/A"} / Slope ${tee && tee.slope != null ? escapeHtml(tee.slope) : "N/A"} • ${escapeHtml(scoringType)} • ${escapeHtml(match.playType || "Match Play")}<br>${escapeHtml(formatMatchDate(match.matchDate))} • Round ${escapeHtml(match.round || "1")}${scorecardWarning}`;
 
     function statRow(label, field) {
       let cells = "";
@@ -5921,7 +5921,7 @@ Max 80 words total.`;
           const oppSd = scrambleStrokeData[oppTeamId] || { strokeMap: {} };
           const oppNet = oppRaw ? oppRaw - (isNet ? (oppSd.strokeMap[hole.hole] || 0) : 0) : null;
           const netWin = net !== null && oppNet !== null && net < oppNet;
-          const netBg = !isNassau && netWin ? 'background:#166534;' : '';
+          const netBg = !isNassau && !strokePlay && netWin ? 'background:#166534;' : '';
           const netLabel = net !== null ? String(net) : '—';
           netRow += '<td style="text-align:center;' + netBg + '">' + netLabel + '</td>';
 
