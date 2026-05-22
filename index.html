@@ -5641,10 +5641,12 @@ Max 80 words total.`;
     if (match) {
       holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
       if (isScrambleFormat(match)) {
-        // For scramble, init detail for both team IDs
         const compTeams = getTeams();
         const teamIds = compTeams.map(t => t.id);
         teamIds.forEach(tid => applyHoleDefaults(match, tid, holeDetailHoleNum));
+      } else if (isIndividualFormat(match)) {
+        // Only apply defaults for the tapped player
+        applyHoleDefaults(match, playerId, holeDetailHoleNum);
       } else {
         getPlayersForMatch(match).forEach(p => applyHoleDefaults(match, p.id, holeDetailHoleNum));
       }
@@ -5681,23 +5683,31 @@ Max 80 words total.`;
       ${hole.hcp ? `<div>HCP <span>${hole.hcp}</span></div>` : ""}
     </div>`;
 
-    // Player tabs
-    // Player/team tabs
-    let tabs = '<div class="hole-player-tabs">';
+    // Player tabs / name header
+    let tabs = '';
     const scrambleMatch = isScrambleFormat(match);
-    if (scrambleMatch) {
+    const indivMatch = isIndividualFormat(match);
+    if (indivMatch) {
+      // Individual: show player name prominently, no tabs
+      const p = players.find(function(x) { return x.id === holeDetailPlayerId; });
+      const pName = p ? p.name : holeDetailPlayerId;
+      tabs = '<div style="text-align:center;font-size:17px;font-weight:700;color:#93c5fd;padding:6px 0 2px;">' + escapeHtml(pName) + '</div>';
+    } else if (scrambleMatch) {
+      tabs = '<div class="hole-player-tabs">';
       const compTeams = getTeams();
       compTeams.forEach(t => {
         const active = t.id === holeDetailPlayerId ? "active" : "";
         tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(t.id) + '\')">' + escapeHtml(t.name) + '</button>';
       });
+      tabs += '</div>';
     } else {
+      tabs = '<div class="hole-player-tabs">';
       playersForMatch.forEach(p => {
         const active = p.id === holeDetailPlayerId ? "active" : "";
         tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(p.id) + '\')">' + escapeHtml(p.name.split(" ")[0]) + '</button>';
       });
+      tabs += '</div>';
     }
-    tabs += '</div>';
 
     const pd = (holeDetailData[holeDetailPlayerId] || {})[holeDetailHoleNum] || {};
     const existingScore = ((match.holeScores || {})[holeDetailPlayerId] || {})[holeDetailHoleNum];
@@ -5988,7 +5998,6 @@ Max 80 words total.`;
   function renderIndividualScorecard(match, wrap, info, holes, tee, isNet) {
     const playerIds = match.individualPlayerIds || [];
     const holeScores = match.holeScores || {};
-    const existingScores = holeScores;
     const scoringType = match.scoringType || "Gross";
 
     // Header
@@ -6015,27 +6024,36 @@ Max 80 words total.`;
     const backPar  = inHoles.reduce(function(t, h) { return t + Number(h.par || 4); }, 0);
     const totalPar = frontPar + backPar;
 
-    // Build table HTML
-    let html = '<div style="overflow-x:auto;"><table class="scorecard-table" style="min-width:700px;">';
+    // Wrapper: horizontal scroll for holes, vertical scroll for players
+    let html = '<div style="overflow:auto;max-height:calc(100vh - 220px);">' +
+               '<table class="scorecard-table" style="min-width:700px;border-collapse:collapse;">';
 
-    // Header row
-    html += '<thead><tr><th style="text-align:left;min-width:90px;">Player</th>';
+    // Sticky header row
+    const thStyle = 'position:sticky;top:0;background:#0d1b35;z-index:3;padding:8px 4px;';
+    const frozenTh = 'position:sticky;left:0;top:0;background:#0d1b35;z-index:4;padding:8px 6px;text-align:left;min-width:100px;';
+    html += '<thead><tr>';
+    html += '<th style="' + frozenTh + '">Player</th>';
     holes.forEach(function(h) {
-      html += '<th>' + h.hole + '</th>';
-      if (Number(h.hole) === 9) html += '<th>OUT</th>';
+      html += '<th style="' + thStyle + '">' + h.hole + '</th>';
+      if (Number(h.hole) === 9) html += '<th style="' + thStyle + 'font-weight:700;">OUT</th>';
     });
-    html += '<th>IN</th><th>TOT</th>';
-    if (isNet) html += '<th>NET</th>';
+    html += '<th style="' + thStyle + 'font-weight:700;">IN</th>';
+    html += '<th style="' + thStyle + 'font-weight:700;">TOT</th>';
+    if (isNet) html += '<th style="' + thStyle + '">NET</th>';
     html += '</tr>';
 
     // Par row
-    html += '<tr style="color:#94a3b8;font-size:11px;"><td>Par</td>';
+    const parThStyle = 'position:sticky;top:36px;background:#0a1628;z-index:2;color:#94a3b8;font-size:11px;padding:4px;';
+    const frozenParTh = 'position:sticky;left:0;top:36px;background:#0a1628;z-index:3;color:#94a3b8;font-size:11px;padding:4px 6px;text-align:left;';
+    html += '<tr>';
+    html += '<td style="' + frozenParTh + '">Par</td>';
     holes.forEach(function(h) {
-      html += '<td>' + h.par + '</td>';
-      if (Number(h.hole) === 9) html += '<td>' + frontPar + '</td>';
+      html += '<td style="' + parThStyle + '">' + h.par + '</td>';
+      if (Number(h.hole) === 9) html += '<td style="' + parThStyle + 'font-weight:700;">' + frontPar + '</td>';
     });
-    html += '<td>' + backPar + '</td><td>' + totalPar + '</td>';
-    if (isNet) html += '<td></td>';
+    html += '<td style="' + parThStyle + 'font-weight:700;">' + backPar + '</td>';
+    html += '<td style="' + parThStyle + 'font-weight:700;">' + totalPar + '</td>';
+    if (isNet) html += '<td style="' + parThStyle + '"></td>';
     html += '</tr></thead>';
 
     // Player rows
@@ -6045,12 +6063,14 @@ Max 80 words total.`;
       const pName = p ? p.name : pid;
       const ch = chs[pid];
       const sm = strokeMaps[pid] || {};
-      const pScores = existingScores[pid] || {};
-      let outGross = 0, inGross = 0, outNet = 0, inNet = 0, holesPlayed = 0;
+      const pScores = holeScores[pid] || {};
+      let outGross = 0, inGross = 0, outNet = 0, inNet = 0;
 
-      const nameLabel = pName + (isNet && ch !== null ? '<span style="color:#94a3b8;font-size:10px;"> (CH ' + ch + ')</span>' : '');
+      const chLabel = isNet && ch !== null ? ' <span style="color:#94a3b8;font-size:10px;">(CH ' + ch + ')</span>' : '';
+      const frozenTd = 'position:sticky;left:0;background:#13294d;z-index:2;padding:8px 6px;min-width:100px;white-space:nowrap;font-weight:600;border-right:1px solid #375984;';
 
-      html += '<tr><td style="text-align:left;font-weight:600;white-space:nowrap;">' + nameLabel + '</td>';
+      html += '<tr style="height:52px;">';
+      html += '<td style="' + frozenTd + '">' + escapeHtml(pName) + chLabel + '</td>';
 
       holes.forEach(function(h) {
         const raw = Number(pScores[h.hole]) || 0;
@@ -6058,26 +6078,30 @@ Max 80 words total.`;
         const strokes = isNet ? (sm[h.hole] || 0) : 0;
         const net = raw ? raw - strokes : null;
         const dotHtml = isNet && strokes ? '<div class="stroke-dots">' + renderStrokeDots(strokes) + '</div>' : '';
-        const badgeHtml = raw ? scoreBadge(raw, par, strokes) : '<span style="color:#475569;font-size:11px;">–</span>';
+        const badgeHtml = raw ? scoreBadge(raw, par, strokes) : '<span style="color:#475569;font-size:13px;">–</span>';
 
+        // Large tap target — full cell height
         html += '<td class="score-tap-cell" data-match-id="' + escapeAttr(activeScoreMatchId) +
           '" data-player-id="' + escapeAttr(pid) +
           '" data-hole="' + Number(h.hole) +
-          '" style="cursor:pointer;touch-action:manipulation;min-width:32px;padding:3px 1px;">' +
-          '<div class="score-cell-wrap">' + dotHtml + '<div id="score-badge-' + escapeAttr(pid) + '-' + h.hole + '">' + badgeHtml + '</div></div></td>';
+          '" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:6px 2px;vertical-align:middle;">' +
+          '<div class="score-cell-wrap" style="min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;">' +
+          dotHtml + '<div id="score-badge-' + escapeAttr(pid) + '-' + h.hole + '">' + badgeHtml + '</div>' +
+          '</div></td>';
 
         if (raw) {
           if (Number(h.hole) <= 9) { outGross += raw; if (net !== null) outNet += net; }
           else { inGross += raw; if (net !== null) inNet += net; }
-          holesPlayed++;
         }
-        if (Number(h.hole) === 9) html += '<td id="indiv-out-' + escapeAttr(pid) + '" class="subtotal-cell">' + (outGross || '') + '</td>';
+        if (Number(h.hole) === 9) {
+          html += '<td id="indiv-out-' + escapeAttr(pid) + '" class="subtotal-cell" style="font-weight:700;">' + (outGross || '') + '</td>';
+        }
       });
 
       const totGross = outGross + inGross;
       const totNet = outNet + inNet;
-      html += '<td id="indiv-in-' + escapeAttr(pid) + '" class="subtotal-cell">' + (inGross || '') + '</td>';
-      html += '<td id="indiv-tot-' + escapeAttr(pid) + '" class="subtotal-cell">' + (totGross || '') + '</td>';
+      html += '<td id="indiv-in-' + escapeAttr(pid) + '" class="subtotal-cell" style="font-weight:700;">' + (inGross || '') + '</td>';
+      html += '<td id="indiv-tot-' + escapeAttr(pid) + '" class="subtotal-cell" style="font-weight:700;">' + (totGross || '') + '</td>';
       if (isNet) html += '<td class="subtotal-cell">' + (totNet || '') + '</td>';
       html += '</tr>';
     });
