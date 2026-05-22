@@ -6108,6 +6108,16 @@ Max 80 words total.`;
 
     html += '</tbody></table></div>';
     wrap.innerHTML = html;
+
+    // Delegated tap handler
+    wrap.addEventListener("click", function(e) {
+      const cell = e.target.closest(".score-tap-cell");
+      if (!cell) return;
+      const matchId = cell.dataset.matchId;
+      const playerId = cell.dataset.playerId;
+      const holeNum = Number(cell.dataset.hole);
+      openHoleDetail(matchId, playerId, holeNum);
+    });
   }
 
   function getPlayersForMatch(match) {
@@ -7754,10 +7764,15 @@ ${closer}`;
     if (!match) { if (btn) { btn.disabled = false; btn.textContent = "Interpret Scores"; } return alert("No active match."); }
 
     const scramble = isScrambleFormat(match);
+    const isIndiv = isIndividualFormat(match);
     let matchPlayers; // { id, name } array — either teams or players
     if (scramble) {
       const compTeams = getTeams();
       matchPlayers = compTeams.map(t => ({ id: t.id, name: t.name }));
+    } else if (isIndiv) {
+      matchPlayers = (match.individualPlayerIds || [])
+        .map(pid => players.find(x => x.id === pid))
+        .filter(Boolean);
     } else {
       matchPlayers = (match.teamAPlayerIds || [])
         .concat(match.teamBPlayerIds || [])
@@ -7960,6 +7975,10 @@ ${closer}`;
     if (isScrambleFormat(match)) {
       const compTeams = getTeams();
       matchPlayers = compTeams.map(t => ({ id: t.id, name: t.name }));
+    } else if (isIndividualFormat(match)) {
+      matchPlayers = (match.individualPlayerIds || [])
+        .map(pid => players.find(x => x.id === pid))
+        .filter(Boolean);
     } else {
       matchPlayers = (match.players || match.teamAPlayerIds || [])
         .concat(match.teamBPlayerIds || [])
