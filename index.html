@@ -4618,7 +4618,7 @@ Max 80 words total.`;
       html += '<td style="color:#64748b;">' + rank + '</td>';
       html += '<td style="text-align:left;font-weight:600;">' + escapeHtml(r.name) + '</td>';
       html += '<td style="color:' + scoreColor + ';font-weight:700;">' + primaryStr + '</td>';
-      if (isNet) html += '<td style="color:' + grossColor + ';font-size:11px;color:#64748b;">' + relGross + '</td>';
+      if (isNet) html += '<td style="color:' + grossColor + ';font-weight:700;">' + relGross + '</td>';
       html += '<td style="color:#94a3b8;">' + thru + '</td>';
       if (isComplete && Object.keys(match.valueSettings || {}).length) {
         const p = pts[r.playerId] || 0;
@@ -5444,13 +5444,16 @@ Max 80 words total.`;
         isFinished
       };
     })
-    .filter(function(r) { return r.gross > 0; }) // only show players who have scored
+    .filter(function(r) { return r.gross > 0; })
     .sort(function(a, b) {
-      // Sort by net if Net scoring, else gross; lowest first
-      const aScore = isNet ? a.net : a.gross;
-      const bScore = isNet ? b.net : b.gross;
+      // Use relative-to-par so partial rounds compare fairly with full rounds
+      const aScore = isNet ? a.relNet : a.relGross;
+      const bScore = isNet ? b.relNet : b.relGross;
+      if (aScore === null && bScore === null) return 0;
+      if (aScore === null) return 1;
+      if (bScore === null) return -1;
       if (aScore !== bScore) return aScore - bScore;
-      return b.holesPlayed - a.holesPlayed; // more holes played = better position on equal score
+      return b.holesPlayed - a.holesPlayed; // tiebreaker: more holes played ranks higher
     });
   }
 
@@ -5473,10 +5476,10 @@ Max 80 words total.`;
     let i = 0;
     while (i < board.length) {
       // Find all players tied at this position
-      const baseScore = isNet ? board[i].net : board[i].gross;
+      const baseScore = isNet ? board[i].relNet : board[i].relGross;
       let j = i;
       while (j < board.length) {
-        const s = isNet ? board[j].net : board[j].gross;
+        const s = isNet ? board[j].relNet : board[j].relGross;
         if (s !== baseScore) break;
         j++;
       }
