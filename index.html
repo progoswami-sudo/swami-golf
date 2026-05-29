@@ -2022,6 +2022,7 @@
       </div>
 
       <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
+      <button id="linkToMemberBtn" onclick="openLinkToMemberPicker()" class="secondary hidden" style="margin-top:8px;">Link to Trip Member</button>
       <button id="deletePlayerBtn" onclick="deletePlayerWithCheck()" class="danger hidden" style="margin-top:8px;">Delete Player</button>
     </div>
   </div>
@@ -4496,6 +4497,18 @@ Max 80 words total.`;
         teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
         numberOfHoles, startingHole, round, format, scoringType, playType, handicapAllowance, valueType, valueSettings,
         teamAPlayerIds, teamBPlayerIds, individualPlayerIds,
+        // Snapshot player handicaps at match creation — changes to handicap won't affect existing matches
+        playerHandicaps: (function() {
+          const allIds = isIndiv
+            ? (individualPlayerIds || [])
+            : (teamAPlayerIds || []).concat(teamBPlayerIds || []);
+          const snap = {};
+          allIds.forEach(function(id) {
+            const p = players.find(function(x) { return x.id === id; });
+            if (p && p.handicapIndex != null) snap[id] = p.handicapIndex;
+          });
+          return snap;
+        })(),
         teamAScore: baseScores.teamAScore || "0", teamBScore: baseScores.teamBScore || "0",
         frontA: baseScores.frontA || "0", frontB: baseScores.frontB || "0",
         backA: baseScores.backA || "0", backB: baseScores.backB || "0",
@@ -4791,13 +4804,11 @@ Max 80 words total.`;
       const allIds = aIds.concat(bIds);
       if (isNet && !scramble) {
         const validChs = allIds.map(id => {
-          const p = players.find(x => x.id === id);
-          return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+          return calculateCourseHandicap(getHandicapForMatch(id, match), tee);
         }).filter(x => x !== null);
         const lowCh = validChs.length ? Math.min(...validChs) : null;
         allIds.forEach(id => {
-          const p = players.find(x => x.id === id);
-          const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+          const ch = calculateCourseHandicap(getHandicapForMatch(id, match), tee);
           const strokes = ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
           strokeMaps[id] = calculateStrokeMap(strokes, holes);
         });
@@ -4891,13 +4902,11 @@ Max 80 words total.`;
     // ── Best Ball / Standard path ─────────────────────────────────────────────
     const allIds = aIds.concat(bIds);
     const validChs = allIds.map(id => {
-      const p = players.find(x => x.id === id);
-      return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      return calculateCourseHandicap(getHandicapForMatch(id, match), tee);
     }).filter(x => x !== null);
     const lowCh = validChs.length ? Math.min.apply(null, validChs) : null;
     allIds.forEach(id => {
-      const p = players.find(x => x.id === id);
-      const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      const ch = calculateCourseHandicap(getHandicapForMatch(id, match), tee);
       const strokes = isNet && ch !== null && lowCh !== null ? Math.max(0, ch - lowCh) : 0;
       strokeMaps[id] = calculateStrokeMap(strokes, holes);
     });
@@ -5407,8 +5416,7 @@ Max 80 words total.`;
     // Build course handicaps
     const chs = {};
     playerIds.forEach(function(id) {
-      const p = players.find(function(x) { return x.id === id; });
-      chs[id] = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      chs[id] = calculateCourseHandicap(getHandicapForMatch(id, match), tee);
     });
 
     return playerIds.map(function(id) {
@@ -5517,8 +5525,7 @@ Max 80 words total.`;
 
   function computeScrambleHandicap(teamIds, tee, allowance) {
     const chs = teamIds.map(id => {
-      const p = players.find(x => x.id === id);
-      return p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      return calculateCourseHandicap(getHandicapForMatch(id, match), tee);
     }).filter(x => x !== null).sort((a, b) => a - b); // low to high
 
     if (!chs.length) return 0;
@@ -5562,6 +5569,14 @@ Max 80 words total.`;
     if (!tee || tee.slope == null || tee.rating == null || isNaN(index)) return null;
     const par = Number(tee.totalPar || 72);
     return Math.round(index * (Number(tee.slope) / 113) + (Number(tee.rating) - par));
+  }
+
+  // Use stored handicap snapshot when available — ignores live handicap changes
+  function getHandicapForMatch(playerId, match) {
+    const stored = match && match.playerHandicaps && match.playerHandicaps[playerId];
+    if (stored != null) return Number(stored);
+    const p = players.find(function(x) { return x.id === playerId; });
+    return p ? Number(p.handicapIndex) : null;
   }
 
   function openEnterScore(matchId) {
@@ -5748,7 +5763,7 @@ Max 80 words total.`;
       strokesOnHole = sm[holeDetailHoleNum] || 0;
     } else if (!scrambleMatch) {
       const courseHandicaps = {};
-      playersForMatch.forEach(p => { courseHandicaps[p.id] = calculateCourseHandicap(p.handicapIndex, tee); });
+      playersForMatch.forEach(p => { courseHandicaps[p.id] = calculateCourseHandicap(getHandicapForMatch(p.id, match), tee); });
       const validCh = playersForMatch.map(p => courseHandicaps[p.id]).filter(v => v !== null);
       const lowCh = validCh.length ? Math.min(...validCh) : null;
       const ch = courseHandicaps[holeDetailPlayerId];
@@ -6033,8 +6048,7 @@ Max 80 words total.`;
     const chs = {};
     const strokeMaps = {};
     playerIds.forEach(function(id) {
-      const p = players.find(function(x) { return x.id === id; });
-      const ch = p ? calculateCourseHandicap(p.handicapIndex, tee) : null;
+      const ch = calculateCourseHandicap(getHandicapForMatch(id, match), tee);
       chs[id] = ch;
       strokeMaps[id] = isNet && ch !== null ? calculateStrokeMap(ch, holes) : {};
     });
@@ -6215,7 +6229,7 @@ Max 80 words total.`;
     const allowance = match.handicapAllowance || "N/A";
 
     const courseHandicaps = {};
-    playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee); });
+    playersForMatch.forEach(function(player) { courseHandicaps[player.id] = calculateCourseHandicap(getHandicapForMatch(player.id, match), tee); });
     const validCh = playersForMatch.map(function(player) { return courseHandicaps[player.id]; }).filter(function(value) { return value !== null; });
     const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
 
@@ -6506,7 +6520,7 @@ Max 80 words total.`;
 
     const courseHandicaps = {};
     playersForMatch.forEach(function(player) {
-      courseHandicaps[player.id] = calculateCourseHandicap(player.handicapIndex, tee);
+      courseHandicaps[player.id] = calculateCourseHandicap(getHandicapForMatch(player.id, match), tee);
     });
     const validCh = playersForMatch.map(function(player) { return courseHandicaps[player.id]; }).filter(function(v) { return v !== null; });
     const lowCh = validCh.length ? Math.min.apply(null, validCh) : null;
@@ -7401,6 +7415,13 @@ ${closer}`;
       document.getElementById("memberPickerRow").style.display = "none";
       if (linkRow) linkRow.style.display = "none";
       deleteBtn.classList.remove("hidden");
+      // Show Link to Member button only for manual (non-linked) players
+      const linkToMemberBtn = document.getElementById("linkToMemberBtn");
+      if (linkToMemberBtn) {
+        const existingPlayer = players.find(function(p) { return p.id === playerId; });
+        const alreadyLinked = !!(existingPlayer && (existingPlayer.linkedUid || existingPlayer.email || existingPlayer.type === "member"));
+        linkToMemberBtn.classList.toggle("hidden", alreadyLinked);
+      }
       loadPlayerForEdit(playerId);
     }
   }
@@ -10103,6 +10124,75 @@ ${closer}`;
   }
 
 
+  async function openLinkToMemberPicker() {
+    // Build a list of trip members who aren't already linked to a player
+    const membersSnap = await getDocs(membersCollection());
+    const linkedUids = players.filter(p => p.linkedUid).map(p => p.linkedUid);
+    const available = membersSnap.docs
+      .filter(d => !linkedUids.includes(d.id))
+      .map(d => ({ uid: d.id, email: d.data().email || d.id }));
+
+    if (!available.length) {
+      return alert("No unlinked trip members found.");
+    }
+
+    const options = available.map(m => m.email).join("\n");
+    const chosen = prompt(
+      "Select a trip member to link this player to.\n\n" +
+      "This will update the player's Name and Gender from their member profile.\n" +
+      "Handicap, team assignment, and all existing scores will NOT be changed.\n\n" +
+      "Available members:\n" + options + "\n\nEnter email address:"
+    );
+    if (!chosen) return;
+
+    const member = available.find(m => m.email.toLowerCase() === chosen.trim().toLowerCase());
+    if (!member) return alert("Member not found. Please enter the exact email address.");
+
+    await linkPlayerToMember(member.uid, member.email);
+  }
+
+  async function linkPlayerToMember(uid, email) {
+    if (!editingPlayerId) return;
+
+    // Fetch member's user profile for name and gender
+    let name = "", gender = "";
+    try {
+      const userSnap = await getDoc(doc(db, "users", uid));
+      if (userSnap.exists()) {
+        name = userSnap.data().name || "";
+        gender = userSnap.data().gender || "";
+      }
+    } catch(e) { /* ignore */ }
+
+    if (!name) {
+      // Fall back to members collection
+      try {
+        const memberSnap = await getDoc(doc(db, "trips", activeTripId, "members", uid));
+        if (memberSnap.exists()) name = memberSnap.data().name || email.split("@")[0];
+      } catch(e) { name = email.split("@")[0]; }
+    }
+
+    const btn = document.getElementById("linkToMemberBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Linking..."; }
+
+    try {
+      await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), {
+        linkedUid: uid,
+        email: email,
+        type: "member",
+        name: name,
+        gender: gender
+        // Deliberately NOT updating: handicapIndex, team, holeScores references
+      });
+      alert("Player linked to " + email + ".\nName updated to: " + name + (gender ? "\nGender: " + gender : "") + "\nHandicap and team assignment unchanged.");
+      openTab("players");
+    } catch(e) {
+      alert("Error linking player: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Link to Trip Member"; }
+    }
+  }
+
   async function deletePlayerWithCheck() {
     if (!editingPlayerId) return;
     if (!requireAdmin("delete players")) return;
@@ -10129,6 +10219,29 @@ ${closer}`;
     const name = document.getElementById("playerName").value.trim();
     const nickname = document.getElementById("nickname").value.trim();
     const handicapIndex = document.getElementById("handicapIndex").value.trim();
+
+    // Warn admin if changing handicap on a player with existing matches
+    if (editingPlayerId && handicapIndex) {
+      const existing = players.find(p => p.id === editingPlayerId);
+      const existingHI = existing && String(existing.handicapIndex || "");
+      const newHI = String(handicapIndex);
+      if (existingHI && existingHI !== newHI) {
+        const hasMatches = matches.some(m =>
+          (m.teamAPlayerIds || []).includes(editingPlayerId) ||
+          (m.teamBPlayerIds || []).includes(editingPlayerId) ||
+          (m.individualPlayerIds || []).includes(editingPlayerId)
+        );
+        if (hasMatches) {
+          const confirmed = confirm(
+            "Changing " + (existing.name || "this player") + "'s Handicap Index from " + existingHI + " to " + newHI + ".\n\n" +
+            "Matches already created (Completed or In Progress) will NOT be affected — they use the handicap that was active when they were created.\n\n" +
+            "The new handicap will only apply to new matches created from this point forward.\n\n" +
+            "Continue?"
+          );
+          if (!confirmed) return;
+        }
+      }
+    }
     let gender = "";
     if (editingPlayerId) {
       const existing = players.find(p => p.id === editingPlayerId);
@@ -12139,7 +12252,8 @@ ${closer}`;
   window.goTeamRosterScreen = goTeamRosterScreen;
   window.viewReceiptFullScreen = viewReceiptFullScreen;
   window.openScorecardAddPhoto = openScorecardAddPhoto;
-  window.updateIndivPayoutRow = updateIndivPayoutRow;
+  window.openLinkToMemberPicker = openLinkToMemberPicker;
+  window.linkPlayerToMember = linkPlayerToMember;
   window.addIndivPayoutRow = addIndivPayoutRow;
   window.removeIndivPayoutRow = removeIndivPayoutRow;
   window.renderScorecardPhotos = renderScorecardPhotos;
