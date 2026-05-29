@@ -4715,8 +4715,15 @@ Max 80 words total.`;
         '</div>' +
 
         '<div class="match-detail">' +
-          '<strong>' + escapeHtml(teamAName) + ':</strong> <span style="color:#93c5fd;font-weight:600;">' + escapeHtml(teamAPlayers) + '</span><br>' +
-          '<strong>' + escapeHtml(teamBName) + ':</strong> <span style="color:#86efac;font-weight:600;">' + escapeHtml(teamBPlayers) + '</span>' +
+          (isIndividualFormat(match)
+            ? '<strong>Players:</strong> <span style="color:#93c5fd;font-weight:600;">' +
+              escapeHtml((match.individualPlayerIds || []).map(function(id) {
+                const p = players.find(function(x) { return x.id === id; });
+                return p ? p.name : id;
+              }).join(", ")) + '</span>'
+            : '<strong>' + escapeHtml(teamAName) + ':</strong> <span style="color:#93c5fd;font-weight:600;">' + escapeHtml(teamAPlayers) + '</span><br>' +
+              '<strong>' + escapeHtml(teamBName) + ':</strong> <span style="color:#86efac;font-weight:600;">' + escapeHtml(teamBPlayers) + '</span>'
+          ) +
         '</div>' +
 
         renderMatchValueSummary(match) +
@@ -6636,15 +6643,29 @@ Max 80 words total.`;
     const settings = match.valueSettings || {};
     const keys = Object.keys(settings);
     if (keys.length === 0) return "";
-    // Sort keys: Front 9 first, Back 9 second, Overall third, then anything else
-    const order = ["Front 9", "Back 9", "Overall"];
-    const sorted = [
-      ...order.filter(k => keys.includes(k)),
-      ...keys.filter(k => !order.includes(k))
-    ];
+
+    // Sort: Nassau segments first, then Individual positions (1st, 2nd, 3rd...)
+    const nassauOrder = ["Front 9", "Back 9", "Overall"];
+    const isIndiv = isIndividualFormat(match);
+
+    let sorted;
+    if (isIndiv) {
+      // Sort by ordinal: 1st, 2nd, 3rd, 4th...
+      const ordinalVal = function(s) {
+        const n = parseInt(s);
+        return isNaN(n) ? 999 : n;
+      };
+      sorted = [...keys].sort(function(a, b) { return ordinalVal(a) - ordinalVal(b); });
+    } else {
+      sorted = [
+        ...nassauOrder.filter(k => keys.includes(k)),
+        ...keys.filter(k => !nassauOrder.includes(k))
+      ];
+    }
+
     return '<div class="match-detail" style="margin-top:10px;"><strong>' +
       escapeHtml(match.valueType === "Cash" ? "Wager" : "Points") + ':</strong> ' +
-      sorted.map(key => escapeHtml(key) + ": " + escapeHtml(settings[key])).join(" • ") +
+      sorted.map(key => escapeHtml(key) + ": " + escapeHtml(String(settings[key]))).join(" • ") +
       '</div>';
   }
 
@@ -8380,45 +8401,42 @@ ${closer}`;
       if (!match.isComplete) return;
       const vt = (match.valueType || "").toLowerCase();
       if (vt === "wager" || vt === "cash") return;
-      // Individual format doesn't contribute to team scoreboard
-      if (isIndividualFormat(match)) return;
+      if (isIndividualFormat(match)) return; // Individual doesn't affect team scoreboard
 
-      // Use stored teamAScore/teamBScore for completed matches —
-      // avoids live recompute from holeScores contaminating results
-      // when other in-progress matches update
-      const storedA = Number(match.teamAScore || 0);
-      const storedB = Number(match.teamBScore || 0);
+      const vs = match.valueSettings || {};
+      const isNassauMatch = (match.format || "").includes("Nassau");
 
-      if (storedA > 0 || storedB > 0) {
-        if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + storedA;
-        if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + storedB;
-        return;
-      }
-
-      // Fallback for legacy matches with no stored scores: recompute once
+      // Recompute from Nassau for team-based formats — safe because
+      // each match's holeScores is keyed by player ID, so matches never share keys
       try {
         const nassau = computeNassau(match);
-        const vs = match.valueSettings || {};
-        const isNassauMatch = (match.format || "").includes("Nassau");
         let aPts = 0, bPts = 0;
-        function addSeg(seg, key) {
+        const addSeg = function(seg, key) {
           const val = Number(vs[key] || 0);
           if (!val || !seg || seg.holesPlayed === 0) return;
           aPts += seg.aUp > 0 ? val : seg.aUp < 0 ? 0 : val / 2;
           bPts += seg.aUp < 0 ? val : seg.aUp > 0 ? 0 : val / 2;
-        }
+        };
         if (isNassauMatch) {
           addSeg(nassau.front, "Front 9");
           addSeg(nassau.back, "Back 9");
           addSeg(nassau.overall, "Overall");
         } else {
           const ov = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
-          aPts += nassau.overall.aUp > 0 ? ov : nassau.overall.aUp < 0 ? 0 : ov / 2;
-          bPts += nassau.overall.aUp < 0 ? ov : nassau.overall.aUp > 0 ? 0 : ov / 2;
+          if (nassau.overall.holesPlayed > 0) {
+            aPts += nassau.overall.aUp > 0 ? ov : nassau.overall.aUp < 0 ? 0 : ov / 2;
+            bPts += nassau.overall.aUp < 0 ? ov : nassau.overall.aUp > 0 ? 0 : ov / 2;
+          }
         }
         if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aPts;
         if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bPts;
-      } catch(e) { /* ignore */ }
+      } catch(e) {
+        // Fallback: use stored scores
+        const a = Number(match.teamAScore || 0);
+        const b = Number(match.teamBScore || 0);
+        if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + a;
+        if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + b;
+      }
     });
 
     return scores;
@@ -8455,41 +8473,38 @@ ${closer}`;
           if (!m.isComplete) return;
           const vt = (m.valueType || "").toLowerCase();
           if (vt === "wager" || vt === "cash") return;
-          if (isIndividualFormat(m)) return; // Individual doesn't affect team scoreboard
+          if (isIndividualFormat(m)) return;
 
-          // Use stored scores for completed matches — never recompute live
-          const storedA = Number(m.teamAScore || 0);
-          const storedB = Number(m.teamBScore || 0);
-          if (storedA > 0 || storedB > 0) {
-            if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + storedA;
-            if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + storedB;
-            return;
-          }
-
-          // Fallback for legacy matches with no stored scores
+          const vs = m.valueSettings || {};
+          const isNassauM = (m.format || "").includes("Nassau");
           try {
             const nassauM = computeNassau(m);
-            const vs = m.valueSettings || {};
-            const isNassauM = (m.format || "").includes("Nassau");
             let aPts = 0, bPts = 0;
-            function addSegT(seg, key) {
+            const addSegT = function(seg, key) {
               const val = Number(vs[key] || 0);
               if (!val || !seg || seg.holesPlayed === 0) return;
               aPts += seg.aUp > 0 ? val : seg.aUp < 0 ? 0 : val / 2;
               bPts += seg.aUp < 0 ? val : seg.aUp > 0 ? 0 : val / 2;
-            }
+            };
             if (isNassauM) {
               addSegT(nassauM.front, "Front 9");
               addSegT(nassauM.back, "Back 9");
               addSegT(nassauM.overall, "Overall");
             } else {
               const ov = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
-              aPts += nassauM.overall.aUp > 0 ? ov : nassauM.overall.aUp < 0 ? 0 : ov / 2;
-              bPts += nassauM.overall.aUp < 0 ? ov : nassauM.overall.aUp > 0 ? 0 : ov / 2;
+              if (nassauM.overall.holesPlayed > 0) {
+                aPts += nassauM.overall.aUp > 0 ? ov : nassauM.overall.aUp < 0 ? 0 : ov / 2;
+                bPts += nassauM.overall.aUp < 0 ? ov : nassauM.overall.aUp > 0 ? 0 : ov / 2;
+              }
             }
             if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + aPts;
             if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + bPts;
-          } catch(e) { /* ignore */ }
+          } catch(e) {
+            const a = Number(m.teamAScore || 0);
+            const b = Number(m.teamBScore || 0);
+            if (teams[0]) scores[teams[0].id] = (scores[teams[0].id] || 0) + a;
+            if (teams[1]) scores[teams[1].id] = (scores[teams[1].id] || 0) + b;
+          }
         });
 
         const scoreHtml = buildScoreboardHtml(teams, scores);
