@@ -4415,8 +4415,9 @@ Respond with ONLY the search query, nothing else.`;
       const team = teams.find(t => t.id === teamId);
       if (!team) return;
       const teamPlayers = players.filter(p => {
-        const pt = getPlayerTeam(p).trim().toLowerCase();
-        return pt === team.name.trim().toLowerCase() || pt === team.id.trim().toLowerCase();
+        const pt = getPlayerTeam(p).trim();
+        // Check team ID first (new storage), then name (legacy)
+        return pt === team.id || pt.toLowerCase() === team.name.trim().toLowerCase();
       });
       const div = document.createElement("div");
       div.style.marginBottom = "10px";
@@ -7246,10 +7247,10 @@ Max 80 words total.`;
     // Sort: Nassau segments first, then Individual positions (1st, 2nd, 3rd...)
     const nassauOrder = ["Front 9", "Back 9", "Overall"];
     const isIndiv = isIndividualFormat(match);
+    const isMultiTeam = isMultiTeamMatch(match);
 
     let sorted;
-    if (isIndiv) {
-      // Sort by ordinal: 1st, 2nd, 3rd, 4th...
+    if (isIndiv || isMultiTeam) {
       const ordinalVal = function(s) {
         const n = parseInt(s);
         return isNaN(n) ? 999 : n;
@@ -7846,7 +7847,7 @@ ${closer}`;
     el.innerHTML = players
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
       .map(p => {
-        const onTeam = (getPlayerTeam(p) === teamName || getPlayerTeam(p) === activeTeamRosterKey);
+        const onTeam = (getPlayerTeam(p) === activeTeamRosterKey || getPlayerTeam(p) === teamName);
         return '<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e3a5f;cursor:pointer;">' +
           '<input type="checkbox" value="' + escapeAttr(p.id) + '"' + (onTeam ? " checked" : "") + ' style="width:18px;height:18px;">' +
           '<div><div style="font-weight:600;">' + escapeHtml(p.name) + '</div>' +
@@ -7862,7 +7863,8 @@ ${closer}`;
 
     const teams = getTeams();
     const team = teams.find(t => t.id === activeTeamRosterKey);
-    const teamName = team ? team.name : activeTeamRosterKey;
+    const teamId = activeTeamRosterKey; // always store ID, not name — rename-proof
+    const teamName = team ? team.name : activeTeamRosterKey; // for display/legacy only
 
     const checked = new Set(
       Array.from(document.querySelectorAll("#addToTeamList input:checked")).map(cb => cb.value)
@@ -7872,12 +7874,13 @@ ${closer}`;
       const batch = writeBatch(db);
       players.forEach(p => {
         const shouldBeOnTeam = checked.has(p.id);
-        const isOnTeam = (getPlayerTeam(p) === teamName || getPlayerTeam(p) === activeTeamRosterKey);
-        // Also check if on a DIFFERENT team from this competition
-        const onOtherTeam = getPlayerTeam(p) && !isOnTeam && teams.some(t => t.name === getPlayerTeam(p) || t.id === getPlayerTeam(p));
+        // Match by ID (new) or name (legacy)
+        const pt = getPlayerTeam(p);
+        const isOnTeam = pt === teamId || pt === teamName;
+        const onOtherTeam = pt && !isOnTeam && teams.some(t => pt === t.name || pt === t.id);
 
         if (shouldBeOnTeam && !isOnTeam) {
-          batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(teamName));
+          batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(teamId));
         } else if (!shouldBeOnTeam && isOnTeam) {
           batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(""));
         }
@@ -9525,9 +9528,10 @@ ${closer}`;
     const team = teams.find(t => t.name === teamName || t.id === activeTeamRosterKey);
     const teamId = team ? team.id : activeTeamRosterKey;
 
-    const teamPlayers = players.filter(p =>
-      getPlayerTeam(p) === teamName || getPlayerTeam(p) === teamId
-    );
+    const teamPlayers = players.filter(p => {
+      const pt = getPlayerTeam(p).trim();
+      return pt === teamId || pt.toLowerCase() === teamName.toLowerCase();
+    });
 
     if (!teamPlayers.length) {
       list.innerHTML = '<div class="empty-state">No players assigned yet. Tap "+ Add Player to Team" above.</div>';
