@@ -5463,7 +5463,7 @@ Max 80 words total.`;
     await updateDoc(doc(db, "trips", activeTripId, "competitions", activeCompetitionId, "matches", matchId), updates);
 
     const margin = Math.abs(nassau.overall.aUp);
-    const holesLeft = nassau.overall.total - nassau.overall.holesPlayed;
+    const holesLeft = nassau && nassau.overall ? nassau.overall.total - nassau.overall.holesPlayed : 0;
     const resultScore = nassau.overall.aUp === 0 ? "E" : (holesLeft === 0 ? margin + " UP" : margin + "&" + holesLeft);
     const winner = nassau.overall.aUp > 0 ? teamAName : nassau.overall.aUp < 0 ? teamBName : "Tied";
     await addSwamiPost("matchComplete", winner + " wins " + resultScore);
@@ -8965,7 +8965,7 @@ ${closer}`;
           addSeg(nassau.overall, "Overall");
         } else {
           const ov = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
-          if (nassau.overall.holesPlayed > 0) {
+          if (nassau.overall && nassau.overall.holesPlayed > 0) {
             aPts += nassau.overall.aUp > 0 ? ov : nassau.overall.aUp < 0 ? 0 : ov / 2;
             bPts += nassau.overall.aUp < 0 ? ov : nassau.overall.aUp > 0 ? 0 : ov / 2;
           }
@@ -9049,7 +9049,7 @@ ${closer}`;
               addSegT(nassauM.overall, "Overall");
             } else {
               const ov = Number(vs["Overall"] || vs["Points"] || vs["Nassau"] || 0);
-              if (nassauM.overall.holesPlayed > 0) {
+              if (nassauM.overall && nassauM.overall.holesPlayed > 0) {
                 aPts += nassauM.overall.aUp > 0 ? ov : nassauM.overall.aUp < 0 ? 0 : ov / 2;
                 bPts += nassauM.overall.aUp < 0 ? ov : nassauM.overall.aUp > 0 ? 0 : ov / 2;
               }
@@ -9960,12 +9960,22 @@ ${closer}`;
       const aNames = aIds.map(id => { const p = players.find(x => x.id === id); return p ? p.name : null; }).filter(Boolean).join("/");
       const bNames = bIds.map(id => { const p = players.find(x => x.id === id); return p ? p.name : null; }).filter(Boolean).join("/");
       let summary = `${m.format||"Match"} R${m.round||1} at ${m.course||"TBD"} (${m.scoringType||"Gross"}${m.handicapAllowance && m.handicapAllowance !== "N/A" ? " "+m.handicapAllowance : ""}): ${aNames||"Team A"} vs ${bNames||"Team B"} — ${status}`;
-      if (nassau) {
+      if (nassau && !nassau.isMultiTeam) {
         const ovr = nassau.overall;
-        if (ovr.holesPlayed > 0) {
+        if (ovr && ovr.holesPlayed > 0) {
           summary += `, Overall: ${ovr.aUp === 0 ? "All Square" : (ovr.aUp > 0 ? (aNames||"A") : (bNames||"B")) + " " + Math.abs(ovr.aUp) + " UP"} thru ${ovr.holesPlayed}`;
-          if (nassau.front.holesPlayed > 0) summary += `, Front: ${nassau.front.aUp === 0 ? "AS" : (nassau.front.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.front.aUp) + "up"}`;
-          if (nassau.back.holesPlayed > 0)  summary += `, Back: ${nassau.back.aUp === 0 ? "AS" : (nassau.back.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.back.aUp) + "up"}`;
+          if (nassau.front && nassau.front.holesPlayed > 0) summary += `, Front: ${nassau.front.aUp === 0 ? "AS" : (nassau.front.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.front.aUp) + "up"}`;
+          if (nassau.back && nassau.back.holesPlayed > 0)  summary += `, Back: ${nassau.back.aUp === 0 ? "AS" : (nassau.back.aUp > 0 ? "A" : "B") + " " + Math.abs(nassau.back.aUp) + "up"}`;
+        }
+      } else if (nassau && nassau.isMultiTeam) {
+        const compTeams = getTeams();
+        const teamRows = Object.entries(nassau.teams || {}).map(([tid, d]) => {
+          const t = compTeams.find(x => x.id === tid);
+          const score = (m.scoringType||"Gross") === "Net" ? d.overall.netTotal : d.overall.total;
+          return { name: t ? t.name : tid, score, played: d.overall.played };
+        }).filter(r => r.played > 0).sort((a,b) => a.score - b.score);
+        if (teamRows.length) {
+          summary += `, Scores: ` + teamRows.map(r => `${r.name} ${r.score} thru ${r.played}`).join(", ");
         }
       }
       // Add notable hole details (birdies, moments)
