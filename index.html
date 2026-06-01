@@ -1698,9 +1698,9 @@
       <div id="matchTeamSelectorsDiv">
         <!-- Team pickers — only shown when competition has >2 teams -->
         <div id="matchTeamPickersDiv" style="display:none;margin-bottom:8px;">
-          <label class="form-label">Side A Team</label>
+          <label class="form-label">Team 1</label>
           <select id="matchTeamAPicker" onchange="onMatchTeamPickerChange()" style="margin-top:6px;margin-bottom:12px;"></select>
-          <label class="form-label">Side B Team</label>
+          <label class="form-label">Team 2</label>
           <select id="matchTeamBPicker" onchange="onMatchTeamPickerChange()" style="margin-top:6px;margin-bottom:12px;"></select>
         </div>
         <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A Players</label>
@@ -4384,11 +4384,20 @@ Respond with ONLY the search query, nothing else.`;
       if (aLabel) aLabel.innerText = teamA.name;
       if (bLabel) bLabel.innerText = teamB.name;
 
-      const matchesTeam = (player, team) =>
-        player.team === team.name || player.team === team.id;
+      const playerBelongsToTeam2 = (player, team) => {
+        if (!team) return false;
+        const pt = (player.team || "").trim().toLowerCase();
+        return pt === team.name.trim().toLowerCase() || pt === team.id.trim().toLowerCase();
+      };
 
-      fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
-      fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
+      fillPlayerSelect("matchTeamAPlayers", players.filter(p => playerBelongsToTeam2(p, teamA)));
+      fillPlayerSelect("matchTeamBPlayers", players.filter(p => playerBelongsToTeam2(p, teamB)));
+
+      // Auto-select all players
+      const aSelect = document.getElementById("matchTeamAPlayers");
+      const bSelect = document.getElementById("matchTeamBPlayers");
+      if (aSelect) Array.from(aSelect.options).forEach(o => { o.selected = true; });
+      if (bSelect) Array.from(bSelect.options).forEach(o => { o.selected = true; });
 
       // Individual format — all players available
       fillPlayerSelect("matchIndividualPlayers", players);
@@ -4406,14 +4415,27 @@ Respond with ONLY the search query, nothing else.`;
     const teamA = teams.find(t => t.id === aPicker.value) || teams[0];
     const teamB = teams.find(t => t.id === bPicker.value) || teams[1];
 
-    if (aLabel) aLabel.innerText = teamA ? teamA.name + " Players" : "Side A Players";
-    if (bLabel) bLabel.innerText = teamB ? teamB.name + " Players" : "Side B Players";
+    if (aLabel) aLabel.innerText = (teamA ? teamA.name : "Team 1") + " Players";
+    if (bLabel) bLabel.innerText = (teamB ? teamB.name : "Team 2") + " Players";
 
-    const matchesTeam = (player, team) =>
-      team && (player.team === team.name || player.team === team.id);
+    // Robust player-team matching: check name, id, and case-insensitive
+    const playerBelongsToTeam = (player, team) => {
+      if (!team) return false;
+      const pt = (player.team || "").trim().toLowerCase();
+      return pt === team.name.trim().toLowerCase() || pt === team.id.trim().toLowerCase();
+    };
 
-    fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
-    fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
+    const aPlayers = players.filter(p => playerBelongsToTeam(p, teamA));
+    const bPlayers = players.filter(p => playerBelongsToTeam(p, teamB));
+
+    fillPlayerSelect("matchTeamAPlayers", aPlayers);
+    fillPlayerSelect("matchTeamBPlayers", bPlayers);
+
+    // Auto-select all players when list is populated (common for team matches)
+    const aSelect = document.getElementById("matchTeamAPlayers");
+    const bSelect = document.getElementById("matchTeamBPlayers");
+    if (aSelect) Array.from(aSelect.options).forEach(o => { o.selected = true; });
+    if (bSelect) Array.from(bSelect.options).forEach(o => { o.selected = true; });
   }
 
   async function runConfidenceMeter() {
