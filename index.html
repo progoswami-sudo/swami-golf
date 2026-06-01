@@ -10243,8 +10243,9 @@ ${closer}`;
       if (btn) { btn.disabled = false; btn.textContent = "Unlink from Member"; }
     }
   }
+
+  async function deletePlayerWithCheck() {
     if (!editingPlayerId) return;
-    if (!requireAdmin("delete players")) return;
     const player = players.find(p => p.id === editingPlayerId);
     if (!player) return;
 
