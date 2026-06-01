@@ -1696,9 +1696,16 @@
 
       <!-- Team selectors (hidden for Individual) -->
       <div id="matchTeamSelectorsDiv">
-        <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A</label>
+        <!-- Team pickers — only shown when competition has >2 teams -->
+        <div id="matchTeamPickersDiv" style="display:none;margin-bottom:8px;">
+          <label class="form-label">Side A Team</label>
+          <select id="matchTeamAPicker" onchange="onMatchTeamPickerChange()" style="margin-top:6px;margin-bottom:12px;"></select>
+          <label class="form-label">Side B Team</label>
+          <select id="matchTeamBPicker" onchange="onMatchTeamPickerChange()" style="margin-top:6px;margin-bottom:12px;"></select>
+        </div>
+        <label class="form-label" id="matchTeamALabel" for="matchTeamAPlayers">Team A Players</label>
         <select id="matchTeamAPlayers" class="multi-select" multiple></select>
-        <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B</label>
+        <label class="form-label" id="matchTeamBLabel" for="matchTeamBPlayers">Team B Players</label>
         <select id="matchTeamBPlayers" class="multi-select" multiple></select>
       </div>
 
@@ -4045,7 +4052,6 @@ Respond with ONLY the search query, nothing else.`;
   function openMatchSetup(matchId = null, copyFromId = null) {
     editingMatchId = matchId;
     show("matchSetupScreen");
-    loadMatchPlayerSelectors();
 
     // Reset confidence meter
     const cmCard = document.getElementById("confidenceMeterCard");
@@ -4126,14 +4132,35 @@ Respond with ONLY the search query, nothing else.`;
         setTimeout(() => populateMatchValueFields(sourceMatch.valueSettings), 0);
       }
 
-      // Players — Copy clears teams so user picks fresh players; Edit restores them
-      if (mode === "copy") {
-        setMultiSelectValues("matchTeamAPlayers", []);
-        setMultiSelectValues("matchTeamBPlayers", []);
-      } else {
-        setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
-        setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
+    // Players — Copy clears teams so user picks fresh players; Edit restores them
+    if (mode === "copy") {
+      loadMatchPlayerSelectors();
+      setMultiSelectValues("matchTeamAPlayers", []);
+      setMultiSelectValues("matchTeamBPlayers", []);
+    } else {
+      // Determine which teams are in this match (for multi-team competitions)
+      const teams = getTeams();
+      let preselectedA = null, preselectedB = null;
+      if (teams.length > 2 && sourceMatch) {
+        // Find which team owns Side A and Side B players
+        const aId = (sourceMatch.teamAPlayerIds || [])[0];
+        const bId = (sourceMatch.teamBPlayerIds || [])[0];
+        if (aId) {
+          const p = players.find(x => x.id === aId);
+          if (p) preselectedA = teams.find(t => p.team === t.name || p.team === t.id)?.id;
+        }
+        if (bId) {
+          const p = players.find(x => x.id === bId);
+          if (p) preselectedB = teams.find(t => p.team === t.name || p.team === t.id)?.id;
+        }
+        // Fall back to stored match-level team info if available
+        preselectedA = preselectedA || (sourceMatch.matchTeamA || null);
+        preselectedB = preselectedB || (sourceMatch.matchTeamB || null);
       }
+      loadMatchPlayerSelectors(preselectedA, preselectedB);
+      setMultiSelectValues("matchTeamAPlayers", sourceMatch.teamAPlayerIds || []);
+      setMultiSelectValues("matchTeamBPlayers", sourceMatch.teamBPlayerIds || []);
+    }
 
     } else {
       // ── Brand new match — set all defaults ────────────────────────────────
@@ -4147,6 +4174,7 @@ Respond with ONLY the search query, nothing else.`;
       document.getElementById("matchFormat").value = "Best Ball";
       document.getElementById("matchScoringType").value = "Gross";
       document.getElementById("matchValueType").value = "Points";
+      loadMatchPlayerSelectors();
       setMultiSelectValues("matchTeamAPlayers", []);
       setMultiSelectValues("matchTeamBPlayers", []);
       handleMatchFormatChange();
@@ -4320,22 +4348,72 @@ Respond with ONLY the search query, nothing else.`;
     });
   }
 
-  function loadMatchPlayerSelectors() {
+  function loadMatchPlayerSelectors(preselectedTeamA, preselectedTeamB) {
     const teams = getTeams();
-    const teamA = teams[0] || { id: "A", name: activeTripData.teamA || "Team A" };
-    const teamB = teams[1] || { id: "B", name: activeTripData.teamB || "Team B" };
+    const pickersDiv = document.getElementById("matchTeamPickersDiv");
+    const aLabel = document.getElementById("matchTeamALabel");
+    const bLabel = document.getElementById("matchTeamBLabel");
 
-    document.getElementById("matchTeamALabel").innerText = teamA.name;
-    document.getElementById("matchTeamBLabel").innerText = teamB.name;
+    if (teams.length > 2) {
+      // Show team pickers
+      if (pickersDiv) pickersDiv.style.display = "block";
+
+      const aPicker = document.getElementById("matchTeamAPicker");
+      const bPicker = document.getElementById("matchTeamBPicker");
+
+      if (aPicker && bPicker) {
+        // Populate team options
+        const opts = teams.map(t => '<option value="' + escapeAttr(t.id) + '">' + escapeHtml(t.name) + '</option>').join("");
+        aPicker.innerHTML = opts;
+        bPicker.innerHTML = opts;
+
+        // Default: first two teams, or restore from existing match
+        aPicker.value = preselectedTeamA || teams[0].id;
+        bPicker.value = preselectedTeamB || teams[1].id;
+      }
+
+      // Populate player selects based on current picker values
+      onMatchTeamPickerChange();
+    } else {
+      // 2-team competition — existing behavior
+      if (pickersDiv) pickersDiv.style.display = "none";
+
+      const teamA = teams[0] || { id: "A", name: activeTripData.teamA || "Team A" };
+      const teamB = teams[1] || { id: "B", name: activeTripData.teamB || "Team B" };
+
+      if (aLabel) aLabel.innerText = teamA.name;
+      if (bLabel) bLabel.innerText = teamB.name;
+
+      const matchesTeam = (player, team) =>
+        player.team === team.name || player.team === team.id;
+
+      fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
+      fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
+
+      // Individual format — all players available
+      fillPlayerSelect("matchIndividualPlayers", players);
+    }
+  }
+
+  function onMatchTeamPickerChange() {
+    const teams = getTeams();
+    const aPicker = document.getElementById("matchTeamAPicker");
+    const bPicker = document.getElementById("matchTeamBPicker");
+    const aLabel = document.getElementById("matchTeamALabel");
+    const bLabel = document.getElementById("matchTeamBLabel");
+    if (!aPicker || !bPicker) return;
+
+    const teamA = teams.find(t => t.id === aPicker.value) || teams[0];
+    const teamB = teams.find(t => t.id === bPicker.value) || teams[1];
+
+    if (aLabel) aLabel.innerText = teamA ? teamA.name + " Players" : "Side A Players";
+    if (bLabel) bLabel.innerText = teamB ? teamB.name + " Players" : "Side B Players";
 
     const matchesTeam = (player, team) =>
-      player.team === team.name || player.team === team.id;
+      team && (player.team === team.name || player.team === team.id);
 
     fillPlayerSelect("matchTeamAPlayers", players.filter(p => matchesTeam(p, teamA)));
     fillPlayerSelect("matchTeamBPlayers", players.filter(p => matchesTeam(p, teamB)));
-
-    // Individual format — all players available
-    fillPlayerSelect("matchIndividualPlayers", players);
   }
 
   async function runConfidenceMeter() {
@@ -4499,6 +4577,8 @@ Max 80 words total.`;
         teeYardage: selectedTee ? (selectedTee.totalYards || selectedTee.totalYardage || null) : null,
         numberOfHoles, startingHole, round, format, scoringType, playType, handicapAllowance, valueType, valueSettings,
         teamAPlayerIds, teamBPlayerIds, individualPlayerIds,
+        matchTeamA: (document.getElementById("matchTeamAPicker") || {}).value || null,
+        matchTeamB: (document.getElementById("matchTeamBPicker") || {}).value || null,
         // Snapshot player handicaps at match creation — changes to handicap won't affect existing matches
         playerHandicaps: (function() {
           const allIds = isIndiv
@@ -12302,7 +12382,7 @@ ${closer}`;
   window.goTeamRosterScreen = goTeamRosterScreen;
   window.viewReceiptFullScreen = viewReceiptFullScreen;
   window.openScorecardAddPhoto = openScorecardAddPhoto;
-  window.openLinkToMemberPicker = openLinkToMemberPicker;
+  window.onMatchTeamPickerChange = onMatchTeamPickerChange;
   window.linkPlayerToMember = linkPlayerToMember;
   window.unlinkPlayerFromMember = unlinkPlayerFromMember;
   window.addIndivPayoutRow = addIndivPayoutRow;
