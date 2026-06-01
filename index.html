@@ -5128,8 +5128,8 @@ Max 80 words total.`;
       const bTeamId = teamB.id;
 
       if (isNet) {
-        const aTeamCH = computeScrambleHandicap(aIds, tee, allowance);
-        const bTeamCH = computeScrambleHandicap(bIds, tee, allowance);
+        const aTeamCH = computeScrambleHandicap(aIds, tee, allowance, match);
+        const bTeamCH = computeScrambleHandicap(bIds, tee, allowance, match);
         const lowCH = Math.min(aTeamCH, bTeamCH);
         const aStrokes = Math.max(0, aTeamCH - lowCH);
         const bStrokes = Math.max(0, bTeamCH - lowCH);
@@ -5881,9 +5881,9 @@ Max 80 words total.`;
     return (match.format || "").includes("Nassau");
   }
 
-  function computeScrambleHandicap(teamIds, tee, allowance) {
+  function computeScrambleHandicap(teamIds, tee, allowance, match) {
     const chs = teamIds.map(id => {
-      return calculateCourseHandicap(getHandicapForMatch(id, match), tee);
+      return calculateCourseHandicap(getHandicapForMatch(id, match || null), tee);
     }).filter(x => x !== null).sort((a, b) => a - b); // low to high
 
     if (!chs.length) return 0;
@@ -6130,8 +6130,8 @@ Max 80 words total.`;
       const aId = compTeams[0] ? compTeams[0].id : "A";
       const bId = compTeams[1] ? compTeams[1].id : "B";
       const allowance = match.handicapAllowance || "N/A";
-      const aCH = computeScrambleHandicap(match.teamAPlayerIds || [], tee, allowance);
-      const bCH = computeScrambleHandicap(match.teamBPlayerIds || [], tee, allowance);
+      const aCH = computeScrambleHandicap(match.teamAPlayerIds || [], tee, allowance, match);
+      const bCH = computeScrambleHandicap(match.teamBPlayerIds || [], tee, allowance, match);
       const lowCH = Math.min(aCH, bCH);
       const thisCH = holeDetailPlayerId === aId ? aCH : bCH;
       strokes = Math.max(0, thisCH - lowCH);
@@ -6477,11 +6477,22 @@ Max 80 words total.`;
     if (isNet) html += `<td style="${parStyle}"></td>`;
     html += '</tr></thead>';
 
+    // Build per-team stroke maps for dot display
+    const teamStrokeMaps = {};
+    if (isNet) {
+      teamIds.forEach(tid => {
+        const netStrokes = teamCHs[tid] || 0;
+        teamStrokeMaps[tid] = netStrokes > 0 ? calculateStrokeMap(netStrokes, holes) : {};
+      });
+    }
+
     // Team rows
     html += '<tbody>';
     teamIds.forEach(tid => {
       const team = compTeams.find(t => t.id === tid);
       const teamName = team ? team.name : tid;
+      const strokeMap = teamStrokeMaps[tid] || {};
+
       // Scramble: score keyed by team id; Best Ball: best of team players per hole
       const getHoleScore = (holeNum) => {
         if (scramble) return Number((holeScores[tid] || {})[holeNum]) || 0;
@@ -6499,10 +6510,12 @@ Max 80 words total.`;
       holes.forEach(h => {
         const raw = getHoleScore(h.hole);
         const par = Number(h.par) || 4;
-        const badgeHtml = raw ? scoreBadge(raw, par, 0) : '<span style="color:#475569;font-size:13px;">–</span>';
+        const strokes = isNet ? (strokeMap[h.hole] || 0) : 0;
+        const dotHtml = strokes > 0 ? `<div class="stroke-dots">${renderStrokeDots(strokes)}</div>` : '';
+        const badgeHtml = raw ? scoreBadge(raw, par, strokes) : '<span style="color:#475569;font-size:13px;">–</span>';
         html += `<td class="score-tap-cell" data-match-id="${escapeAttr(activeScoreMatchId)}" data-player-id="${escapeAttr(tid)}" data-hole="${Number(h.hole)}" style="cursor:pointer;touch-action:manipulation;user-select:none;min-width:38px;padding:6px 2px;vertical-align:middle;">` +
           `<div class="score-cell-wrap" style="min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;">` +
-          `<div id="score-badge-${escapeAttr(tid)}-${h.hole}">${badgeHtml}</div></div></td>`;
+          `${dotHtml}<div id="score-badge-${escapeAttr(tid)}-${h.hole}">${badgeHtml}</div></div></td>`;
         if (raw) {
           if (Number(h.hole) <= 9) outGross += raw;
           else inGross += raw;
@@ -6762,8 +6775,8 @@ Max 80 words total.`;
 
     let scrambleStrokeData = {};
     if (scramble && isNet) {
-      const aCH = computeScrambleHandicap(teamAIds, tee, allowance);
-      const bCH = computeScrambleHandicap(teamBIds, tee, allowance);
+      const aCH = computeScrambleHandicap(teamAIds, tee, allowance, match);
+      const bCH = computeScrambleHandicap(teamBIds, tee, allowance, match);
       const lowCH = Math.min(aCH, bCH);
       const aStrokes = Math.max(0, aCH - lowCH);
       const bStrokes = Math.max(0, bCH - lowCH);
