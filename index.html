@@ -5504,6 +5504,8 @@ Max 80 words total.`;
     return { team: teamName };
   }
   // ── END TEAM ASSIGNMENT ───────────────────────────────────────────────────
+
+  function isScrambleFormat(match) {
     return (match.format || "").toLowerCase().startsWith("scramble");
   }
 
