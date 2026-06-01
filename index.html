@@ -4147,11 +4147,11 @@ Respond with ONLY the search query, nothing else.`;
         const bId = (sourceMatch.teamBPlayerIds || [])[0];
         if (aId) {
           const p = players.find(x => x.id === aId);
-          if (p) preselectedA = teams.find(t => p.team === t.name || p.team === t.id)?.id;
+          if (p) preselectedA = teams.find(t => getPlayerTeam(p) === t.name || getPlayerTeam(p) === t.id)?.id;
         }
         if (bId) {
           const p = players.find(x => x.id === bId);
-          if (p) preselectedB = teams.find(t => p.team === t.name || p.team === t.id)?.id;
+          if (p) preselectedB = teams.find(t => getPlayerTeam(p) === t.name || getPlayerTeam(p) === t.id)?.id;
         }
         // Fall back to stored match-level team info if available
         preselectedA = preselectedA || (sourceMatch.matchTeamA || null);
@@ -4386,7 +4386,7 @@ Respond with ONLY the search query, nothing else.`;
 
       const playerBelongsToTeam2 = (player, team) => {
         if (!team) return false;
-        const pt = (player.team || "").trim().toLowerCase();
+        const pt = getPlayerTeam(player).trim().toLowerCase();
         return pt === team.name.trim().toLowerCase() || pt === team.id.trim().toLowerCase();
       };
 
@@ -4421,7 +4421,7 @@ Respond with ONLY the search query, nothing else.`;
     // Robust player-team matching: check name, id, and case-insensitive
     const playerBelongsToTeam = (player, team) => {
       if (!team) return false;
-      const pt = (player.team || "").trim().toLowerCase();
+      const pt = getPlayerTeam(player).trim().toLowerCase();
       return pt === team.name.trim().toLowerCase() || pt === team.id.trim().toLowerCase();
     };
 
@@ -4842,7 +4842,7 @@ Max 80 words total.`;
                 return compTeams.map(function(t, ti) {
                   const teamPlayerNames = indivIds
                     .map(function(id) { return players.find(function(p) { return p.id === id; }); })
-                    .filter(function(p) { return p && (p.team === t.name || p.team === t.id); })
+                    .filter(function(p) { return p && (getPlayerTeam(p) === t.name || getPlayerTeam(p) === t.id); })
                     .map(function(p) { return p.name; }).join(", ");
                   const col = ti === 0 ? "#93c5fd" : "#86efac";
                   return '<strong>' + escapeHtml(t.name) + ':</strong> <span style="color:' + col + ';font-weight:600;">' + escapeHtml(teamPlayerNames || "—") + '</span>';
@@ -5479,7 +5479,31 @@ Max 80 words total.`;
 
   // ── SCRAMBLE HANDICAP ENGINE ─────────────────────────────────────────────────
 
-  function isScrambleFormat(match) {
+  // ── COMPETITION-SCOPED TEAM ASSIGNMENT ────────────────────────────────────
+  // Team assignments are stored per-competition to prevent cross-competition conflicts.
+  // New: player.teamAssignments[competitionId] = "Team Name"
+  // Legacy: player.team (still read as fallback)
+
+  function getPlayerTeam(player) {
+    if (!player) return "";
+    // Prefer competition-scoped assignment
+    if (player.teamAssignments && activeCompetitionId &&
+        player.teamAssignments[activeCompetitionId] != null) {
+      return player.teamAssignments[activeCompetitionId];
+    }
+    // Fall back to legacy flat field
+    return player.team || "";
+  }
+
+  function setPlayerTeamUpdate(teamName) {
+    // Returns a Firestore update object for the player's team in current competition
+    if (activeCompetitionId) {
+      return { [`teamAssignments.${activeCompetitionId}`]: teamName };
+    }
+    // Legacy fallback (no active competition)
+    return { team: teamName };
+  }
+  // ── END TEAM ASSIGNMENT ───────────────────────────────────────────────────
     return (match.format || "").toLowerCase().startsWith("scramble");
   }
 
@@ -6979,7 +7003,7 @@ Max 80 words total.`;
       const parts = [
         p.name + (p.nickname ? ' "' + p.nickname + '"' : ''),
         `HI: ${p.handicapIndex || "N/A"}`,
-        `Team: ${p.team || "unassigned"}`,
+        `Team: ${getPlayerTeam(p) || "unassigned"}`,
         p.strengths && p.strengths.length ? `Strengths: ${p.strengths.join(", ")}` : null,
         p.weaknesses && p.weaknesses.length ? `Weaknesses: ${p.weaknesses.join(", ")}` : null,
         null // intel loaded from subcollection
@@ -7379,7 +7403,7 @@ ${closer}`;
     el.innerHTML = players
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
       .map(p => {
-        const onTeam = (p.team === teamName || p.team === activeTeamRosterKey);
+        const onTeam = (getPlayerTeam(p) === teamName || getPlayerTeam(p) === activeTeamRosterKey);
         return '<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e3a5f;cursor:pointer;">' +
           '<input type="checkbox" value="' + escapeAttr(p.id) + '"' + (onTeam ? " checked" : "") + ' style="width:18px;height:18px;">' +
           '<div><div style="font-weight:600;">' + escapeHtml(p.name) + '</div>' +
@@ -7405,14 +7429,14 @@ ${closer}`;
       const batch = writeBatch(db);
       players.forEach(p => {
         const shouldBeOnTeam = checked.has(p.id);
-        const isOnTeam = (p.team === teamName || p.team === activeTeamRosterKey);
+        const isOnTeam = (getPlayerTeam(p) === teamName || getPlayerTeam(p) === activeTeamRosterKey);
         // Also check if on a DIFFERENT team from this competition
-        const onOtherTeam = p.team && !isOnTeam && teams.some(t => t.name === p.team || t.id === p.team);
+        const onOtherTeam = getPlayerTeam(p) && !isOnTeam && teams.some(t => t.name === getPlayerTeam(p) || t.id === getPlayerTeam(p));
 
         if (shouldBeOnTeam && !isOnTeam) {
-          batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: teamName });
+          batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(teamName));
         } else if (!shouldBeOnTeam && isOnTeam) {
-          batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: "" });
+          batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(""));
         }
       });
       await batch.commit();
@@ -8551,7 +8575,7 @@ ${closer}`;
           if (!p) return;
           // Find which competition team this player belongs to
           teams.forEach(function(t) {
-            if (p.team === t.name || p.team === t.id) {
+            if (getPlayerTeam(p) === t.name || getPlayerTeam(p) === t.id) {
               scores[t.id] = (scores[t.id] || 0) + pPts;
             }
           });
@@ -8638,7 +8662,7 @@ ${closer}`;
               const p = players.find(function(x) { return x.id === pid; });
               if (!p) return;
               teams.forEach(function(t) {
-                if (p.team === t.name || p.team === t.id) {
+                if (getPlayerTeam(p) === t.name || getPlayerTeam(p) === t.id) {
                   scores[t.id] = (scores[t.id] || 0) + pPts;
                 }
               });
@@ -8837,8 +8861,7 @@ ${closer}`;
         if (_setupNumTeams === "individual" && players.length) {
           const batch = writeBatch(db);
           players.forEach(p => {
-            // Each player's team name = their own name (matches newTeams)
-            batch.update(doc(db, "trips", activeTripId, "players", p.id), { team: p.name });
+            batch.update(doc(db, "trips", activeTripId, "players", p.id), setPlayerTeamUpdate(p.name));
           });
           await batch.commit();
         }
@@ -9049,7 +9072,7 @@ ${closer}`;
     const teamId = team ? team.id : activeTeamRosterKey;
 
     const teamPlayers = players.filter(p =>
-      p.team === teamName || p.team === teamId
+      getPlayerTeam(p) === teamName || getPlayerTeam(p) === teamId
     );
 
     if (!teamPlayers.length) {
@@ -9118,7 +9141,7 @@ ${closer}`;
 
   async function removePlayerFromTeam(playerId) {
     try {
-      await updateDoc(doc(db, "trips", activeTripId, "players", playerId), { team: "" });
+      await updateDoc(doc(db, "trips", activeTripId, "players", playerId), setPlayerTeamUpdate(""));
       // Re-render roster inline without full reload
       const teams = getTeams();
       const team = teams.find(t => t.id === activeTeamRosterKey);
@@ -9562,7 +9585,7 @@ ${closer}`;
     const playerList = players.map(p => [
       p.name + (p.nickname ? ` "${p.nickname}"` : ""),
       p.handicapIndex ? `HI:${p.handicapIndex}` : null,
-      p.team ? `Team:${p.team}` : null,
+      getPlayerTeam(p) ? `Team:${getPlayerTeam(p)}` : null,
       p.gender ? formatGender(p.gender) : null
     ].filter(Boolean).join(" ")).join(" | ");
 
