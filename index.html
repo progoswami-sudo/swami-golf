@@ -2023,6 +2023,7 @@
 
       <button onclick="savePlayer()" id="savePlayerBtn" style="margin-top:8px;">Save Player</button>
       <button id="linkToMemberBtn" onclick="openLinkToMemberPicker()" class="secondary hidden" style="margin-top:8px;">Link to Trip Member</button>
+      <button id="unlinkFromMemberBtn" onclick="unlinkPlayerFromMember()" class="secondary hidden" style="margin-top:8px;border-color:#f87171;color:#f87171;">Unlink from Member</button>
       <button id="deletePlayerBtn" onclick="deletePlayerWithCheck()" class="danger hidden" style="margin-top:8px;">Delete Player</button>
     </div>
   </div>
@@ -2287,6 +2288,7 @@
     setDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     collection,
     addDoc,
     getDocs,
@@ -7415,13 +7417,13 @@ ${closer}`;
       document.getElementById("memberPickerRow").style.display = "none";
       if (linkRow) linkRow.style.display = "none";
       deleteBtn.classList.remove("hidden");
-      // Show Link to Member button only for manual (non-linked) players
+      // Show Link / Unlink buttons based on linked status
+      const existingPlayerForLink = players.find(function(p) { return p.id === playerId; });
+      const alreadyLinked = !!(existingPlayerForLink && (existingPlayerForLink.linkedUid || existingPlayerForLink.email || existingPlayerForLink.type === "member"));
       const linkToMemberBtn = document.getElementById("linkToMemberBtn");
-      if (linkToMemberBtn) {
-        const existingPlayer = players.find(function(p) { return p.id === playerId; });
-        const alreadyLinked = !!(existingPlayer && (existingPlayer.linkedUid || existingPlayer.email || existingPlayer.type === "member"));
-        linkToMemberBtn.classList.toggle("hidden", alreadyLinked);
-      }
+      const unlinkFromMemberBtn = document.getElementById("unlinkFromMemberBtn");
+      if (linkToMemberBtn) linkToMemberBtn.classList.toggle("hidden", alreadyLinked);
+      if (unlinkFromMemberBtn) unlinkFromMemberBtn.classList.toggle("hidden", !alreadyLinked);
       loadPlayerForEdit(playerId);
     }
   }
@@ -10125,30 +10127,48 @@ ${closer}`;
 
 
   async function openLinkToMemberPicker() {
-    // Build a list of trip members who aren't already linked to a player
     const membersSnap = await getDocs(membersCollection());
     const linkedUids = players.filter(p => p.linkedUid).map(p => p.linkedUid);
     const available = membersSnap.docs
       .filter(d => !linkedUids.includes(d.id))
-      .map(d => ({ uid: d.id, email: d.data().email || d.id }));
+      .map(d => ({ uid: d.id, email: d.data().email || d.id }))
+      .sort((a, b) => a.email.localeCompare(b.email));
 
     if (!available.length) {
       return alert("No unlinked trip members found.");
     }
 
-    const options = available.map(m => m.email).join("\n");
-    const chosen = prompt(
-      "Select a trip member to link this player to.\n\n" +
-      "This will update the player's Name and Gender from their member profile.\n" +
-      "Handicap, team assignment, and all existing scores will NOT be changed.\n\n" +
-      "Available members:\n" + options + "\n\nEnter email address:"
-    );
-    if (!chosen) return;
+    // Build modal overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
 
-    const member = available.find(m => m.email.toLowerCase() === chosen.trim().toLowerCase());
-    if (!member) return alert("Member not found. Please enter the exact email address.");
+    const modal = document.createElement("div");
+    modal.style.cssText = "background:#0f2442;border:1px solid #375984;border-radius:16px;padding:20px;width:100%;max-width:400px;";
+    modal.innerHTML =
+      '<div style="font-size:17px;font-weight:700;margin-bottom:6px;">Link to Trip Member</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:14px;">Name and Gender will update from their member profile. Handicap, team, and scores are unchanged.</div>' +
+      '<label class="form-label">Select Member</label>' +
+      '<select id="linkMemberModalSelect" style="margin-top:6px;margin-bottom:16px;">' +
+      '<option value="">— Choose a member —</option>' +
+      available.map(m => '<option value="' + escapeAttr(m.uid) + '">' + escapeHtml(m.email) + '</option>').join("") +
+      '</select>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="linkMemberModalCancel" class="secondary" style="flex:1;margin:0;">Cancel</button>' +
+        '<button id="linkMemberModalConfirm" style="flex:1;margin:0;">Link</button>' +
+      '</div>';
 
-    await linkPlayerToMember(member.uid, member.email);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById("linkMemberModalCancel").onclick = () => overlay.remove();
+    document.getElementById("linkMemberModalConfirm").onclick = async () => {
+      const sel = document.getElementById("linkMemberModalSelect");
+      const uid = sel.value;
+      if (!uid) return alert("Please select a member.");
+      const member = available.find(m => m.uid === uid);
+      overlay.remove();
+      await linkPlayerToMember(member.uid, member.email);
+    };
   }
 
   async function linkPlayerToMember(uid, email) {
@@ -10193,7 +10213,36 @@ ${closer}`;
     }
   }
 
-  async function deletePlayerWithCheck() {
+  async function unlinkPlayerFromMember() {
+    if (!editingPlayerId) return;
+    const player = players.find(p => p.id === editingPlayerId);
+    if (!player) return;
+
+    const confirmed = confirm(
+      "Unlink " + (player.name || "this player") + " from their member account?\n\n" +
+      "The player's Name and Gender will become editable again. " +
+      "Handicap, team, and all scores will NOT be changed.\n\n" +
+      "Continue?"
+    );
+    if (!confirmed) return;
+
+    const btn = document.getElementById("unlinkFromMemberBtn");
+    if (btn) { btn.disabled = true; btn.textContent = "Unlinking..."; }
+
+    try {
+      await updateDoc(doc(db, "trips", activeTripId, "players", editingPlayerId), {
+        linkedUid: deleteField(),
+        email: deleteField(),
+        type: "manual"
+      });
+      alert("Player unlinked. You can now edit their name and gender manually.");
+      openTab("players");
+    } catch(e) {
+      alert("Error unlinking player: " + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Unlink from Member"; }
+    }
+  }
     if (!editingPlayerId) return;
     if (!requireAdmin("delete players")) return;
     const player = players.find(p => p.id === editingPlayerId);
@@ -12254,6 +12303,7 @@ ${closer}`;
   window.openScorecardAddPhoto = openScorecardAddPhoto;
   window.openLinkToMemberPicker = openLinkToMemberPicker;
   window.linkPlayerToMember = linkPlayerToMember;
+  window.unlinkPlayerFromMember = unlinkPlayerFromMember;
   window.addIndivPayoutRow = addIndivPayoutRow;
   window.removeIndivPayoutRow = removeIndivPayoutRow;
   window.renderScorecardPhotos = renderScorecardPhotos;
