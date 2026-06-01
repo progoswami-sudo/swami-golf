@@ -4176,8 +4176,6 @@ Respond with ONLY the search query, nothing else.`;
       document.getElementById("matchScoringType").value = "Gross";
       document.getElementById("matchValueType").value = "Points";
       loadMatchPlayerSelectors();
-      setMultiSelectValues("matchTeamAPlayers", []);
-      setMultiSelectValues("matchTeamBPlayers", []);
       handleMatchFormatChange();
     }
   }
@@ -4516,8 +4514,10 @@ Max 80 words total.`;
   }
 
   function setMultiSelectValues(elementId, values) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
     const valueSet = new Set(values || []);
-    Array.from(document.getElementById(elementId).options).forEach(option => {
+    Array.from(el.options).forEach(option => {
       option.selected = valueSet.has(option.value);
     });
   }
