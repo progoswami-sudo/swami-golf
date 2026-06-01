@@ -4935,6 +4935,23 @@ Max 80 words total.`;
                   return '<strong>' + escapeHtml(t.name) + ':</strong> <span style="color:' + col + ';font-weight:600;">' + escapeHtml(teamPlayerNames || "—") + '</span>';
                 }).join("<br>");
               })()
+            : isMultiTeamMatch(match)
+            ? (function() {
+                const compTeams = getTeams();
+                const teamMap = match.teamPlayerMap || {};
+                const teamColors = ["#93c5fd","#86efac","#fcd34d","#f9a8d4"];
+                return (match.matchTeamIds || []).map(function(tid, ti) {
+                  const team = compTeams.find(function(t) { return t.id === tid; });
+                  const tName = team ? team.name : tid;
+                  const pIds = teamMap[tid] || [];
+                  const pNames = pIds.map(function(id) {
+                    const p = players.find(function(x) { return x.id === id; });
+                    return p ? p.name : null;
+                  }).filter(Boolean).join(", ");
+                  const col = teamColors[ti] || "#e2e8f0";
+                  return '<strong>' + escapeHtml(tName) + ':</strong> <span style="color:' + col + ';font-weight:600;">' + escapeHtml(pNames || "—") + '</span>';
+                }).join("<br>");
+              })()
             : '<strong>' + escapeHtml(teamAName) + ':</strong> <span style="color:#93c5fd;font-weight:600;">' + escapeHtml(teamAPlayers) + '</span><br>' +
               '<strong>' + escapeHtml(teamBName) + ':</strong> <span style="color:#86efac;font-weight:600;">' + escapeHtml(teamBPlayers) + '</span>'
           ) +
@@ -6017,7 +6034,10 @@ Max 80 words total.`;
     const match = matches.find(m => m.id === matchId);
     if (match) {
       holeDetailData = JSON.parse(JSON.stringify(match.holeDetail || {}));
-      if (isScrambleFormat(match)) {
+      if (isScrambleFormat(match) && isMultiTeamMatch(match)) {
+        // Multi-team scramble: apply defaults for the tapped team only
+        applyHoleDefaults(match, playerId, holeDetailHoleNum);
+      } else if (isScrambleFormat(match)) {
         const compTeams = getTeams();
         const teamIds = compTeams.map(t => t.id);
         teamIds.forEach(tid => applyHoleDefaults(match, tid, holeDetailHoleNum));
@@ -6064,15 +6084,30 @@ Max 80 words total.`;
     let tabs = '';
     const scrambleMatch = isScrambleFormat(match);
     const indivMatch = isIndividualFormat(match);
+    const multiTeam = isMultiTeamMatch(match);
+
     if (indivMatch) {
-      // Individual: show player name prominently, no tabs
       const p = players.find(function(x) { return x.id === holeDetailPlayerId; });
       const pName = p ? p.name : holeDetailPlayerId;
       tabs = '<div style="text-align:center;font-size:17px;font-weight:700;color:#93c5fd;padding:6px 0 2px;">' + escapeHtml(pName) + '</div>';
+    } else if (multiTeam && scrambleMatch) {
+      // Multi-team scramble: show only the teams in this match
+      // holeDetailPlayerId holds the active team ID (set by the scorecard tap)
+      tabs = '<div class="hole-player-tabs">';
+      const matchTeamIds = match.matchTeamIds || [];
+      matchTeamIds.forEach(tid => {
+        const team = compTeams.find(t => t.id === tid);
+        const tName = team ? team.name : tid;
+        const active = tid === holeDetailPlayerId ? "active" : "";
+        tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(tid) + '\')">' + escapeHtml(tName) + '</button>';
+      });
+      tabs += '</div>';
     } else if (scrambleMatch) {
       tabs = '<div class="hole-player-tabs">';
-      const compTeams = getTeams();
-      compTeams.forEach(t => {
+      const matchTeams = match.matchTeamIds
+        ? (match.matchTeamIds || []).map(tid => compTeams.find(t => t.id === tid)).filter(Boolean)
+        : [compTeams[0], compTeams[1]].filter(Boolean);
+      matchTeams.forEach(t => {
         const active = t.id === holeDetailPlayerId ? "active" : "";
         tabs += '<button class="hole-player-tab ' + active + '" onclick="switchHoleDetailPlayer(\'' + escapeAttr(t.id) + '\')">' + escapeHtml(t.name) + '</button>';
       });
@@ -6486,22 +6521,15 @@ Max 80 words total.`;
     html += '</tbody></table></div>';
     wrap.innerHTML = html;
 
-    // Click handler — for scramble tap opens score detail for team id; for best ball opens for first player
+    // Click handler — team ID is the playerId stored in data-player-id
     wrap.addEventListener("click", function(e) {
       const cell = e.target.closest(".score-tap-cell");
       if (!cell) return;
-      const rawId = cell.dataset.playerId;
+      const teamId = cell.dataset.playerId; // for multi-team, this is the team ID
       const holeNum = Number(cell.dataset.hole);
-      // For scramble: playerId is actually teamId — use first player in team as the entry point
-      if (scramble) {
-        const firstPlayer = (teamMap[rawId] || [])[0];
-        if (firstPlayer) openHoleDetail(activeScoreMatchId, firstPlayer, holeNum);
-        // But we want to save to the TEAM key, not the player key — handle in saveHoleDetail
-      } else {
-        openHoleDetail(activeScoreMatchId, rawId, holeNum);
-      }
-      // Store which team this tap is for
-      window._multiTeamScoreTapTeamId = rawId;
+      // Open hole detail with team ID as the active player ID
+      // applyHoleDefaults and saveHoleDetail both use holeDetailPlayerId as the key
+      openHoleDetail(activeScoreMatchId, teamId, holeNum);
     });
   }
 
