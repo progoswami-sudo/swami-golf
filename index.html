@@ -5064,14 +5064,21 @@ Max 80 words total.`;
       });
       const lowestCH = Math.min(...Object.values(teamCHs).filter(x => x !== null && !isNaN(x)));
 
+      // Build per-team stroke maps for hole-by-hole net application
+      const teamStrokeMapsNassau = {};
+      if (isNet) {
+        const lowestCHForMap = lowestCH;
+        teamIds.forEach(tid => {
+          const netStrokes = Math.max(0, (teamCHs[tid] || 0) - lowestCHForMap);
+          teamStrokeMapsNassau[tid] = netStrokes > 0 ? calculateStrokeMap(netStrokes, holes) : {};
+        });
+      }
+
       // Compute per-team totals per segment
       function teamSegTotal(tid, segHoles) {
         const pIds = teamMap[tid] || [];
-        const netStrokes = isNet ? Math.max(0, (teamCHs[tid] || 0) - lowestCH) : 0;
-        // For scramble: single score per hole from holeScores[tid]
-        // For best ball: best score per hole from team's players
-        let total = 0, played = 0;
-        let parPlayed = 0;
+        const strokeMap = teamStrokeMapsNassau[tid] || {};
+        let gross = 0, net = 0, played = 0, parPlayed = 0;
         segHoles.forEach(hole => {
           let score = null;
           if (scramble) {
@@ -5081,12 +5088,17 @@ Max 80 words total.`;
             const raws = pIds.map(id => Number((holeScores[id] || {})[hole.hole])).filter(s => s > 0);
             if (raws.length) score = Math.min(...raws);
           }
-          if (score !== null) { total += score; played++; parPlayed += Number(hole.par || 4); }
+          if (score !== null) {
+            const strokesOnHole = isNet ? (strokeMap[hole.hole] || 0) : 0;
+            gross += score;
+            net   += score - strokesOnHole;
+            played++;
+            parPlayed += Number(hole.par || 4);
+          }
         });
-        const netTotal = isNet ? total - netStrokes : total;
-        const relGross = played > 0 ? total - parPlayed : null;
-        const relNet   = (isNet && played > 0) ? netTotal - parPlayed : null;
-        return { total, netTotal, played, parPlayed, relGross, relNet };
+        const relGross = played > 0 ? gross - parPlayed : null;
+        const relNet   = (isNet && played > 0) ? net - parPlayed : null;
+        return { total: gross, netTotal: net, played, parPlayed, relGross, relNet };
       }
 
       const outHoles = holes.filter(h => Number(h.hole) <= 9);
